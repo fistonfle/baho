@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#f8fafc"/>
+  <text x="600" y="60" text-anchor="middle" font-size="34" font-family="Arial" font-weight="700" fill="#0f172a">Baho ERD</text>
+
+  <rect x="70" y="140" width="170" height="150" rx="12" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="155" y="180" text-anchor="middle" font-size="26" font-family="Arial" font-weight="700" fill="#0f172a">Users</text>
+  <text x="155" y="215" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">id</text>
+  <text x="155" y="240" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">name</text>
+  <text x="155" y="265" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">email</text>
+
+  <rect x="330" y="140" width="180" height="150" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="420" y="180" text-anchor="middle" font-size="26" font-family="Arial" font-weight="700" fill="#0f172a">Categories</text>
+  <text x="420" y="215" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">id</text>
+  <text x="420" y="240" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">name</text>
+  <text x="420" y="265" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">slug</text>
+
+  <rect x="610" y="140" width="200" height="170" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="710" y="180" text-anchor="middle" font-size="26" font-family="Arial" font-weight="700" fill="#0f172a">Content</text>
+  <text x="710" y="215" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">id</text>
+  <text x="710" y="240" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">category_id</text>
+  <text x="710" y="265" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">title</text>
+  <text x="710" y="290" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">status</text>
+
+  <rect x="930" y="140" width="180" height="150" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+  <text x="1020" y="180" text-anchor="middle" font-size="26" font-family="Arial" font-weight="700" fill="#0f172a">Reminders</text>
+  <text x="1020" y="215" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">id</text>
+  <text x="1020" y="240" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">user_id</text>
+  <text x="1020" y="265" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">time</text>
+
+  <rect x="510" y="430" width="220" height="150" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="620" y="470" text-anchor="middle" font-size="24" font-family="Arial" font-weight="700" fill="#0f172a">Progress</text>
+  <text x="620" y="505" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">user_id</text>
+  <text x="620" y="535" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">content_id</text>
+  <text x="620" y="565" text-anchor="middle" font-size="18" font-family="Arial" fill="#1e293b">completed_at</text>
+
+  <path d="M 240 215 L 330 215" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M 510 215 L 610 215" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M 810 215 L 930 215" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M 620 320 L 620 430" stroke="#334155" stroke-width="3" fill="none"/>
+</svg>

@@ -51,13 +51,12 @@ baho/
 
 ## Default user flow
 
-1. Land on the welcome screen
-2. Select health interests
-3. View the personalized dashboard
-4. Explore audio lessons and educational content
-5. Review exercise and reminder guidance
-6. Open the FAQ and issue reporting flow
-7. Review the admin area for content management
+1. Land on the welcome screen and continue as a guest to browse public lessons.
+2. Select interests and enter a name to view the learner dashboard.
+3. Create a learner account to save private questions, reminders and lesson progress.
+4. Open account access and create the first administrator when prompted.
+5. The administrator can create creator accounts, manage FAQs, review questions and issue reports, and publish or reject submitted content.
+6. Creators sign in and submit new content for administrator review.
 
 ## Technologies
 
@@ -93,6 +92,8 @@ cp .env.example .env
 npm run dev
 ```
 
+The backend applies its schema on startup. Set `DATABASE_URL` to a PostgreSQL database the current user can access, and set `AUTH_TOKEN_SECRET` to a long random secret. If PostgreSQL is unavailable, the backend starts in demo mode; demo-mode data is held in memory and does not survive a restart.
+
 ### 3. Frontend
 
 ```bash
@@ -100,6 +101,8 @@ cd baho/frontend
 npm install
 npm run dev
 ```
+
+For a separately hosted backend, create `frontend/.env.local` and set `VITE_API_BASE_URL` to its `/api/v1` URL before building.
 
 ### 4. Run simple backend tests
 
@@ -131,7 +134,13 @@ The backend reads the PostgreSQL connection string from the environment. A sampl
 ```env
 PORT=4000
 DATABASE_URL=postgresql://fle@localhost:5432/baho
+AUTH_TOKEN_SECRET=replace-with-a-long-random-secret-before-deployment
+BAHO_ADMIN_NAME=
+BAHO_ADMIN_EMAIL=
+BAHO_ADMIN_PASSWORD=
 ```
+
+To seed the first administrator at backend startup, fill in all three `BAHO_ADMIN_*` values in `backend/.env`; use a password with at least 12 characters. The seed runs only when no administrator exists. If these values are left blank, the account screen provides one-time first-admin setup instead. Public learner registration cannot assign staff roles. Admin and creator endpoints require a signed-in staff account.
 
 ## Demo notes
 
