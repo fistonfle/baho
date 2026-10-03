@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#f8fafc"/>
+  <text x="600" y="60" text-anchor="middle" font-size="34" font-family="Arial" font-weight="700" fill="#0f172a">Baho System Architecture</text>
+
+  <rect x="80" y="150" width="250" height="170" rx="18" fill="#ecfeff" stroke="#0f766e" stroke-width="2"/>
+  <text x="205" y="195" text-anchor="middle" font-size="28" font-family="Arial" font-weight="700" fill="#0f172a">Frontend</text>
+  <text x="205" y="230" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">React + TypeScript</text>
+  <text x="205" y="260" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">PWA / Offline</text>
+  <text x="205" y="290" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Dashboard + Audio</text>
+
+  <rect x="475" y="150" width="250" height="170" rx="18" fill="#ecfccb" stroke="#4d7c0f" stroke-width="2"/>
+  <text x="600" y="195" text-anchor="middle" font-size="28" font-family="Arial" font-weight="700" fill="#0f172a">Backend</text>
+  <text x="600" y="230" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Express API</text>
+  <text x="600" y="260" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Auth / Content / FAQ</text>
+  <text x="600" y="290" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Admin review</text>
+
+  <rect x="870" y="150" width="250" height="170" rx="18" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+  <text x="995" y="195" text-anchor="middle" font-size="28" font-family="Arial" font-weight="700" fill="#0f172a">Database</text>
+  <text x="995" y="230" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">PostgreSQL</text>
+  <text x="995" y="260" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Users, Content</text>
+  <text x="995" y="290" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Reminders, Issues</text>
+
+  <path d="M 330 235 L 475 235" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M 725 235 L 870 235" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M 600 320 L 600 430" stroke="#334155" stroke-width="3" fill="none"/>
+
+  <rect x="420" y="430" width="360" height="180" rx="18" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+  <text x="600" y="480" text-anchor="middle" font-size="28" font-family="Arial" font-weight="700" fill="#0f172a">Community value</text>
+  <text x="600" y="520" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Personalized NCD education</text>
+  <text x="600" y="550" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Audio guidance + reminders</text>
+  <text x="600" y="580" text-anchor="middle" font-size="20" font-family="Arial" fill="#334155">Offline access in low-connectivity areas</text>
+</svg>
