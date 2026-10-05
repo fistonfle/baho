@@ -27,6 +27,8 @@ import {
   addReminder as addReminderAction,
   clearAuthenticatedUser,
   defaultFaqItems,
+  defaultReminders,
+  readGuestData,
   deleteReminder as deleteReminderAction,
   markLessonComplete as markLessonCompleteAction,
   setActiveCategory,
@@ -141,12 +143,6 @@ function App() {
         localStorage.removeItem('baho-user');
       }
     } else {
-      const guestReminders = localStorage.getItem('baho-reminders');
-      const guestProgress = localStorage.getItem('baho-progress');
-      const guestScores = loadCache<QuizScore[]>('quiz-scores');
-      if (guestReminders) dispatch(setReminders(JSON.parse(guestReminders)));
-      if (guestProgress) dispatch(setCompletedLessons(JSON.parse(guestProgress)));
-      if (guestScores) dispatch(setQuizScores(guestScores));
       if (profile) dispatch(setCurrentScreen('dashboard'));
     }
     loadSecure<HealthProfile>('health-profile').then(async (profile) => {
@@ -449,6 +445,10 @@ function App() {
     localStorage.removeItem('baho-user');
     dispatch(clearAuthenticatedUser());
     dispatch(setQuestions([]));
+    // Bring back this device's guest data; the account's data must not be saved over it.
+    dispatch(setCompletedLessons(readGuestData('baho-progress', [])));
+    dispatch(setReminders(readGuestData('baho-reminders', defaultReminders)));
+    dispatch(setQuizScores(readGuestData('baho-cache-quiz-scores', [])));
     notify('Wasohotse muri konti yawe.');
     if (userName) navigate('dashboard');
   };

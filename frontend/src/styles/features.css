@@ -2309,3 +2309,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Same size for every button in the lesson form's action row. */
+.creator-form-actions .primary,
+.creator-form-actions .secondary {
+  min-height: 46px;
+  padding: 0 20px;
+  font-size: 0.9rem;
+}
