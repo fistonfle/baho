@@ -140,12 +140,12 @@ On start-up the backend creates all tables and seeds the demo content (14 lesson
 PORT=4000
 DATABASE_URL=postgresql://<user>@localhost:5432/baho
 AUTH_TOKEN_SECRET=<long random secret>
-BAHO_ADMIN_NAME=        # optional: first administrator, created on start-up
+BAHO_ADMIN_NAME=        # first administrator, created on start-up
 BAHO_ADMIN_EMAIL=
 BAHO_ADMIN_PASSWORD=    # at least 12 characters
 ```
 
-If the `BAHO_ADMIN_*` values are left empty, open **Injira → Fungura konti ya mbere y'ubuyobozi** in the app to create the first admin once. Admins then create creator accounts in **Ubuyobozi → Abakozi**. The frontend calls `http://localhost:4000/api/v1` by default; set `VITE_API_BASE_URL` in `frontend/.env.local` for a hosted API.
+The **first admin is created only from these `BAHO_ADMIN_*` values** when the backend starts and no admin exists yet; there is no public sign-up for staff. After that, admins create other admins and creators in **Ubuyobozi → Abakozi**, and learners register themselves in the app. The frontend calls `http://localhost:4000/api/v1` by default; set `VITE_API_BASE_URL` in `frontend/.env.local` for a hosted API.
 
 ### Option B: Docker
 
@@ -231,7 +231,6 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 | Method and path | Purpose | Access |
 |---|---|---|
 | `POST /auth/register`, `POST /auth/login` | Create a learner account, sign in (returns a token) | Public |
-| `GET /auth/setup-status`, `POST /auth/setup-admin` | One-time creation of the first admin | Public (once) |
 | `GET /categories`, `GET /content`, `GET /content/:id` | Topics and published lessons (with image and quiz) | Public |
 | `GET /curricula` | Learning paths and diseases with their ordered lessons | Public |
 | `GET /faq` | Frequently asked questions | Public |

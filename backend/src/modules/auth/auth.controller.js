@@ -13,15 +13,6 @@ const publicUser = (user, role = 'learner') => ({
   role
 });
 
-export const getSetupStatus = async (_req, res) => {
-  try {
-    const result = await pool.query("SELECT COUNT(*)::int AS count FROM staff WHERE role = 'admin'");
-    return res.json({ setupNeeded: result.rows[0].count === 0 });
-  } catch (error) {
-    return res.json({ setupNeeded: !inMemoryStore.staff.some((entry) => entry.role === 'admin'), demoMode: true });
-  }
-};
-
 export const getCreators = async (_req, res) => {
   try {
     const result = await pool.query(
@@ -39,54 +30,6 @@ export const getCreators = async (_req, res) => {
       })
       .filter(Boolean);
     return res.json({ staff });
-  }
-};
-
-export const setupAdmin = async (req, res) => {
-  const { name, email, password } = req.body || {};
-  if (!name?.trim() || !email?.trim() || !password || String(password).length < 8) {
-    return res.status(400).json({ message: 'Name, email and a password of at least 8 characters are required' });
-  }
-  const cleanEmail = normalizedEmail(email);
-  try {
-    const existingAdmins = await pool.query("SELECT COUNT(*)::int AS count FROM staff WHERE role = 'admin'");
-    if (existingAdmins.rows[0].count > 0) {
-      return res.status(409).json({ message: 'Initial admin setup has already been completed' });
-    }
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const result = await client.query(
-        'INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, full_name, email, preferred_language',
-        [name.trim(), cleanEmail, hashPassword(password)]
-      );
-      const user = result.rows[0];
-      await client.query('INSERT INTO staff (user_id, role) VALUES ($1, $2)', [user.id, 'admin']);
-      await client.query('COMMIT');
-      const identity = publicUser(user, 'admin');
-      return res.status(201).json({ message: 'Admin setup completed', user: identity, token: createToken(identity) });
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    if (error.code === '23505') return res.status(409).json({ message: 'An account with that email already exists' });
-    if (!isDatabaseUnavailable(error)) {
-      return res.status(503).json({ message: 'Could not create the initial admin account' });
-    }
-    if (inMemoryStore.staff.some((entry) => entry.role === 'admin')) {
-      return res.status(409).json({ message: 'Initial admin setup has already been completed' });
-    }
-    if (inMemoryStore.users.some((entry) => entry.email === cleanEmail)) {
-      return res.status(409).json({ message: 'An account with that email already exists' });
-    }
-    const user = { id: Date.now(), fullName: name.trim(), email: cleanEmail, passwordHash: hashPassword(password) };
-    inMemoryStore.users.push(user);
-    inMemoryStore.staff.push({ id: Date.now() + 1, userId: user.id, role: 'admin' });
-    const identity = publicUser(user, 'admin');
-    return res.status(201).json({ message: 'Admin setup completed in demo mode', user: identity, token: createToken(identity) });
   }
 };
 
