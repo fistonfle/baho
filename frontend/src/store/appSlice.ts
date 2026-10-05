@@ -62,8 +62,7 @@ interface AppState {
   issueForm: { title: string; description: string };
   creatorForm: { fullName: string; email: string; password: string; role: string };
   authForm: { name: string; email: string; password: string };
-  authMode: 'login' | 'register' | 'setup';
-  setupNeeded: boolean;
+  authMode: 'login' | 'register';
   authUser: { id: number; name: string; email: string; role: string } | null;
   authToken: string | null;
   feedbackMessage: string;
@@ -99,7 +98,6 @@ const initialState: AppState = {
   creatorForm: { fullName: '', email: '', password: '', role: 'creator' },
   authForm: { name: '', email: '', password: '' },
   authMode: 'login',
-  setupNeeded: false,
   authUser: null,
   authToken: null,
   feedbackMessage: '',
@@ -257,12 +255,8 @@ const appSlice = createSlice({
     updateAuthForm: (state, action: PayloadAction<Partial<{ name: string; email: string; password: string }>>) => {
       state.authForm = { ...state.authForm, ...action.payload };
     },
-    setAuthMode: (state, action: PayloadAction<'login' | 'register' | 'setup'>) => {
+    setAuthMode: (state, action: PayloadAction<'login' | 'register'>) => {
       state.authMode = action.payload;
-    },
-    setSetupNeeded: (state, action: PayloadAction<boolean>) => {
-      state.setupNeeded = action.payload;
-      if (state.authMode === 'setup') state.authMode = 'login';
     },
     setAuthenticatedUser: (state, action: PayloadAction<{ token: string; user: { id: number; name: string; email: string; role: string } }>) => {
       state.authToken = action.payload.token;
@@ -348,7 +342,6 @@ export const {
   markLessonComplete,
   updateAuthForm,
   setAuthMode,
-  setSetupNeeded,
   setAuthenticatedUser,
   clearAuthenticatedUser,
   setFeedbackMessage,

@@ -50,7 +50,6 @@ import {
   setSelectedInterests,
   setSelectedLesson,
   setSelectedNcdTopic,
-  setSetupNeeded,
   setUserName,
   toggleInterest,
   updateAuthForm,
@@ -70,7 +69,6 @@ const translateAuthError = (message: string) => {
   const normalized = message.toLowerCase();
   if (normalized.includes('invalid email or password')) return 'Imeyili cyangwa ijambo ry\'ibanga si byo.';
   if (normalized.includes('already exists') || normalized.includes('already belongs')) return 'Iyi konti isanzwe ihari. Injira cyangwa ukoreshe indi imeyili.';
-  if (normalized.includes('setup has already been completed')) return 'Konti ya mbere y\'ubuyobozi yamaze gufungurwa.';
   if (normalized.includes('at least 8 characters')) return 'Ijambo ry\'ibanga rigomba kuba nibura inyuguti 8.';
   if (normalized.includes('fetch') || normalized.includes('failed') || normalized.includes('could not')) return 'Ntibyashobotse. Reba internet wongere ugerageze.';
   return 'Habaye ikibazo. Ongera ugerageze.';
@@ -103,7 +101,7 @@ function App() {
   const state = useAppSelector((root) => root.app);
   const {
     currentScreen, userName, selectedInterests, lessons, selectedLesson, reminders, reminderForm, issueForm,
-    questionForm, authForm, authMode, setupNeeded, authUser, feedbackMessage, faqItems, questions, isOnline,
+    questionForm, authForm, authMode, authUser, feedbackMessage, faqItems, questions, isOnline,
     activeCategory, completedLessons, selectedNcdTopic, riskTags, curricula, categories, quizScores
   } = state;
   const isStaff = authUser?.role === 'admin' || authUser?.role === 'creator';
@@ -425,23 +423,11 @@ function App() {
     notify(permission === 'granted' ? 'Ubutumwa bwo kwibutsa bwemewe.' : 'Ntiwemeye ubutumwa bwo kwibutsa.');
   };
 
-  const openAuth = async () => {
-    navigate('auth');
-    try {
-      const status = await api.getSetupStatus();
-      dispatch(setSetupNeeded(status.setupNeeded));
-    } catch {
-      // The form still works; the first-admin option just stays hidden.
-    }
-  };
+  const openAuth = () => navigate('auth');
 
   const submitAuth = async () => {
     try {
-      const response = authMode === 'setup'
-        ? await api.setupAdmin(authForm)
-        : authMode === 'register'
-          ? await api.register(authForm)
-          : await api.login(authForm);
+      const response = authMode === 'register' ? await api.register(authForm) : await api.login(authForm);
       setAuthToken(response.token);
       localStorage.setItem('baho-token', response.token);
       localStorage.setItem('baho-user', JSON.stringify(response.user));
@@ -500,7 +486,6 @@ function App() {
           <AuthScreen
             mode={authMode}
             form={authForm}
-            setupNeeded={setupNeeded}
             onFormChange={(changes) => dispatch(updateAuthForm(changes))}
             onModeChange={(mode) => dispatch(setAuthMode(mode))}
             onSubmit={() => void submitAuth()}
@@ -628,7 +613,7 @@ function App() {
             onIssueFormChange={(changes) => dispatch(updateIssueForm(changes))}
             onAskQuestion={() => void askQuestion()}
             onReportIssue={() => void reportIssue()}
-            onSignIn={() => void openAuth()}
+            onSignIn={openAuth}
           />
         );
       case 'admin':
@@ -650,7 +635,7 @@ function App() {
           isSignedIn={Boolean(authUser)}
           isStaff={isStaff}
           onNavigate={navigate}
-          onSignIn={() => void openAuth()}
+          onSignIn={openAuth}
           onSignOut={signOut}
         />
       )}

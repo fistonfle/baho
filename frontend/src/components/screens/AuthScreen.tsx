@@ -2,18 +2,18 @@ import type { FormEvent } from 'react';
 
 import { BrandMark } from '../ui';
 
-type AuthMode = 'login' | 'register' | 'setup';
+// Staff accounts are created by an admin, and the first admin comes from the
+// server's environment, so this screen only signs in and registers learners.
+type AuthMode = 'login' | 'register';
 
 const headings: Record<AuthMode, { title: string; text: string; button: string }> = {
   login: { title: 'Injira muri konti yawe', text: 'Injira kugira ngo ukomeze amasomo yawe n\'ibyo wabitse.', button: 'Injira' },
-  register: { title: 'Fungura konti', text: 'Konti igufasha kubika ibibazo, ibyibutsa n\'aho ugeze mu masomo.', button: 'Fungura konti' },
-  setup: { title: 'Fungura konti ya mbere y\'ubuyobozi', text: 'Umuyobozi wa Baho ashobora kongeramo abakozi no kugenzura amasomo.', button: 'Fungura konti y\'ubuyobozi' }
+  register: { title: 'Fungura konti', text: 'Konti igufasha kubika ibibazo, ibyibutsa n\'aho ugeze mu masomo.', button: 'Fungura konti' }
 };
 
 export function AuthScreen({
   mode,
   form,
-  setupNeeded,
   onFormChange,
   onModeChange,
   onSubmit,
@@ -21,7 +21,6 @@ export function AuthScreen({
 }: {
   mode: AuthMode;
   form: { name: string; email: string; password: string };
-  setupNeeded: boolean;
   onFormChange: (changes: Partial<{ name: string; email: string; password: string }>) => void;
   onModeChange: (mode: AuthMode) => void;
   onSubmit: () => void;
@@ -78,11 +77,6 @@ export function AuthScreen({
             {mode !== 'register' && (
               <button className="auth-option" type="button" onClick={() => onModeChange('register')}>
                 Nta konti ufite? <strong>Fungura konti</strong>
-              </button>
-            )}
-            {setupNeeded && mode !== 'setup' && (
-              <button className="auth-option" type="button" onClick={() => onModeChange('setup')}>
-                <strong>Fungura konti ya mbere y'ubuyobozi</strong>
               </button>
             )}
           </div>

@@ -74,15 +74,13 @@ test('Configured admin seed creates the first protected administrator once', asy
     const secondSeed = await seedInitialAdmin();
     assert.equal(secondSeed.seeded, false);
 
+    // There is no public way to create an admin: the first one comes from the server's environment.
     const response = await postJson(`${baseUrl}/api/v1/auth/setup-admin`, {
       name: 'Baho Admin',
       email: 'admin@example.test',
       password: 'admin-pass-123'
     });
-    assert.equal(response.status, 409);
-
-    const statusResponse = await fetch(`${baseUrl}/api/v1/auth/setup-status`);
-    assert.equal((await statusResponse.json()).setupNeeded, false);
+    assert.equal(response.status, 404);
   } finally {
     server.close();
   }

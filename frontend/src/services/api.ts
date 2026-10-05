@@ -113,9 +113,6 @@ export const api = {
   deleteContent: (id: number) => request<{ message: string }>(`/admin/content/${id}`, { method: 'DELETE' }),
   updateIssueStatus: (id: number, status: string) =>
     request<{ message: string; issue: any }>(`/admin/issues/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  getSetupStatus: () => request<{ setupNeeded: boolean; demoMode?: boolean }>('/auth/setup-status'),
-  setupAdmin: (payload: { name: string; email: string; password: string }) =>
-    request<{ message: string; token: string; user: any }>('/auth/setup-admin', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload: { email: string; password: string }) =>
     request<{ token: string; user: any }>('/auth/login', {
       method: 'POST',
