@@ -3,7 +3,7 @@
 **Baho** ("live" in Kinyarwanda) is a Kinyarwanda-first, audio-first web app that teaches rural communities in Rwanda how to prevent and live with non-communicable diseases (NCDs): high blood pressure, diabetes, heart disease and cancer. Learners get a personal learning path based on their health profile, listen to short illustrated lessons, check their understanding with quizzes, and keep learning when the network drops. Health professionals write the lessons, and an administrator reviews and publishes them.
 
 - **GitHub repository:** https://github.com/fistonfle/baho
-- **Video demo:** _add the link here after recording (5–10 minutes)_
+- **Video demo:** [demo/Baho-Demo.mp4](demo/Baho-Demo.mp4) ([watch on GitHub](https://github.com/fistonfle/baho/blob/main/demo/Baho-Demo.mp4))
 - **Capstone:** BSc Software Engineering, African Leadership University (FullStack track)
 
 ![Learner dashboard with the diabetes learning path](designs/screenshots/04-dashboard-learning-path.png)
@@ -95,6 +95,7 @@ baho/
 ├── database/                 schema.sql (13 tables) and seed.sql
 ├── designs/                  wireframes/, uml/, screenshots/, erd.svg, architecture.svg
 ├── docs/                     architecture.md, deployment.md
+├── demo/                     Baho-Demo.mp4 (video demo)
 ├── docker-compose.yml        API + PostgreSQL
 └── package.json              root scripts (setup, dev, test, build)
 ```
