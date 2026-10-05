@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { defaultCategories, offlineLessons } from '../data/healthContent';
 import type { Category, Curriculum, Interest, IssueReport, Lesson, QuestionItem, QuizQuestion, QuizScore, Reminder } from '../types';
 
-export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'admin';
+export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'profile' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'admin';
 
 export const defaultLessons: Lesson[] = offlineLessons;
 

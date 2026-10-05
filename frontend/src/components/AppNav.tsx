@@ -77,7 +77,15 @@ export function AppNav({
             <span /> {isOnline ? 'Kuri internet' : 'Nta internet'}
           </span>
           <button className="app-nav-help" onClick={() => onNavigate('faq')} aria-label="Ubufasha"><NavIcon name="help" /></button>
-          <span className="account-avatar" title={userName || 'Umushyitsi'} aria-hidden="true">{(userName || 'B').trim().charAt(0).toUpperCase()}</span>
+          <button
+            className={`account-avatar avatar-button ${currentScreen === 'profile' ? 'active' : ''}`}
+            onClick={() => onNavigate('profile')}
+            title="Umwirondoro wanjye"
+            aria-label="Umwirondoro wanjye"
+            aria-current={currentScreen === 'profile' ? 'page' : undefined}
+          >
+            {(userName || 'B').trim().charAt(0).toUpperCase()}
+          </button>
           {isSignedIn
             ? <button className="app-nav-account-button" onClick={onSignOut}>Sohoka</button>
             : <button className="app-nav-account-button" onClick={onSignIn}>Injira</button>}

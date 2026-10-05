@@ -14,6 +14,7 @@ import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { RemindersScreen } from './components/screens/RemindersScreen';
 import { HealthProfileScreen } from './components/screens/HealthProfileScreen';
 import { PathsScreen } from './components/screens/PathsScreen';
+import { ProfileScreen } from './components/screens/ProfileScreen';
 import { defaultCategories, offlineDiseases, offlineLessons, tipOfTheDay } from './data/healthContent';
 import { getStreak, recordActivity } from './lib/activity';
 import { flushOutbox, getOutbox, loadCache, queueIssue, saveCache } from './lib/offline';
@@ -63,7 +64,7 @@ import type { Category, Curriculum, Lesson, QuestionItem, QuizScore } from './ty
 
 const PROFILE_KEY = 'baho-profile';
 const PATH_KEY = 'baho-active-path';
-const learnerScreens: Screen[] = ['dashboard', 'paths', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'admin', 'risk'];
+const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'admin', 'risk'];
 
 const translateAuthError = (message: string) => {
   const normalized = message.toLowerCase();
@@ -289,6 +290,7 @@ function App() {
     [lessons, selectedInterests, riskTags, completedLessons]
   );
   const healthTip = useMemo(tipOfTheDay, []);
+  const completedCount = completedLessons.filter((id) => lessons.some((lesson) => lesson.id === id)).length;
   const topicNames = categories.map((category) => category.name);
   // Diseases are the learning paths that have a condition; built-in ones are used offline.
   const apiDiseases = curricula.filter((curriculum) => curriculum.condition);
@@ -423,7 +425,10 @@ function App() {
     notify(permission === 'granted' ? 'Ubutumwa bwo kwibutsa bwemewe.' : 'Ntiwemeye ubutumwa bwo kwibutsa.');
   };
 
-  const openAuth = () => navigate('auth');
+  const openAuth = (mode: 'login' | 'register' = 'login') => {
+    dispatch(setAuthMode(mode));
+    navigate('auth');
+  };
 
   const submitAuth = async () => {
     try {
@@ -480,7 +485,7 @@ function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'landing':
-        return <LandingScreen onStart={() => navigate(userName ? 'dashboard' : 'onboarding')} onAdmin={openAuth} returning={Boolean(userName)} />;
+        return <LandingScreen onStart={() => navigate(userName ? 'dashboard' : 'onboarding')} onAdmin={() => openAuth()} returning={Boolean(userName)} />;
       case 'auth':
         return (
           <AuthScreen
@@ -517,6 +522,31 @@ function App() {
             onClear={() => void clearHealthProfile()}
           />
         );
+      case 'profile':
+        return (
+          <ProfileScreen
+            userName={userName}
+            account={authUser}
+            completedCount={completedCount}
+            totalLessons={lessons.length}
+            streak={streak}
+            quizAverage={quizAverage}
+            knowledgeScore={knowledgeScore}
+            activePath={activePath}
+            completedLessons={completedLessons}
+            interests={selectedInterests}
+            healthProfile={healthProfile}
+            onRename={(name) => { dispatch(setUserName(name)); notify('Izina ryahinduwe.'); }}
+            onEditInterests={() => navigate('onboarding')}
+            onEditHealthProfile={() => navigate('risk')}
+            onClearHealthProfile={() => void clearHealthProfile()}
+            onViewPaths={() => navigate('paths')}
+            onOpenStaffArea={() => navigate('admin')}
+            onSignIn={() => openAuth('login')}
+            onRegister={() => openAuth('register')}
+            onSignOut={signOut}
+          />
+        );
       case 'paths':
         return (
           <PathsScreen
@@ -538,7 +568,7 @@ function App() {
             activePath={activePath}
             completedLessons={completedLessons}
             quizAverage={quizAverage}
-            completedCount={completedLessons.filter((id) => lessons.some((lesson) => lesson.id === id)).length}
+            completedCount={completedCount}
             totalLessons={lessons.length}
             streak={streak}
             hasRiskCheck={healthProfile.conditions.length > 0 || Object.keys(healthProfile.answers).length > 0}
@@ -613,7 +643,7 @@ function App() {
             onIssueFormChange={(changes) => dispatch(updateIssueForm(changes))}
             onAskQuestion={() => void askQuestion()}
             onReportIssue={() => void reportIssue()}
-            onSignIn={openAuth}
+            onSignIn={() => openAuth()}
           />
         );
       case 'admin':
@@ -635,7 +665,7 @@ function App() {
           isSignedIn={Boolean(authUser)}
           isStaff={isStaff}
           onNavigate={navigate}
-          onSignIn={openAuth}
+          onSignIn={() => openAuth()}
           onSignOut={signOut}
         />
       )}
