@@ -48,6 +48,31 @@ export type AdminContentItem = {
   curriculumIds?: number[];
 };
 
+// A guest's data is read before the first render. Loading it later in an effect
+// let the "save" effects write the empty defaults over it first.
+export const readGuestData = <T,>(key: string, fallback: T): T => {
+  try {
+    if (typeof localStorage === 'undefined' || localStorage.getItem('baho-token')) return fallback;
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// The saved session is also read up front, so the first render already knows
+// someone is signed in and never saves guest data over it.
+const readSession = (): { token: string; user: AppState['authUser'] } | null => {
+  try {
+    const token = typeof localStorage === 'undefined' ? null : localStorage.getItem('baho-token');
+    const user = token ? JSON.parse(localStorage.getItem('baho-user') || 'null') : null;
+    return token && user ? { token, user } : null;
+  } catch {
+    return null;
+  }
+};
+const savedSession = readSession();
+
 export const emptyContentForm: ContentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', imageUrl: '', status: 'draft', quiz: [], curriculumIds: [] };
 
 interface AppState {
@@ -91,15 +116,15 @@ const initialState: AppState = {
   selectedInterests: ['Umuvuduko w\'amaraso', 'Imirire', 'Imyitozo ngororamubiri'],
   lessons: defaultLessons,
   selectedLesson: defaultLessons[0],
-  reminders: defaultReminders,
+  reminders: readGuestData('baho-reminders', defaultReminders),
   reminderForm: { time: '21:00', label: 'Soma isomo ryo mu buzima' },
   issues: defaultIssues,
   issueForm: { title: '', description: '' },
   creatorForm: { fullName: '', email: '', password: '', role: 'creator' },
   authForm: { name: '', email: '', password: '' },
   authMode: 'login',
-  authUser: null,
-  authToken: null,
+  authUser: savedSession?.user ?? null,
+  authToken: savedSession?.token ?? null,
   feedbackMessage: '',
   contentForm: emptyContentForm,
   questionForm: { topic: 'Umuvuduko w\'amaraso', question: '' },
@@ -111,13 +136,13 @@ const initialState: AppState = {
   adminContent: [],
   curricula: [],
   categories: defaultCategories,
-  quizScores: [],
+  quizScores: readGuestData('baho-cache-quiz-scores', []),
   editingContentId: null,
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
   riskTags: [],
   activeCategory: 'All',
   selectedNcdTopic: 0,
-  completedLessons: []
+  completedLessons: readGuestData('baho-progress', [])
 };
 
 const appSlice = createSlice({
@@ -261,10 +286,12 @@ const appSlice = createSlice({
     setAuthenticatedUser: (state, action: PayloadAction<{ token: string; user: { id: number; name: string; email: string; role: string } }>) => {
       state.authToken = action.payload.token;
       state.authUser = action.payload.user;
-      state.userName = action.payload.user.name;
+      const isStaff = action.payload.user.role === 'admin' || action.payload.user.role === 'creator';
+      // A staff sign-in on a shared device must not replace the learner's own profile name.
+      if (!isStaff) state.userName = action.payload.user.name;
       state.authForm = { name: '', email: '', password: '' };
       state.feedbackMessage = '';
-      state.currentScreen = action.payload.user.role === 'admin' || action.payload.user.role === 'creator' ? 'admin' : 'dashboard';
+      state.currentScreen = isStaff ? 'admin' : 'dashboard';
     },
     clearAuthenticatedUser: (state) => {
       state.authToken = null;
