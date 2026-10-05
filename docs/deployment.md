@@ -1,26 +1,17 @@
-# Deployment guidance
+# Deployment
 
-## Local development
+The full deployment plan (platforms, environment variables and steps) is in the main [README](../README.md#deployment-plan).
 
-1. Start the backend in `baho/backend`.
-2. Start the frontend in `baho/frontend`.
-3. Set `DATABASE_URL` and a random `AUTH_TOKEN_SECRET` in `backend/.env`.
-4. The frontend calls `http://localhost:4000/api/v1` by default; override it with `VITE_API_BASE_URL` for a separately hosted API.
-5. On first launch, use the account flow to bootstrap the first administrator. Admins create creator accounts; creators submit content for review.
+## Summary
 
-## Production deployment
+- **Web app:** `npm run build` in `frontend/`, host `frontend/dist` on Vercel or Netlify (HTTPS). Set `VITE_API_BASE_URL` to the API's `/api/v1` URL.
+- **API:** deploy `backend/` with its Dockerfile to Render or Railway. Set `DATABASE_URL`, `AUTH_TOKEN_SECRET` and optionally `BAHO_ADMIN_*`.
+- **Database:** managed PostgreSQL. Tables and demo content are created automatically on the API's first start.
+- **Local or health-centre server:** `docker compose up --build` runs the API and PostgreSQL together.
 
-- Build the frontend using `npm run build`.
-- Serve the `dist` folder using a static host such as Vercel or Netlify.
-- Deploy the backend separately to Render, Railway, or a container-based host.
-- Configure PostgreSQL and environment values for production use.
-
-## Security and future enhancements
+## Before going live
 
 - Keep `AUTH_TOKEN_SECRET` private and rotate it if exposed.
-- Use HTTPS for deployed frontends and APIs.
-- Configure CORS to allow only the deployed frontend origin.
-- Add rate limiting, email verification and account recovery before production use.
-- Introduce rate limiting and validation
-
-If PostgreSQL is unavailable, local development uses an in-memory demo store. This data is intentionally temporary; configure a healthy PostgreSQL service before hosting.
+- Restrict CORS to the deployed frontend origin (`backend/src/app.js`).
+- Add rate limiting, email verification and account recovery.
+- Have a native speaker and a health professional review all lesson and quiz content.

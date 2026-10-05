@@ -1,189 +1,292 @@
 # Baho
 
-Baho is a Kinyarwanda-first digital health and wellness application designed to make preventive NCD education more accessible, understandable and actionable for communities in Rwanda and similar settings.
+**Baho** ("live" in Kinyarwanda) is a Kinyarwanda-first, audio-first web app that teaches rural communities in Rwanda how to prevent and live with non-communicable diseases (NCDs): high blood pressure, diabetes, heart disease and cancer. Learners get a personal learning path based on their health profile, listen to short illustrated lessons, check their understanding with quizzes, and keep learning when the network drops. Health professionals write the lessons, and an administrator reviews and publishes them.
 
-This repository contains an MVP/demo implementation of the product concept described in the Baho capstone proposal. The current version focuses on a realistic, student-level proof of concept that can be extended into a stronger production-ready system without losing clarity or demonstration value.
+- **GitHub repository:** https://github.com/fistonfle/baho
+- **Video demo:** _add the link here after recording (5–10 minutes)_
+- **Capstone:** BSc Software Engineering, African Leadership University (FullStack track)
+
+![Learner dashboard with the diabetes learning path](designs/screenshots/04-dashboard-learning-path.png)
+
+---
+
+## Contents
+
+1. [Features](#features)
+2. [Technology choices](#technology-choices)
+3. [Project structure](#project-structure)
+4. [Setting up the environment](#setting-up-the-environment)
+5. [Designs](#designs)
+6. [Database schema](#database-schema)
+7. [API endpoints](#api-endpoints)
+8. [Deployment plan](#deployment-plan)
+9. [Demo walkthrough](#demo-walkthrough)
+10. [Scope and privacy notes](#scope-and-privacy-notes)
+
+---
+
+## Features
+
+| Feature | Where in the code | Proposal ref |
+|---|---|---|
+| Kinyarwanda interface and content | whole app | FR01 |
+| **Learning paths**: each diagnosed condition maps to an ordered curriculum stored in PostgreSQL; the dashboard shows "lesson 2 of 7" and the next lesson | `GET /curricula`, `screens/PathsScreen.tsx`, `DashboardScreen.tsx` | FR09 |
+| **Lesson flow**: illustration → short text → audio → quiz | `screens/LibraryScreen.tsx`, `public/images/` | FR01, FR02 |
+| Audio player for every lesson (recorded MP3, or the browser voice as a fallback) with replay, seek and speed | `components/AudioPlayer.tsx` | FR02 |
+| **Lesson quizzes**: questions in `quiz_questions`; signed-in attempts are graded by the server and saved in `quiz_attempts`; progress shows the best score and the average | `POST /quiz-attempts`, `components/LessonQuiz.tsx` | SO3 |
+| NCD module: risk factors, warning signs and prevention for each disease, with audio | `screens/NcdScreen.tsx` | FR03 |
+| **Add a new disease**: an admin adds a disease; it gets its own topic and learning path and appears for learners right away | `POST/PATCH /admin/diseases`, `components/DiseaseManager.tsx` | FR03, FR12 |
+| Onboarding with topic choice and an optional health profile (diagnosed conditions plus six lifestyle questions) | `OnboardingScreen.tsx`, `HealthProfileScreen.tsx` | FR07, FR08 |
+| Health profile encrypted on the device (AES-GCM, non-extractable key in IndexedDB), never sent to the server | `lib/secureStore.ts` | NFR05, NFR06 |
+| "For you" feed ranked by a transparent rule (topic +2, risk +3, finished −4) with the reason on each card | `lib/personalization.ts` | FR09 |
+| Five-item knowledge check (Appendix A of the proposal) comparing the first and latest scores | `screens/CheckupScreen.tsx` | SO3 |
+| Progress, learning streak and a seven-day calendar | `lib/activity.ts` | FR13 |
+| Exercise guidance by level with steps and audio | `screens/ExerciseScreen.tsx` | FR05 |
+| Reminders with quick presets and browser notifications | `screens/RemindersScreen.tsx` | FR04 |
+| Searchable FAQ with audio answers, questions to health workers, issue reports | `screens/FaqScreen.tsx` | FR18, FR19 |
+| Offline: service worker for the app shell, images and audio; local copy of lessons; outbox for reports written offline | `public/sw.js`, `lib/offline.ts` | FR06, FR19 |
+| Responsive layout: bottom navigation on phones, top navigation on laptops | `components/AppNav.tsx`, `styles/features.css` | FR15, NFR10 |
+| Staff area with tabs: review queue, lessons (image, learning paths, quiz editor), diseases, learner questions, staff accounts, reports, FAQ | `screens/AdminScreen.tsx` | FR12, FR16, FR17 |
+| Installable PWA (manifest and icons) | `public/manifest.webmanifest` | NFR08 |
+
+**Roles.** *Learners* can use Baho as guests or with an account (an account keeps progress, quiz scores, reminders and questions on the server). *Creators* (health professionals) write lessons with an image, a quiz and learning paths and send them for review; they cannot publish. *Admins* review and publish lessons, add diseases, answer questions and manage staff.
+
+---
+
+## Technology choices
+
+| Layer | Tool | Why |
+|---|---|---|
+| Frontend | **React 18 + TypeScript**, built with **Vite** | Component-based UI, type safety, fast builds; one codebase for phones and laptops |
+| State | **Redux Toolkit** | One predictable store for lessons, progress, paths and staff data |
+| Offline | **Service worker**, localStorage, **IndexedDB** + **Web Crypto (AES-GCM)** | Works on weak rural connections; keeps health answers private on the device |
+| Audio | HTML5 Audio + **Web Speech API** | Plays recorded Kinyarwanda MP3s; reads lessons aloud when no recording exists yet |
+| Backend | **Node.js + Express** | Lightweight REST API in the same language as the frontend |
+| Database | **PostgreSQL** (`pg` driver) | Relational data with foreign keys (users, lessons, paths, quizzes, attempts) |
+| Auth | scrypt password hashing + HMAC-signed bearer tokens, role middleware | No extra dependencies; staff routes are protected on the server |
+| Tests | Node's built-in test runner | 15 API tests, including the full staff workflow |
+| DevOps | **Docker / Docker Compose**, Git + GitHub | Reproducible API and database environment |
+
+---
 
 ## Project structure
 
 ```text
 baho/
-├── frontend/
+├── frontend/                 React + TypeScript PWA (Vite)
+│   ├── public/               sw.js, manifest, icons, lesson illustrations (images/)
+│   └── src/
+│       ├── App.tsx           app controller: data loading, navigation, handlers
+│       ├── components/       AppNav, AudioPlayer, LessonQuiz, DiseaseManager, ui
+│       │   └── screens/      one file per screen (Dashboard, Library, Ncd, Admin, ...)
+│       ├── lib/              personalization, secureStore (AES-GCM), offline, activity
+│       ├── data/             built-in Kinyarwanda content (offline fallback, exercises)
+│       ├── services/api.ts   REST client
+│       ├── store/            Redux Toolkit slice
+│       └── styles/           features.css (index.css holds the base design)
+├── backend/                  Node.js + Express REST API
 │   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── index.html
-├── backend/
-│   ├── src/
-│   ├── package.json
+│   │   ├── config/           db.js (schema + seeding), seedData.js, demo store
+│   │   ├── modules/          auth, content, learning, progress, questions, issues, reminders
+│   │   └── routes/index.js   all /api/v1 routes
+│   ├── tests/api.test.js
+│   ├── Dockerfile
 │   └── .env.example
-├── database/
-│   ├── schema.sql
-│   └── seed.sql
-├── designs/
-│   ├── architecture.svg
-│   ├── erd.svg
-│   ├── wireframes/
-│   └── screenshots/
-├── docs/
-│   ├── deployment.md
-│   └── architecture.md
-├── demo/
-│   └── Baho-Demo.mp4
-├── README.md
-└── .gitignore
+├── database/                 schema.sql (13 tables) and seed.sql
+├── designs/                  wireframes/, uml/, screenshots/, erd.svg, architecture.svg
+├── docs/                     architecture.md, deployment.md
+├── docker-compose.yml        API + PostgreSQL
+└── package.json              root scripts (setup, dev, test, build)
 ```
 
-## MVP focus
+---
 
-| Feature | Where | Proposal ref |
-|---|---|---|
-| Kinyarwanda interface and content | whole app | FR01 |
-| Audio player for every lesson (recorded MP3, or the browser voice as a fallback) with replay, seek and speed | `components/AudioPlayer.tsx` | FR02 |
-| NCD module: blood pressure, diabetes, heart disease and cancer (risk factors, warning signs, prevention) | `screens/NcdScreen.tsx` | FR03 |
-| Five-item knowledge check (same items as Appendix A), with the first and latest score compared | `screens/CheckupScreen.tsx` | SO3 |
-| Reminders with quick presets and browser notifications | `screens/RemindersScreen.tsx` | FR04 |
-| Exercise guidance by level with steps and audio | `screens/ExerciseScreen.tsx` | FR05 |
-| Offline: service worker for the app shell and audio, local copy of lessons and FAQs, offline outbox for issue reports | `public/sw.js`, `lib/offline.ts` | FR06, FR19 |
-| **Learning paths**: each diagnosed condition maps to an ordered curriculum stored in PostgreSQL (`curricula`, `curriculum_lessons`); the dashboard shows "lesson 3 of 6" and the next lesson | `GET /curricula`, `screens/PathsScreen.tsx`, dashboard | FR09 |
-| **Lesson flow**: illustration → short text → audio → quiz | `screens/LibraryScreen.tsx`, `public/images/` | FR01, FR02 |
-| **Lesson quizzes**: questions stored in `quiz_questions`; signed-in attempts graded by the server and saved in `quiz_attempts`; progress shows the best score per lesson and the average | `POST /quiz-attempts`, `GET /progress`, `components/LessonQuiz.tsx` | SO3 |
-| Onboarding: topic choice plus an optional health profile (diagnosed conditions and six lifestyle questions) | `screens/OnboardingScreen.tsx`, `screens/HealthProfileScreen.tsx` | FR07, FR08 |
-| Health profile encrypted on the device (AES-GCM, non-extractable key in IndexedDB), never sent to the server | `lib/secureStore.ts` | NFR05, NFR06 |
-| "For you" feed ranked by a transparent rule (topic +2, risk tag +3, finished -4) with the reason shown on each card | `lib/personalization.ts` | FR09 |
-| Progress, learning streak and a seven-day calendar | `lib/activity.ts`, dashboard | FR13 |
-| Phone layout with bottom navigation; laptop layout with top navigation | `components/AppNav.tsx` | FR15, NFR10 |
-| Searchable FAQ with audio answers, questions to health workers, issue reports | `screens/FaqScreen.tsx` | FR18, FR19 |
-| **Add a new disease**: admins add a disease (name, icon, description, risk factors, warning signs, prevention). It gets its own topic and learning path and immediately appears in the NCD module, the health profile, onboarding topics and the lesson form, so creators can write lessons for it | `POST/PATCH /admin/diseases`, `components/DiseaseManager.tsx` | FR03, FR12 |
-| Staff area: admins create creators and admins; review and publish lessons; pick a lesson image, add it to learning paths and write its quiz; answer questions; manage FAQs and reports | `screens/AdminScreen.tsx` | FR12, FR16, FR17 |
-| Installable PWA (manifest and icons) | `public/manifest.webmanifest` | NFR08 |
+## Setting up the environment
 
-Privacy by design: diagnosed conditions and lifestyle answers stay encrypted on the phone. The server only sends the public learning paths, and the phone chooses the matching one. Progress and quiz scores, which contain no health details, are stored on the server for signed-in learners.
+### Prerequisites
 
-Left out on purpose: blood pressure and glucose logging, height and weight, and anything else that would look like diagnosis. Baho educates; it does not measure or diagnose (proposal section 1.5).
+- **Node.js 20+** and npm
+- **PostgreSQL 14+** running locally (or Docker, see option B)
+- Git
 
-Roles: **admins** add diseases, publish lessons and manage staff; **creators** (health professionals) write lessons with an image, a quiz and learning paths, for any disease, and submit them for review. They cannot publish.
-
-Simplifications compared with the proposal (deliberate for the MVP): email and password instead of phone and PIN; two staff roles (admin and creator) instead of three; a single signed access token instead of an access and refresh token pair.
-
-## Demo walkthrough
-
-1. **Landing → Tangira kwiga.** Choose topics and enter a name. In the health profile, choose *Diyabete* and answer the six questions. Point out the privacy note: the answers stay on the phone, encrypted.
-2. **Dashboard.** The learning path *Inzira ya diyabete* appears with seven ordered lessons. The "for you" cards below show *why* each extra lesson is recommended.
-3. **Lesson.** Press *Komeza*: the illustration, short text and audio appear, then the quiz. Submit it; the lesson is ticked off, the path moves to lesson 2, and the quiz average appears on the dashboard. When signed in, show the attempt in the `quiz_attempts` table.
-4. **Indwara → Tangira isuzuma.** Take the five-question check, study the NCD module, then retake it to show the before and after scores.
-5. **Imyitozo and Ibyibutsa.** Change the exercise level, add a reminder from a preset.
-6. **Ubufasha.** Search the FAQ, listen to an answer, send a report.
-7. **Offline.** Build and preview the app (below), open it once, then stop both servers or turn on airplane mode and reload. The app still opens with the downloaded lessons, and reports are queued until the connection returns.
-8. **New disease.** As admin, open *Ubuyobozi → Indwara* and add one (e.g. *Asima*), then press *+ Isomo* or sign in as a creator to write a lesson for it with an image and a quiz. After the admin publishes it, a learner sees *Asima* in the NCD module and the health profile, and choosing it gives the path *Inzira ya Asima*.
-9. **Staff.** Sign in as an admin: the review queue, publishing a creator's lesson, editing a lesson to add a quiz question and put it in a learning path (the learner side updates on reload), answering a learner's question.
-
-## Recorded audio
-
-Lessons point to files such as `/audio/blood-pressure.mp3`, `/audio/diabetes.mp3` and `/audio/cancer.mp3` (full list in `backend/src/config/seedData.js`). Record them in Kinyarwanda (Audacity, MP3 at 64 kbps) and put them in `frontend/public/audio/`. Until a file exists, the player falls back to the browser's speech voice automatically.
-
-## Technologies
-
-### Frontend
-- React
-- TypeScript
-- Vite
-
-### Backend
-- Node.js
-- Express
-- PostgreSQL
-- dotenv for environment variables
-
-### Database
-- PostgreSQL as the main relational foundation for Baho
-- Existing SQL schema is kept as the design reference for the student project
-
-## Quick start
-
-### 1. Start PostgreSQL locally
+### Option A: run locally (recommended for development)
 
 ```bash
-createdb baho
-```
-
-### 2. Backend
-
-```bash
-cd baho/backend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-The backend applies its schema on startup. Set `DATABASE_URL` to a PostgreSQL database the current user can access, and set `AUTH_TOKEN_SECRET` to a long random secret. If PostgreSQL is unavailable, the backend starts in demo mode; demo-mode data is held in memory and does not survive a restart.
-
-### 3. Frontend
-
-```bash
-cd baho/frontend
-npm install
-npm run dev
-```
-
-For a separately hosted backend, create `frontend/.env.local` and set `VITE_API_BASE_URL` to its `/api/v1` URL before building.
-
-### 4. Run simple backend tests
-
-```bash
-cd baho/backend
-npm test
-```
-
-### 5. Local Docker setup
-
-```bash
+# 1. Get the code
+git clone https://github.com/fistonfle/baho.git
 cd baho
-docker compose up --build
+
+# 2. Install backend and frontend dependencies
+npm run setup
+
+# 3. Create the database
+createdb baho
+
+# 4. Configure the backend
+cp backend/.env.example backend/.env
+#    edit backend/.env: set DATABASE_URL for your PostgreSQL user,
+#    a long random AUTH_TOKEN_SECRET, and (optionally) the first admin account
+
+# 5. Start the API (http://localhost:4000) and the web app (http://localhost:5173)
+npm run dev:backend      # terminal 1
+npm run dev:frontend     # terminal 2
 ```
 
-This starts the backend and PostgreSQL together in containers for easier demo and deployment preparation.
+On start-up the backend creates all tables and seeds the demo content (14 lessons, 6 topics, 5 learning paths, 6 FAQs). If PostgreSQL cannot be reached, it starts in **demo mode** with the same content held in memory (data is lost on restart).
 
-### 6. Production build and offline check
-
-```bash
-cd baho/frontend
-npm run build
-npm run preview
-```
-
-The service worker only runs in the production build. Open http://localhost:4173 once, then go offline and reload.
-
-## Environment configuration
-
-The backend reads the PostgreSQL connection string from the environment. A sample file is included as `.env.example`.
+### Environment variables (`backend/.env`)
 
 ```env
 PORT=4000
-DATABASE_URL=postgresql://fle@localhost:5432/baho
-AUTH_TOKEN_SECRET=replace-with-a-long-random-secret-before-deployment
-BAHO_ADMIN_NAME=
+DATABASE_URL=postgresql://<user>@localhost:5432/baho
+AUTH_TOKEN_SECRET=<long random secret>
+BAHO_ADMIN_NAME=        # optional: first administrator, created on start-up
 BAHO_ADMIN_EMAIL=
-BAHO_ADMIN_PASSWORD=
+BAHO_ADMIN_PASSWORD=    # at least 12 characters
 ```
 
-To seed the first administrator at backend startup, fill in all three `BAHO_ADMIN_*` values in `backend/.env`; use a password with at least 12 characters. The seed runs only when no administrator exists. If these values are left blank, the account screen provides one-time first-admin setup instead. Public learner registration cannot assign staff roles. Admin and creator endpoints require a signed-in staff account.
+If the `BAHO_ADMIN_*` values are left empty, open **Injira → Fungura konti ya mbere y'ubuyobozi** in the app to create the first admin once. Admins then create creator accounts in **Ubuyobozi → Abakozi**. The frontend calls `http://localhost:4000/api/v1` by default; set `VITE_API_BASE_URL` in `frontend/.env.local` for a hosted API.
 
-## Demo notes
+### Option B: Docker
 
-This version is intentionally designed as a functioning MVP with a stronger backend foundation. It demonstrates the product in a credible way while remaining focused on a manageable scope for a capstone submission.
+```bash
+docker compose up --build      # API on :4000, PostgreSQL on :5433
+npm run dev:frontend           # web app on :5173
+```
 
-## Deployment ideas
+### Tests, production build and offline check
 
-- Frontend: static hosting such as Netlify or Vercel
-- Backend: Node/Express service on Render, Railway, or a VM
-- Database: PostgreSQL for development and managed PostgreSQL in deployment
-- Local container workflow: Docker Compose for reproducible demo or staging setup
-- Offline access: service worker (app shell and audio) plus a local copy of lessons and FAQs
+```bash
+npm test             # 15 backend API tests (run in demo mode, no database needed)
+npm run preview      # production build served on http://localhost:4173
+```
 
-## Full capstone context
+The service worker only runs in the production build: open http://localhost:4173 once, stop the servers (or switch off the network) and reload. The app still opens with the downloaded lessons.
 
-This project aligns with the Baho proposal as a working demo rather than a final, exhaustive system. It demonstrates the core concept clearly: local-language, personalized, preventive NCD education delivered in a way that is practical, accessible and easy to extend.
-# baho
+### Recorded audio
+
+Lessons point to files such as `/audio/blood-pressure.mp3` (full list in `backend/src/config/seedData.js`). Record them in Kinyarwanda (Audacity, MP3 at 64 kbps) and place them in `frontend/public/audio/`. Until a file exists, the player reads the lesson with the browser's voice.
+
+---
+
+## Designs
+
+### Wireframes and mockups (design process)
+
+The interface was designed first as wireframes and mockups in the proposal, then built and refined. The finished app keeps the same structure: audio-first lessons, a learning feed on the dashboard, an NCD module, and a staff area with a review queue.
+
+| Phone screens | Laptop learner home | Responsive layouts |
+|---|---|---|
+| ![](designs/wireframes/01-first-visit-onboarding-home.png) | ![](designs/wireframes/03-learner-home-laptop.png) | ![](designs/wireframes/05-responsive-layouts.png) |
+| ![](designs/wireframes/02-audio-lesson-ncd-exercise-reminders.png) | ![](designs/wireframes/04-ncd-lesson-laptop.png) | ![](designs/wireframes/07-staff-roles-review-queue.png) |
+
+All wireframes: [`designs/wireframes/`](designs/wireframes). UML diagrams (use case, activity, class, sequence): [`designs/uml/`](designs/uml).
+
+### Style guide
+
+- **Colours:** primary green `#147764`, dark green `#18342F`, soft green `#E3F3ED`, gold accent `#E5AA50`, coral for warnings `#D9735E`, page background `#F5F8F5`.
+- **Type:** Avenir Next / system sans-serif; bold, tight headings; body text at 16 px with 1.7 line height for readability.
+- **Components:** rounded cards (14–24 px radius), pill chips for topics and statuses, large touch targets (≥ 44 px), a sticky top bar and a bottom tab bar on phones.
+- **Illustrations:** simple flat SVGs with brown-skinned figures and local foods, one per lesson, in the same palette.
+- **Accessibility:** audio for every lesson, FAQ answer and exercise; `aria-pressed`/`aria-current` on toggles and navigation; short sentences in plain Kinyarwanda.
+
+### Screenshots of the app
+
+| | | |
+|---|---|---|
+| ![Landing](designs/screenshots/01-landing.png) Landing | ![Onboarding](designs/screenshots/02-onboarding-topics.png) Onboarding: topics | ![Health profile](designs/screenshots/03-health-profile.png) Private health profile |
+| ![Lesson](designs/screenshots/05-lesson-image-audio.png) Lesson: image, text, audio | ![Quiz](designs/screenshots/06-lesson-quiz-feedback.png) Lesson quiz with feedback | ![Paths](designs/screenshots/07-learning-paths.png) Learning paths |
+| ![NCD](designs/screenshots/08-ncd-module.png) NCD module | ![Knowledge check](designs/screenshots/09-knowledge-check.png) Knowledge check | ![Exercise](designs/screenshots/10-exercise.png) Exercises |
+| ![Reminders](designs/screenshots/11-reminders.png) Reminders | ![Help](designs/screenshots/12-help-faq.png) Help and FAQ | ![Review queue](designs/screenshots/16-admin-review-queue.png) Admin review queue |
+| ![Add disease](designs/screenshots/17-admin-add-disease.png) Admin: add a disease | ![Editor](designs/screenshots/18-lesson-editor-image-paths-quiz.png) Lesson editor: image, paths, quiz | ![Creator](designs/screenshots/20-creator-workspace.png) Creator workspace |
+| ![Phone dashboard](designs/screenshots/13-mobile-dashboard.png) Phone: dashboard | ![Phone lesson](designs/screenshots/14-mobile-lesson.png) Phone: lesson | ![Phone NCD](designs/screenshots/15-mobile-ncd.png) Phone: NCD module |
+
+### Architecture
+
+![Baho system architecture](designs/architecture.svg)
+
+---
+
+## Database schema
+
+13 PostgreSQL tables. Full DDL: [`database/schema.sql`](database/schema.sql). The backend applies it automatically on start-up.
+
+![Entity relationship diagram](designs/erd.svg)
+
+| Group | Tables |
+|---|---|
+| People | `users`, `staff` (role: admin or creator) |
+| Content | `categories`, `content` (lessons), `quiz_questions`, `faqs` |
+| Learning paths and diseases | `curricula` (a path; with a condition it is also a disease), `curriculum_lessons` (ordered lessons in a path) |
+| Learner activity | `progress`, `quiz_attempts`, `reminders`, `questions`, `issues` |
+
+The health profile (diagnosed conditions and lifestyle answers) is deliberately **not** in the database: it stays encrypted on the learner's device.
+
+---
+
+## API endpoints
+
+Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
+
+| Method and path | Purpose | Access |
+|---|---|---|
+| `POST /auth/register`, `POST /auth/login` | Create a learner account, sign in (returns a token) | Public |
+| `GET /auth/setup-status`, `POST /auth/setup-admin` | One-time creation of the first admin | Public (once) |
+| `GET /categories`, `GET /content`, `GET /content/:id` | Topics and published lessons (with image and quiz) | Public |
+| `GET /curricula` | Learning paths and diseases with their ordered lessons | Public |
+| `GET /faq` | Frequently asked questions | Public |
+| `POST /issues` | Report a problem | Public |
+| `POST /quiz-attempts` | Submit quiz answers; graded and saved by the server | 🔒 |
+| `GET /progress`, `POST /progress/:contentId/complete` | Completed lessons, best quiz scores and average | 🔒 |
+| `GET/POST/DELETE /reminders` | Personal reminders | 🔒 |
+| `GET/POST /questions` | Ask a health worker; see answers | 🔒 |
+| `GET/POST /admin/content`, `PATCH /admin/content/:id` | Write and edit lessons (image, quiz, paths) | 🛡 admin, creator |
+| `PATCH /admin/content/:id/status`, `DELETE /admin/content/:id` | Publish, reject or delete a lesson | 🛡 admin |
+| `POST /admin/diseases`, `PATCH /admin/diseases/:id` | Add or edit a disease | 🛡 admin |
+| `POST /questions/:id/answer` | Answer a learner's question | 🛡 admin, creator |
+| `GET/POST /admin/creators` | List staff, create creator or admin accounts | 🛡 admin |
+| `POST/PATCH/DELETE /admin/faqs` | Manage the FAQ | 🛡 admin |
+| `GET/PATCH /admin/issues` | Review and resolve reports | 🛡 admin |
+| `GET /health` | Health check | Public |
+
+---
+
+## Deployment plan
+
+| Part | Platform | How |
+|---|---|---|
+| Web app (PWA) | **Vercel** or **Netlify** (free tier, HTTPS by default) | Build command `npm run build` in `frontend/`, publish `frontend/dist`, set `VITE_API_BASE_URL=https://<api-host>/api/v1` |
+| REST API | **Render** or **Railway** (Docker web service) | Deploy `backend/` with its `Dockerfile` (start command `npm start`); set `DATABASE_URL`, `AUTH_TOKEN_SECRET` and the first-admin variables |
+| Database | Managed **PostgreSQL** (Render, Railway or Neon) | Create the database and copy its URL into `DATABASE_URL`; tables and seed content are created on the first start |
+| Audio and images | Served with the web app (`frontend/public`) | Cached by the service worker for offline use |
+
+Steps:
+
+1. Push to GitHub (`main`).
+2. Create the managed PostgreSQL database and note its connection URL.
+3. Create the API service from the repository (root `backend/`), add the environment variables and deploy. Check `GET /api/v1/health`.
+4. Create the frontend site from the repository (root `frontend/`), set `VITE_API_BASE_URL` and deploy.
+5. Restrict CORS to the frontend domain, open the site on an Android phone in Chrome and use **Add to home screen**.
+
+Pilot scale (proposal: 30 participants) fits the free or smallest paid tiers of these platforms. For a health-centre setting without reliable internet, `docker compose up` runs the API and database on a single laptop or small server on the local network.
+
+---
+
+## Demo walkthrough
+
+1. **Learner:** Landing → *Tangira kwiga* → choose topics and a name → health profile: tick *Diyabete* and answer six questions (the answers stay encrypted on the phone).
+2. **Dashboard:** the diabetes learning path (7 ordered lessons), progress, streak and quiz average; "for you" cards explain why each lesson is suggested.
+3. **Lesson:** illustration, short text, audio player, then the quiz; the server grades it and the path moves to the next lesson.
+4. **NCD module and knowledge check:** information per disease; take the five-question check before and after learning.
+5. **Exercises, reminders, help:** change the exercise level, add a reminder from a preset, search the FAQ and report a problem.
+6. **Offline:** in the production build, stop the servers and reload; the app and lessons still work, and reports wait in an outbox.
+7. **Staff:** a creator writes a lesson with an image, quiz and learning path; the admin reviews and publishes it, adds a new disease, and answers a learner's question.
+
+---
+
+## Scope and privacy notes
+
+- **Privacy by design:** diagnosed conditions and lifestyle answers never leave the device. The server only stores progress, quiz scores, reminders and questions, which contain no health details.
+- **Not a diagnosis tool:** Baho does not collect blood pressure or glucose readings and does not diagnose; every lesson carries a disclaimer advising a visit to the health centre.
+- **Deliberate MVP simplifications compared with the proposal:** email and password instead of phone and PIN; two staff roles (admin and creator) instead of three; one signed access token instead of an access/refresh pair.
+- **Content review:** the Kinyarwanda lessons and quizzes are drafts to be checked by a native speaker and a health professional before field testing.
