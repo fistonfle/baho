@@ -22,6 +22,5 @@
 - Configure CORS to allow only the deployed frontend origin.
 - Add rate limiting, email verification and account recovery before production use.
 - Introduce rate limiting and validation
-- Add service worker caching for the offline-first experience
 
 If PostgreSQL is unavailable, local development uses an in-memory demo store. This data is intentionally temporary; configure a healthy PostgreSQL service before hosting.

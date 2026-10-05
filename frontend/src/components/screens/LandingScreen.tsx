@@ -1,6 +1,6 @@
 import { ActionButton } from '../ui';
 
-export function LandingScreen({ onStart, onAdmin }: { onStart: () => void; onAdmin: () => void }) {
+export function LandingScreen({ onStart, onAdmin, returning }: { onStart: () => void; onAdmin: () => void; returning: boolean }) {
   return (
     <div className="screen landing-page">
       <header className="landing-header">
@@ -24,14 +24,14 @@ export function LandingScreen({ onStart, onAdmin }: { onStart: () => void; onAdm
           <div className="landing-copy">
             <div className="hero-kicker"><span /> Amakuru y'ubuzima yizewe, mu Kinyarwanda</div>
             <h1>Ubuzima bwiza butangirira ku <span>makuru meza.</span></h1>
-            <p className="hero-description">Menya uko warinda indwara zidakira, wige ku buzima bwawe, kandi utere intambwe nto buri munsi.</p>
+            <p className="hero-description">Menya uko warinda indwara zitandura, wige ku buzima bwawe, kandi utere intambwe nto buri munsi.</p>
             <div className="landing-cta">
-              <ActionButton onClick={onStart} className="hero-primary">Tangira kwiga <span aria-hidden="true">→</span></ActionButton>
+              <ActionButton onClick={onStart} className="hero-primary">{returning ? 'Komeza kwiga' : 'Tangira kwiga'} <span aria-hidden="true">→</span></ActionButton>
               <span className="hero-note">Ubuntu. Byoroshye. Mu rurimi rwawe.</span>
             </div>
             <div className="landing-proof">
               <span className="proof-check" aria-hidden="true">✓</span>
-              <span>Wige ku muvuduko w'amaraso, diyabete n'ubuzima bw'umutima</span>
+              <span>Umuvuduko w'amaraso, diyabete, umutima na kanseri</span>
             </div>
           </div>
 

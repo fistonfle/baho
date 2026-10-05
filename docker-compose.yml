@@ -23,6 +23,7 @@ services:
     environment:
       PORT: 4000
       DATABASE_URL: postgresql://fle:postgres@postgres:5432/baho
+      AUTH_TOKEN_SECRET: local-docker-demo-secret-change-before-hosting
     depends_on:
       postgres:
         condition: service_healthy

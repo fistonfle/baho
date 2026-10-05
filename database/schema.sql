@@ -84,9 +84,4 @@ CREATE TABLE IF NOT EXISTS questions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO categories (name, slug) VALUES
-    ('Imirire', 'nutrition'),
-    ('Umuvuduko w''amaraso', 'blood-pressure'),
-    ('Diyabete', 'diabetes'),
-    ('Umutima', 'heart-health')
-ON CONFLICT (slug) DO NOTHING;
+-- Categories and demo content are seeded by the backend (see seed.sql).

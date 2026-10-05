@@ -1,107 +1,117 @@
-import type { RefObject } from 'react';
+import type { Lesson, QuizScore } from '../../types';
+import { AudioPlayer } from '../AudioPlayer';
+import { LessonQuiz } from '../LessonQuiz';
+import { Disclaimer } from '../ui';
 
-import type { Lesson } from '../../types';
+// On phones the player sits below the list, so bring it into view.
+export const scrollToPlayer = () => {
+  if (window.innerWidth > 820) return;
+  window.setTimeout(() => document.querySelector('.audio-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+};
 
 export function LibraryScreen({
   lessons,
+  topics,
   selectedLesson,
   activeCategory,
+  completedLessons,
+  quizScores,
+  nextInPath,
   setActiveCategory,
   setSelectedLesson,
-  audioProgress,
-  handleSeek,
   markLessonComplete,
-  audioRef
+  submitQuiz
 }: {
   lessons: Lesson[];
+  topics: string[];
   selectedLesson: Lesson;
   activeCategory: string;
+  completedLessons: number[];
+  quizScores: QuizScore[];
+  nextInPath: Lesson | null;
   setActiveCategory: (value: string) => void;
   setSelectedLesson: (value: Lesson) => void;
-  audioProgress: number;
-  handleSeek: (value: number) => void;
   markLessonComplete: (lessonId: number) => void;
-  audioRef: RefObject<HTMLAudioElement>;
+  submitQuiz: (lessonId: number, answers: number[]) => Promise<{ score: number; total: number; correct: boolean[] }>;
 }) {
-  const topicCategories = ['Byose', 'Umuvuduko w\'amaraso', 'Diyabete', 'Imirire', 'Ubuzima bw\'umutima'];
-  const selectedCategory = activeCategory === 'All' ? 'Byose' : activeCategory;
+  // Only show filters for categories that actually have lessons.
+  const categories = ['All', ...topics.filter((interest) => lessons.some((lesson) => lesson.category === interest))];
   const filteredLessons = activeCategory === 'All' ? lessons : lessons.filter((lesson) => lesson.category === activeCategory);
-
-  const speakLesson = () => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const narration = new SpeechSynthesisUtterance(`${selectedLesson.title}. ${selectedLesson.body}`);
-    narration.lang = 'rw-RW';
-    window.speechSynthesis.speak(narration);
-  };
+  const isComplete = completedLessons.includes(selectedLesson.id);
+  const bestScore = quizScores.find((item) => item.contentId === selectedLesson.id);
+  const hasQuiz = selectedLesson.quiz?.length > 0;
 
   return (
     <div className="screen dynamic-screen library-screen">
       <div className="panel-section">
         <p className="eyebrow">Ibikubiyemo</p>
-        <h2>Amakuru y'ubuzima</h2>
+        <h2>Amasomo y'ubuzima</h2>
+        <p className="screen-intro">{completedLessons.length} kuri {lessons.length} warangije</p>
 
-        <div className="category-row">
-          {topicCategories.map((category) => (
+        <div className="category-row" role="tablist" aria-label="Ibyiciro by'amasomo">
+          {categories.map((category) => (
             <button
               key={category}
-              className={`tiny-button ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => setActiveCategory(category === 'Byose' ? 'All' : category)}
+              role="tab"
+              aria-selected={activeCategory === category}
+              className={`tiny-button ${activeCategory === category ? 'active' : ''}`}
+              onClick={() => setActiveCategory(category)}
             >
-              {category}
+              {category === 'All' ? 'Byose' : category}
             </button>
           ))}
         </div>
 
         <div className="list-stack">
-          {filteredLessons.map((lesson) => (
-            <button key={lesson.id} className={`list-item ${selectedLesson.id === lesson.id ? 'selected' : ''}`} onClick={() => setSelectedLesson(lesson)}>
-              <div>
-                <strong>{lesson.title}</strong>
-                <span>{lesson.category}</span>
-              </div>
-              <span>Fungura</span>
-            </button>
-          ))}
+          {filteredLessons.length === 0 && <p className="text-muted">Nta masomo ari muri iki cyiciro.</p>}
+          {filteredLessons.map((lesson) => {
+            const done = completedLessons.includes(lesson.id);
+            const score = quizScores.find((item) => item.contentId === lesson.id);
+            return (
+              <button key={lesson.id} className={`list-item ${selectedLesson.id === lesson.id ? 'selected' : ''}`} onClick={() => { setSelectedLesson(lesson); scrollToPlayer(); }}>
+                <span className={`lesson-check ${done ? 'done' : ''}`} aria-label={done ? 'Warirangije' : 'Ntirirarangira'}>{done ? '✓' : '▶'}</span>
+                <div>
+                  <strong>{lesson.title}</strong>
+                  <span>{lesson.category} · {lesson.duration}</span>
+                </div>
+                {score && <span className="lesson-score">{score.score}/{score.total}</span>}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="panel-section audio-panel">
+        {selectedLesson.imageUrl && <img className="lesson-image" src={selectedLesson.imageUrl} alt="" />}
         <p className="eyebrow">{selectedLesson.category}</p>
         <h3>{selectedLesson.title}</h3>
-        <p>{selectedLesson.body}</p>
-
-        <div className="audio-box">
-          <button className="play-control" onClick={() => {
-            if (!audioRef.current || !selectedLesson.audioUrl) {
-              speakLesson();
-              return;
-            }
-            void audioRef.current.play().catch(speakLesson);
-          }}>Tangira</button>
-          <button className="play-control muted" onClick={() => {
-            audioRef.current?.pause();
-            if ('speechSynthesis' in window) window.speechSynthesis.pause();
-          }}>Hagarika</button>
-          <button className="play-control muted" onClick={() => {
-            if (audioRef.current && selectedLesson.audioUrl) {
-              audioRef.current.currentTime = 0;
-              void audioRef.current.play().catch(speakLesson);
-            } else {
-              speakLesson();
-            }
-          }}>Subiramo</button>
-          <button className="play-control success" onClick={() => markLessonComplete(selectedLesson.id)}>Rangiza isomo</button>
-          <button className="play-control" onClick={speakLesson}>Umva isomo risomwe</button>
+        <div className="lesson-body">
+          {selectedLesson.body.split('\n').filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
         </div>
-
-        {selectedLesson.audioUrl && <div className="seek-row">
-          <span>0%</span>
-          <input type="range" min="0" max="100" value={audioProgress} onChange={(event) => handleSeek(Number(event.target.value))} />
-          <span>100%</span>
-        </div>}
-
-        {selectedLesson.audioUrl && <audio ref={audioRef} controls src={selectedLesson.audioUrl} />}
+        <AudioPlayer
+          text={`${selectedLesson.title}. ${selectedLesson.body}`}
+          audioUrl={selectedLesson.audioUrl}
+          onFinished={hasQuiz ? undefined : () => markLessonComplete(selectedLesson.id)}
+        />
+        {hasQuiz ? (
+          <LessonQuiz
+            lessonId={selectedLesson.id}
+            questions={selectedLesson.quiz}
+            bestScore={bestScore}
+            onSubmit={(answers) => submitQuiz(selectedLesson.id, answers)}
+          />
+        ) : (
+          <button className={`complete-button ${isComplete ? 'done' : ''}`} onClick={() => markLessonComplete(selectedLesson.id)} disabled={isComplete}>
+            {isComplete ? '✓ Warangije iri somo' : 'Narangije iri somo'}
+          </button>
+        )}
+        {isComplete && nextInPath && (
+          <button className="next-lesson" onClick={() => { setSelectedLesson(nextInPath); window.scrollTo({ top: 0, behavior: 'smooth' }); scrollToPlayer(); }}>
+            <span>Isomo rikurikira mu nzira yawe</span>
+            <strong>{nextInPath.title} →</strong>
+          </button>
+        )}
+        <Disclaimer />
       </div>
     </div>
   );
