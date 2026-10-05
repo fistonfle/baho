@@ -1,38 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { Interest, IssueReport, Lesson, QuestionItem, Reminder } from '../types';
+import { defaultCategories, offlineLessons } from '../data/healthContent';
+import type { Category, Curriculum, Interest, IssueReport, Lesson, QuestionItem, QuizQuestion, QuizScore, Reminder } from '../types';
 
-export type Screen = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'library' | 'ncd' | 'exercise' | 'reminders' | 'faq' | 'admin';
+export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'admin';
 
-export const defaultLessons: Lesson[] = [
-  {
-    id: 1,
-    title: 'Umuvuduko w\'amaraso ni iki?',
-    category: 'Umuvuduko w\'amaraso',
-    summary: 'Kumenya ibimenyetso n\'ukubungabunga umuvuduko w\'amaraso.',
-    body: 'Umuvuduko w\'amaraso ni igipimo cy\'amaraso y\'ingome mu mitsi. Akenshi ni ingenzi kumenya uko umutima ukora, kandi kuringaniza ibiryo by\'umunyu no gukora imyitozo birafasha.',
-    duration: '03:42',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-  },
-  {
-    id: 2,
-    title: 'Diyabete n\'ubuzima',
-    category: 'Diyabete',
-    summary: 'Kurinda ubuzima bwawe no kumenya ibimenyetso bya diyabete.',
-    body: 'Diyabete irashobora kugaragara nk\'ibimenyetso byo kugira isoni, inyota nyinshi, no gucika intege. Gukoresha ibiryo bifite isukari nkeya no gukora imyitozo biba byiza.',
-    duration: '04:06',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
-  },
-  {
-    id: 3,
-    title: 'Imirire myiza',
-    category: 'Imirire',
-    summary: 'Ibyiza by\'imirire ifite ubuzima bwiza.',
-    body: 'Kurya ibiryo byuzuye, ibiryo by\'imbuto, ibinyampeke, ibijyanye n\'imibiri, no kugabanya umunyu ni intambwe nziza mu kubungabunga ubuzima.',
-    duration: '02:58',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-  }
-];
+export const defaultLessons: Lesson[] = offlineLessons;
 
 export const defaultReminders: Reminder[] = [
   { id: 1, time: '08:00', label: 'Kunywa amazi' },
@@ -50,7 +23,32 @@ export const defaultFaqItems = [
   { question: 'Nshobora guhamagara ubufasha?', answer: 'Yego, ushobora gutanga ikibazo cyangwa uhabwe ubufasha mu gice cy\'ibibazo no gufasha.' }
 ];
 
-export const topicCategories = ['All', 'Umuvuduko w\'amaraso', 'Diyabete', 'Imirire'];
+export type ContentForm = {
+  categoryId: number;
+  title: string;
+  summary: string;
+  body: string;
+  audioUrl: string;
+  imageUrl: string;
+  status: string;
+  quiz: QuizQuestion[];
+  curriculumIds: number[];
+};
+
+export type AdminContentItem = {
+  id: number;
+  title: string;
+  status: string;
+  categoryId?: number;
+  summary?: string;
+  body?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  quiz?: QuizQuestion[];
+  curriculumIds?: number[];
+};
+
+export const emptyContentForm: ContentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', imageUrl: '', status: 'draft', quiz: [], curriculumIds: [] };
 
 interface AppState {
   currentScreen: Screen;
@@ -69,17 +67,20 @@ interface AppState {
   authUser: { id: number; name: string; email: string; role: string } | null;
   authToken: string | null;
   feedbackMessage: string;
-  contentForm: { categoryId: number; title: string; summary: string; body: string; audioUrl: string; status: string };
+  contentForm: ContentForm;
   questionForm: { topic: string; question: string };
   answerDrafts: Record<number, string>;
   faqItems: { id?: number; question: string; answer: string }[];
   faqForm: { question: string; answer: string };
   questions: QuestionItem[];
   adminCreators: { id: number; fullName: string; email: string; role: string }[];
-  adminContent: { id: number; title: string; status: string; categoryId?: number; summary?: string; body?: string; audioUrl?: string }[];
+  adminContent: AdminContentItem[];
+  curricula: Curriculum[];
+  categories: Category[];
+  quizScores: QuizScore[];
   editingContentId: number | null;
   isOnline: boolean;
-  audioProgress: number;
+  riskTags: Interest[];
   activeCategory: string;
   selectedNcdTopic: number;
   completedLessons: number[];
@@ -102,7 +103,7 @@ const initialState: AppState = {
   authUser: null,
   authToken: null,
   feedbackMessage: '',
-  contentForm: { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', status: 'draft' },
+  contentForm: emptyContentForm,
   questionForm: { topic: 'Umuvuduko w\'amaraso', question: '' },
   answerDrafts: {},
   faqItems: defaultFaqItems,
@@ -110,9 +111,12 @@ const initialState: AppState = {
   questions: defaultQuestions,
   adminCreators: [],
   adminContent: [],
+  curricula: [],
+  categories: defaultCategories,
+  quizScores: [],
   editingContentId: null,
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-  audioProgress: 0,
+  riskTags: [],
   activeCategory: 'All',
   selectedNcdTopic: 0,
   completedLessons: []
@@ -138,13 +142,11 @@ const appSlice = createSlice({
     },
     setLessons: (state, action: PayloadAction<Lesson[]>) => {
       state.lessons = action.payload;
-      if (!state.selectedLesson || !state.lessons.some((lesson) => lesson.id === state.selectedLesson.id)) {
-        state.selectedLesson = state.lessons[0] ?? state.selectedLesson;
-      }
+      // Keep the open lesson, but use the freshly loaded copy of it.
+      state.selectedLesson = state.lessons.find((lesson) => lesson.id === state.selectedLesson?.id) ?? state.lessons[0] ?? state.selectedLesson;
     },
     setSelectedLesson: (state, action: PayloadAction<Lesson>) => {
       state.selectedLesson = action.payload;
-      state.audioProgress = 0;
     },
     setReminders: (state, action: PayloadAction<Reminder[]>) => {
       state.reminders = action.payload;
@@ -154,8 +156,8 @@ const appSlice = createSlice({
     },
     addReminder: (state) => {
       const label = state.reminderForm.label.trim() || 'Soma isomo ryo mu buzima';
-      const nextId = state.reminders.length + 1;
-      state.reminders = [...state.reminders, { id: nextId, time: state.reminderForm.time, label }];
+      state.reminders = [...state.reminders, { id: Date.now(), time: state.reminderForm.time, label }]
+        .sort((a, b) => a.time.localeCompare(b.time));
       state.reminderForm = { time: '21:00', label: 'Soma isomo ryo mu buzima' };
     },
     deleteReminder: (state, action: PayloadAction<number>) => {
@@ -174,20 +176,20 @@ const appSlice = createSlice({
       state.adminCreators = [action.payload, ...state.adminCreators];
       state.creatorForm = { fullName: '', email: '', password: '', role: 'creator' };
     },
-    updateContentForm: (state, action: PayloadAction<Partial<{ categoryId: number; title: string; summary: string; body: string; audioUrl: string; status: string }>>) => {
+    updateContentForm: (state, action: PayloadAction<Partial<ContentForm>>) => {
       state.contentForm = { ...state.contentForm, ...action.payload };
     },
-    addContentLocal: (state, action: PayloadAction<{ id: number; title: string; status: string }>) => {
+    addContentLocal: (state, action: PayloadAction<AdminContentItem>) => {
       state.adminContent = [action.payload, ...state.adminContent];
-      state.contentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', status: 'draft' };
+      state.contentForm = emptyContentForm;
       state.editingContentId = null;
     },
     setEditingContentId: (state, action: PayloadAction<number | null>) => {
       state.editingContentId = action.payload;
     },
-    updateContentLocal: (state, action: PayloadAction<{ id: number; title: string; status: string; categoryId: number; summary: string; body: string; audioUrl: string }>) => {
+    updateContentLocal: (state, action: PayloadAction<AdminContentItem>) => {
       state.adminContent = state.adminContent.map((item) => item.id === action.payload.id ? action.payload : item);
-      state.contentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', status: 'draft' };
+      state.contentForm = emptyContentForm;
       state.editingContentId = null;
     },
     addIssueLocal: (state, action: PayloadAction<IssueReport>) => {
@@ -232,8 +234,11 @@ const appSlice = createSlice({
     setIsOnline: (state, action: PayloadAction<boolean>) => {
       state.isOnline = action.payload;
     },
-    setAudioProgress: (state, action: PayloadAction<number>) => {
-      state.audioProgress = action.payload;
+    setRiskTags: (state, action: PayloadAction<Interest[]>) => {
+      state.riskTags = action.payload;
+    },
+    setSelectedInterests: (state, action: PayloadAction<Interest[]>) => {
+      state.selectedInterests = action.payload;
     },
     setActiveCategory: (state, action: PayloadAction<string>) => {
       state.activeCategory = action.payload;
@@ -275,7 +280,28 @@ const appSlice = createSlice({
     setFeedbackMessage: (state, action: PayloadAction<string>) => {
       state.feedbackMessage = action.payload;
     },
-    setAdminContent: (state, action: PayloadAction<{ id: number; title: string; status: string; categoryId?: number; summary?: string; body?: string; audioUrl?: string }[]>) => {
+    setCurricula: (state, action: PayloadAction<Curriculum[]>) => {
+      state.curricula = action.payload;
+    },
+    setCategories: (state, action: PayloadAction<Category[]>) => {
+      state.categories = action.payload;
+    },
+    // Replaces one path or disease (or adds it) after a staff edit.
+    upsertCurriculum: (state, action: PayloadAction<Curriculum>) => {
+      const exists = state.curricula.some((item) => item.id === action.payload.id);
+      state.curricula = exists
+        ? state.curricula.map((item) => (item.id === action.payload.id ? action.payload : item))
+        : [...state.curricula, action.payload];
+    },
+    setQuizScores: (state, action: PayloadAction<QuizScore[]>) => {
+      state.quizScores = action.payload;
+    },
+    recordQuizScore: (state, action: PayloadAction<QuizScore>) => {
+      const previous = state.quizScores.find((item) => item.contentId === action.payload.contentId);
+      if (previous && previous.score / previous.total >= action.payload.score / action.payload.total) return;
+      state.quizScores = [...state.quizScores.filter((item) => item.contentId !== action.payload.contentId), action.payload];
+    },
+    setAdminContent: (state, action: PayloadAction<AdminContentItem[]>) => {
       state.adminContent = action.payload;
     },
     setAdminCreators: (state, action: PayloadAction<{ id: number; fullName: string; email: string; role: string }[]>) => {
@@ -314,7 +340,8 @@ export const {
   addQuestionLocal,
   answerQuestionSuccess,
   setIsOnline,
-  setAudioProgress,
+  setRiskTags,
+  setSelectedInterests,
   setActiveCategory,
   setSelectedNcdTopic,
   setCompletedLessons,
@@ -326,6 +353,11 @@ export const {
   clearAuthenticatedUser,
   setFeedbackMessage,
   setAdminContent,
+  setCurricula,
+  setCategories,
+  upsertCurriculum,
+  setQuizScores,
+  recordQuizScore,
   setAdminCreators
 } = appSlice.actions;
 

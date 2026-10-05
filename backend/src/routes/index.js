@@ -8,6 +8,7 @@ import { createCreator, getCreators, getSetupStatus, login, register, setupAdmin
 import { authenticate, requireRole } from '../modules/auth/security.js';
 import { createReminder, deleteReminder, getReminders } from '../modules/reminders/reminders.controller.js';
 import { completeLesson, getProgress } from '../modules/progress/progress.controller.js';
+import { getCurricula, patchDisease, postDisease, submitQuizAttempt } from '../modules/learning/learning.controller.js';
 
 const router = express.Router();
 
@@ -16,6 +17,10 @@ router.get('/categories', getCategories);
 router.get('/content', getContent);
 router.get('/content/:id', getContentById);
 router.get('/faq', getFaqs);
+router.get('/curricula', getCurricula);
+router.post('/quiz-attempts', authenticate, submitQuizAttempt);
+router.post('/admin/diseases', authenticate, requireRole('admin'), postDisease);
+router.patch('/admin/diseases/:id', authenticate, requireRole('admin'), patchDisease);
 router.post('/admin/faqs', authenticate, requireRole('admin'), createFaq);
 router.patch('/admin/faqs/:id', authenticate, requireRole('admin'), updateFaq);
 router.delete('/admin/faqs/:id', authenticate, requireRole('admin'), deleteFaq);
@@ -35,7 +40,7 @@ router.post('/auth/setup-admin', setupAdmin);
 router.post('/admin/creators', authenticate, requireRole('admin'), createCreator);
 router.get('/admin/creators', authenticate, requireRole('admin'), getCreators);
 router.post('/admin/content', authenticate, requireRole('admin', 'creator'), createContent);
-router.patch('/admin/content/:id', authenticate, requireRole('admin'), updateContent);
+router.patch('/admin/content/:id', authenticate, requireRole('admin', 'creator'), updateContent);
 router.patch('/admin/content/:id/status', authenticate, requireRole('admin'), updateContentStatus);
 router.delete('/admin/content/:id', authenticate, requireRole('admin'), deleteContent);
 router.get('/admin/content', authenticate, requireRole('admin', 'creator'), getAdminContent);

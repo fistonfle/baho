@@ -25,17 +25,20 @@ export const getSetupStatus = async (_req, res) => {
 export const getCreators = async (_req, res) => {
   try {
     const result = await pool.query(
-      "SELECT u.id, u.full_name AS \"fullName\", u.email, s.role FROM users u JOIN staff s ON s.user_id = u.id WHERE s.role = 'creator' ORDER BY u.created_at DESC"
+      'SELECT u.id, u.full_name AS "fullName", u.email, s.role FROM users u JOIN staff s ON s.user_id = u.id ORDER BY s.role, u.created_at DESC'
     );
-    return res.json({ creators: result.rows });
+    return res.json({ staff: result.rows });
   } catch (error) {
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not load creator accounts' });
     }
-    const creators = inMemoryStore.users
-      .filter((user) => inMemoryStore.staff.some((staff) => staff.userId === user.id && staff.role === 'creator'))
-      .map((user) => ({ id: user.id, fullName: user.fullName, email: user.email, role: 'creator' }));
-    return res.json({ creators });
+    const staff = inMemoryStore.users
+      .map((user) => {
+        const membership = inMemoryStore.staff.find((entry) => entry.userId === user.id);
+        return membership ? { id: user.id, fullName: user.fullName, email: user.email, role: membership.role } : null;
+      })
+      .filter(Boolean);
+    return res.json({ staff });
   }
 };
 
@@ -88,7 +91,11 @@ export const setupAdmin = async (req, res) => {
 };
 
 export const createCreator = async (req, res) => {
-  const { fullName, email, password } = req.body || {};
+  const { fullName, email, password, role = 'creator' } = req.body || {};
+
+  if (!['creator', 'admin'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be creator or admin' });
+  }
 
   if (!fullName?.trim() || !email?.trim() || !password || String(password).length < 8) {
     return res.status(400).json({ message: 'Full name, email and a password of at least 8 characters are required' });
@@ -111,7 +118,7 @@ export const createCreator = async (req, res) => {
         [String(fullName).trim(), cleanEmail, hashPassword(password), 'Kinyarwanda']
       );
       user = result.rows[0];
-      await client.query('INSERT INTO staff (user_id, role) VALUES ($1, $2)', [user.id, 'creator']);
+      await client.query('INSERT INTO staff (user_id, role) VALUES ($1, $2)', [user.id, role]);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -126,7 +133,7 @@ export const createCreator = async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role: 'creator'
+        role
       }
     });
   } catch (error) {
@@ -148,7 +155,7 @@ export const createCreator = async (req, res) => {
     };
 
     inMemoryStore.users.push(user);
-    inMemoryStore.staff.push({ id: Date.now() + 1, userId: user.id, role: 'creator' });
+    inMemoryStore.staff.push({ id: Date.now() + 1, userId: user.id, role });
 
     return res.status(201).json({
       message: 'Creator created successfully',
@@ -156,7 +163,7 @@ export const createCreator = async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role: 'creator'
+        role
       }
     });
   }

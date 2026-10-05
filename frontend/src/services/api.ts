@@ -1,5 +1,30 @@
+import type { Category, Curriculum, QuizQuestion, QuizScore } from '../types';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
 let authToken: string | null = null;
+
+export type DiseasePayload = {
+  name: string;
+  icon: string;
+  about: string;
+  description?: string;
+  imageUrl?: string;
+  riskFactors: string[];
+  warningSigns: string[];
+  prevention: string[];
+};
+
+export type ContentPayload = {
+  categoryId: number;
+  title: string;
+  summary?: string;
+  body: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  status?: string;
+  quiz?: QuizQuestion[];
+  curriculumIds?: number[];
+};
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
@@ -32,12 +57,19 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const api = {
   setAuthToken,
   getContent: () => request<{ content: any[] }>('/content'),
-  getCategories: () => request<{ categories: any[] }>('/categories'),
+  getCategories: () => request<{ categories: Category[] }>('/categories'),
+  createDisease: (payload: DiseasePayload) =>
+    request<{ message: string; disease: Curriculum }>('/admin/diseases', { method: 'POST', body: JSON.stringify(payload) }),
+  updateDisease: (id: number, payload: DiseasePayload) =>
+    request<{ message: string; disease: Curriculum }>(`/admin/diseases/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   getReminders: () => request<{ reminders: { id: number; time: string; label: string }[] }>('/reminders'),
   createReminder: (payload: { time: string; label: string }) =>
     request<{ message: string; reminder: { id: number; time: string; label: string } }>('/reminders', { method: 'POST', body: JSON.stringify(payload) }),
   deleteReminder: (id: number) => request<{ message: string }>(`/reminders/${id}`, { method: 'DELETE' }),
-  getProgress: () => request<{ completedLessonIds: number[] }>('/progress'),
+  getProgress: () => request<{ completedLessonIds: number[]; quizScores: QuizScore[]; quizAverage: number | null }>('/progress'),
+  getCurricula: () => request<{ curricula: Curriculum[] }>('/curricula'),
+  submitQuizAttempt: (contentId: number, answers: number[]) =>
+    request<{ score: number; total: number; correct: boolean[] }>('/quiz-attempts', { method: 'POST', body: JSON.stringify({ contentId, answers }) }),
   completeLesson: (id: number) => request<{ message: string; contentId: number }>(`/progress/${id}/complete`, { method: 'POST' }),
   getFaqs: () => request<{ faqs: any[] }>('/faq'),
   createFaq: (payload: { question: string; answer: string }) =>
@@ -61,7 +93,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  createContent: (payload: { categoryId: number; title: string; summary?: string; body: string; audioUrl?: string; status?: string }) =>
+  createContent: (payload: ContentPayload) =>
     request<{ message: string; content: any }>('/admin/content', {
       method: 'POST',
       body: JSON.stringify(payload)
@@ -72,9 +104,9 @@ export const api = {
       body: JSON.stringify(payload)
     }),
   getAdminContent: () => request<{ content: any[] }>('/admin/content'),
-  getCreators: () => request<{ creators: any[] }>('/admin/creators'),
+  getCreators: () => request<{ staff: any[] }>('/admin/creators'),
   getAdminIssues: () => request<{ issues: any[] }>('/admin/issues'),
-  updateContent: (id: number, payload: { categoryId: number; title: string; summary?: string; body: string; audioUrl?: string; status?: string }) =>
+  updateContent: (id: number, payload: ContentPayload) =>
     request<{ message: string; content: any }>(`/admin/content/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   updateContentStatus: (id: number, status: string) =>
     request<{ message: string; content: any }>(`/admin/content/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),

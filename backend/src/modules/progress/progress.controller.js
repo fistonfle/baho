@@ -1,16 +1,30 @@
 import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
+import { quizSummary } from '../learning/learning.service.js';
 
 const isConnectionFailure = isDatabaseUnavailable;
 
+const loadCompletedIds = async (userId) => {
+  try {
+    const result = await pool.query('SELECT content_id FROM progress WHERE user_id = $1 ORDER BY completed_at DESC', [userId]);
+    return result.rows.map((row) => Number(row.content_id));
+  } catch (error) {
+    if (!isConnectionFailure(error)) throw error;
+    return inMemoryStore.progress.filter((item) => item.userId === userId).map((item) => item.contentId);
+  }
+};
+
+// Completed lessons plus the learner's best quiz score per lesson and their average.
 export const getProgress = async (req, res) => {
   try {
-    const result = await pool.query('SELECT content_id FROM progress WHERE user_id = $1 ORDER BY completed_at DESC', [req.user.id]);
-    return res.json({ completedLessonIds: result.rows.map((row) => Number(row.content_id)) });
-  } catch (error) {
-    if (!isConnectionFailure(error)) return res.status(503).json({ message: 'Could not load lesson progress' });
-    return res.json({ completedLessonIds: inMemoryStore.progress.filter((item) => item.userId === req.user.id).map((item) => item.contentId) });
+    const [completedLessonIds, quizScores] = await Promise.all([loadCompletedIds(req.user.id), quizSummary(req.user.id)]);
+    const quizAverage = quizScores.length
+      ? Math.round((quizScores.reduce((sum, item) => sum + item.score / item.total, 0) / quizScores.length) * 100)
+      : null;
+    return res.json({ completedLessonIds, quizScores, quizAverage });
+  } catch {
+    return res.status(503).json({ message: 'Could not load lesson progress' });
   }
 };
 
