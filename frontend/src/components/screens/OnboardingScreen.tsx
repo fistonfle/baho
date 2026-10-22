@@ -1,5 +1,5 @@
 import type { Interest } from '../../types';
-import { BrandMark } from '../ui';
+import { PageHeader } from '../ui';
 
 export function OnboardingScreen({
   userName,
@@ -33,45 +33,39 @@ export function OnboardingScreen({
   };
 
   return (
-    <div className="screen onboarding-screen">
-      <div className="onboarding-content">
-        <div className="onboarding-brand-row">
-          <BrandMark />
-          <span className="onboarding-progress-label">Intambwe ya 1 kuri 2</span>
-        </div>
-        <form className="onboarding-card panel" onSubmit={(event) => { event.preventDefault(); submit(); }}>
-          <div className="step-dots" aria-hidden="true"><span className="active" /><span /></div>
-          <div className="onboarding-step-heading">
-            <span className="onboarding-step-number">01</span>
-            <div>
-              <p className="eyebrow">KUGUTEGURIRA BAHO</p>
-              <h2>Ni izihe ngingo zigushishikaje?</h2>
+    <div className="container form-page">
+      <PageHeader
+        crumbs={[{ label: 'Ahabanza', onClick: onBack }, { label: 'Kwiyandikisha' }]}
+        title="Tangira kwiga"
+        lead="Hitamo ingingo wifuza kwigaho. Ibi bidufasha kukwereka amasomo akubereye."
+      />
+      <ol className="stepper">
+        <li className="current">1. Ingingo n'izina</li>
+        <li>2. Umwirondoro w'ubuzima (si ngombwa)</li>
+      </ol>
+      <form className="panel" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+        <div className="panel-body">
+          <fieldset className="form-group" style={{ border: 0, padding: 0, margin: '0 0 16px' }}>
+            <legend className="form-label" style={{ marginBottom: 8 }}>Ingingo zigushishikaje</legend>
+            <div className="choice-grid">
+              {topics.map((interest) => (
+                <label key={interest} className={`option ${selectedInterests.includes(interest) ? 'selected' : ''}`}>
+                  <input type="checkbox" checked={selectedInterests.includes(interest)} onChange={() => onToggleInterest(interest)} />
+                  {interest}
+                </label>
+              ))}
             </div>
+          </fieldset>
+          <div className="form-group">
+            <label htmlFor="learner-name">Izina ryawe</label>
+            <input id="learner-name" className="input" value={userName} onChange={(event) => onNameChange(event.target.value)} placeholder="Urugero: Uwase" autoComplete="given-name" />
           </div>
-          <p className="onboarding-intro">Hitamo ingingo wifuza kwigaho. Ibi bidufasha kukwereka amasomo akubereye.</p>
-          <div className="interest-grid">
-            {topics.map((interest) => (
-              <button
-                type="button"
-                key={interest}
-                className={`chip ${selectedInterests.includes(interest) ? 'active' : ''}`}
-                aria-pressed={selectedInterests.includes(interest)}
-                onClick={() => onToggleInterest(interest)}
-              >
-                {interest}
-              </button>
-            ))}
-          </div>
-          <label className="field">
-            <span>Izina ryawe</span>
-            <input value={userName} onChange={(event) => onNameChange(event.target.value)} placeholder="Urugero: Uwase" autoComplete="given-name" />
-          </label>
-          <div className="onboarding-actions">
-            <button type="button" className="onboarding-back" onClick={onBack}>Subira inyuma</button>
-            <button type="submit" className="primary">Komeza <span aria-hidden="true">→</span></button>
-          </div>
-        </form>
-      </div>
+        </div>
+        <div className="panel-foot row-between">
+          <button type="button" className="btn btn-secondary" onClick={onBack}>Subira inyuma</button>
+          <button type="submit" className="btn btn-primary">Komeza</button>
+        </div>
+      </form>
     </div>
   );
 }

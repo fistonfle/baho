@@ -148,14 +148,14 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
           onError={() => setSource('voice')}
         />
       )}
-      <button className="audio-play" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
+      <button className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
         {playing
           ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor" /></svg>
           : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>}
       </button>
       <div className="audio-main">
         <div className="audio-meta">
-          <strong>{playing ? 'Biri gukina…' : progress >= 100 ? 'Warangije kumva' : 'Umva isomo'}</strong>
+          <strong>{playing ? 'Biri gusomwa' : progress >= 100 ? 'Warangije kumva' : 'Umva isomo mu ijwi'}</strong>
           <span>{source === 'file' ? `${formatTime(elapsed)} / ${formatTime(duration)}` : 'Ijwi rya mudasobwa'}</span>
         </div>
         <input
@@ -166,16 +166,15 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
           value={Math.round(progress)}
           onChange={(event) => seek(Number(event.target.value))}
           aria-label="Aho isomo rigeze"
-          style={{ ['--fill' as string]: `${progress}%` }}
         />
         <div className="audio-actions">
-          <button onClick={restart}>↺ Subiramo</button>
-          <button onClick={changeRate} aria-label="Umuvuduko w'ijwi">{rate}×</button>
+          <button className="btn btn-secondary btn-sm" onClick={restart}>Subiramo</button>
+          <button className="btn btn-secondary btn-sm" onClick={changeRate} aria-label="Umuvuduko w'ijwi">Umuvuduko: {rate}×</button>
           {source === 'file' && 'caches' in window && (
-            <button onClick={() => void saveForOffline()} disabled={saved}>{saved ? '✓ Yabitswe' : '↓ Bika nta internet'}</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => void saveForOffline()} disabled={saved}>{saved ? 'Ryabitswe kuri telefoni' : 'Bika ku gikoresho'}</button>
           )}
         </div>
-        {source === 'voice' && !canSpeak && <p className="audio-note">Uru rubuga ntirushobora gusoma mu ijwi.</p>}
+        {source === 'voice' && !canSpeak && <p className="small muted">Uru rubuga ntirushobora gusoma mu ijwi.</p>}
       </div>
     </div>
   );

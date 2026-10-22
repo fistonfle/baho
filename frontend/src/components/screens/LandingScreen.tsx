@@ -1,92 +1,68 @@
-import { ActionButton } from '../ui';
-
 export function LandingScreen({ onStart, onAdmin, returning }: { onStart: () => void; onAdmin: () => void; returning: boolean }) {
   return (
-    <div className="screen landing-page">
-      <header className="landing-header">
-        <a className="brand-mark" href="#home" aria-label="Baho ahabanza">
-          <span className="brand-symbol" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none">
-              <path d="M16 27s-10-6.1-10-13.1A5.9 5.9 0 0 1 16 10a5.9 5.9 0 0 1 10 3.9C26 20.9 16 27 16 27Z" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" />
-              <path d="M8.5 16h4l2-4 3.1 8 2.1-4h3.8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <span>BAHO<span className="brand-period">.</span></span>
-        </a>
-        <div className="landing-header-actions">
-          <span className="language-label"><span className="language-dot" /> Ikinyarwanda</span>
-          <ActionButton variant="ghost" onClick={onAdmin}>Injira muri konti</ActionButton>
+    <>
+      <section className="landing-banner">
+        <div className="container">
+          <div>
+            <h1>Inyigisho ku ndwara zitandura, mu Kinyarwanda</h1>
+            <p className="lead">
+              Baho igufasha kumenya no kwirinda umuvuduko w'amaraso ukabije, diyabete, indwara z'umutima na kanseri.
+              Amasomo ni magufi, afite amajwi n'amashusho, kandi akora no mu gihe nta internet.
+            </p>
+            <div className="row">
+              <button className="btn btn-primary" onClick={onStart}>{returning ? 'Komeza kwiga' : 'Tangira kwiga'}</button>
+              <button className="btn btn-secondary" onClick={onAdmin}>Injira muri konti</button>
+            </div>
+            <p className="muted small" style={{ marginTop: 12 }}>Ni ubuntu. Ushobora gukoresha Baho nta konti.</p>
+          </div>
+          <figure>
+            <img src="/images/bp-check.svg" alt="Umuntu apimwa umuvuduko w'amaraso" />
+            <figcaption>Isomo: Gupima umuvuduko w'amaraso</figcaption>
+          </figure>
         </div>
-      </header>
+      </section>
 
-      <main id="home">
-        <section className="landing-hero">
-          <div className="landing-copy">
-            <div className="hero-kicker"><span /> Amakuru y'ubuzima yizewe, mu Kinyarwanda</div>
-            <h1>Ubuzima bwiza butangirira ku <span>makuru meza.</span></h1>
-            <p className="hero-description">Menya uko warinda indwara zitandura, wige ku buzima bwawe, kandi utere intambwe nto buri munsi.</p>
-            <div className="landing-cta">
-              <ActionButton onClick={onStart} className="hero-primary">{returning ? 'Komeza kwiga' : 'Tangira kwiga'} <span aria-hidden="true">→</span></ActionButton>
-              <span className="hero-note">Ubuntu. Byoroshye. Mu rurimi rwawe.</span>
-            </div>
-            <div className="landing-proof">
-              <span className="proof-check" aria-hidden="true">✓</span>
-              <span>Umuvuduko w'amaraso, diyabete, umutima na kanseri</span>
-            </div>
-          </div>
-
-          <div className="hero-art" aria-label="Igishushanyo cy'ubuzima bwiza" role="img">
-            <div className="art-orbit art-orbit-one" />
-            <div className="art-orbit art-orbit-two" />
-            <div className="art-sun" />
-            <div className="art-leaf art-leaf-one" />
-            <div className="art-leaf art-leaf-two" />
-            <div className="art-main-card">
-              <div className="art-card-top"><span className="art-pulse-icon">+</span><span>INAMA Y'UYU MUNSI</span></div>
-              <div className="art-heart-wrap">
-                <svg viewBox="0 0 180 140" fill="none" aria-hidden="true">
-                  <path d="M90 119S23 79 23 42C23 8 66 1 90 34 114 1 157 8 157 42c0 37-67 77-67 77Z" fill="#D9F1E9" stroke="#1D806B" strokeWidth="3" />
-                  <path d="M41 65h27l11-22 19 49 13-27h29" stroke="#13816D" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <p>Intambwe nto zubaka ubuzima bwiza.</p>
-              <div className="art-progress"><span /></div>
-              <span className="art-card-caption">Wige ku buzima bwawe buri munsi</span>
-            </div>
-            <div className="art-float-tag art-float-top"><span className="float-dot" /> Kwiga mu Kinyarwanda</div>
-            <div className="art-float-tag art-float-bottom"><span className="float-spark">+</span> Imenye. Irinde. Itere imbere.</div>
-          </div>
-        </section>
-
-        <section className="landing-features" aria-labelledby="features-title">
-          <div className="features-heading">
-            <div>
-              <p className="eyebrow">UBUFASHA BWA BAHO</p>
-              <h2 id="features-title">Ubuzima bwawe, intambwe ku yindi</h2>
-            </div>
-            <p>Ibikoresho byoroheje bigufasha kumenya byinshi no gufata ingamba zikwiriye.</p>
-          </div>
-          <div className="feature-grid">
-            <article className="feature-card">
-              <span className="feature-icon feature-icon-green" aria-hidden="true">01</span>
-              <div><h3>Wige ibikureba</h3><p>Amakuru asobanutse ku ndwara zidakira n'uburyo bwo kuzirinda.</p></div>
-              <span className="feature-arrow" aria-hidden="true">↗</span>
+      <section className="landing-section">
+        <div className="container stack">
+          <h2>Ibyo Baho igufasha</h2>
+          <div className="grid-3">
+            <article className="service-item">
+              <h3>Inzira y'imyigire yawe</h3>
+              <p>Uhitamo indwara wifuza kumenyaho, Baho ikaguha urutonde rw'amasomo akurikirana.</p>
             </article>
-            <article className="feature-card">
-              <span className="feature-icon feature-icon-gold" aria-hidden="true">02</span>
-              <div><h3>Umva amasomo</h3><p>Kurikirana amasomo y'ubuzima mu buryo bworoshye, aho uri hose.</p></div>
-              <span className="feature-arrow" aria-hidden="true">↗</span>
+            <article className="service-item">
+              <h3>Amasomo y'amajwi</h3>
+              <p>Buri somo rifite ishusho, inyandiko ngufi n'ijwi, n'isuzuma rito ryo kureba ko wumvise.</p>
             </article>
-            <article className="feature-card">
-              <span className="feature-icon feature-icon-blue" aria-hidden="true">03</span>
-              <div><h3>Ibuka intego zawe</h3><p>Shyiraho ibibutsa kandi ukurikirane amasomo umaze kurangiza.</p></div>
-              <span className="feature-arrow" aria-hidden="true">↗</span>
+            <article className="service-item">
+              <h3>Amakuru yizewe</h3>
+              <p>Amasomo yandikwa n'abakozi b'ubuzima, agasuzumwa n'inzobere mbere yo gusohoka.</p>
             </article>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <footer className="landing-footer"><span>BAHO<span className="brand-period">.</span></span><span>Amakuru meza. Ubuzima bwiza.</span></footer>
-    </div>
+      <section className="landing-section" style={{ paddingTop: 0 }}>
+        <div className="container grid-2">
+          <div className="panel">
+            <div className="panel-head"><h2>Uko bikora</h2></div>
+            <div className="panel-body">
+              <ol className="steps">
+                <li>Hitamo ingingo zigushishikaje, wandike izina ryawe.</li>
+                <li>Uzuza umwirondoro w'ubuzima (si ngombwa). Ibisubizo biguma kuri telefoni yawe.</li>
+                <li>Kurikira inzira yawe: umva isomo, ukore isuzuma rito, urebe aho ugeze.</li>
+              </ol>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-head"><h2>Ku bakozi b'ubuzima</h2></div>
+            <div className="panel-body">
+              <p>Abanditsi bategura amasomo, inzobere zikemeza ibikubiye mu masomo y'indwara zabo, umuyobozi agasohora.</p>
+              <button className="btn btn-secondary" onClick={onAdmin}>Injira nk'umukozi</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

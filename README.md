@@ -49,7 +49,9 @@
 | Staff area with tabs: review queue, lessons (image, learning paths, quiz editor), diseases, learner questions, staff accounts, reports, FAQ | `screens/AdminScreen.tsx` | FR12, FR16, FR17 |
 | Installable PWA (manifest and icons) | `public/manifest.webmanifest` | NFR08 |
 
-**Roles.** *Learners* can use Baho as guests or with an account (an account keeps progress, quiz scores, reminders and questions on the server). *Creators* (health professionals) write lessons with an image, a quiz and learning paths and send them for review; they cannot publish. *Admins* review and publish lessons, add diseases, answer questions and manage staff.
+**Roles.** *Learners* can use Baho as guests or with an account (an account keeps progress, quiz scores, reminders and questions on the server). *Creators* (health professionals) write lessons with an image, a quiz and learning paths and send them for review; they cannot publish. *Specialists* are assigned one or more diseases by an admin; every lesson on those diseases must be approved by a specialist (who sees the full lesson and the quiz answers) before it can be published, or sent back to the creator with a note. *Admins* publish approved lessons, add diseases, answer questions and manage staff and specialist assignments.
+
+**Lesson workflow:** `draft` → `review` → `approved` (by a specialist of that disease) → `published`. A lesson sent back is `rejected` with the specialist's note shown to the creator. The rule is enforced by the API: publishing a lesson whose disease has a specialist returns `409` until it is approved. Diseases without a specialist are published by an admin directly.
 
 ---
 
@@ -185,9 +187,11 @@ All wireframes: [`designs/wireframes/`](designs/wireframes). UML diagrams (use c
 
 ### Style guide
 
-- **Colours:** primary green `#147764`, dark green `#18342F`, soft green `#E3F3ED`, gold accent `#E5AA50`, coral for warnings `#D9735E`, page background `#F5F8F5`.
-- **Type:** Avenir Next / system sans-serif; bold, tight headings; body text at 16 px with 1.7 line height for readability.
-- **Components:** rounded cards (14–24 px radius), pill chips for topics and statuses, large touch targets (≥ 44 px), a sticky top bar and a bottom tab bar on phones.
+The interface follows a formal information-portal layout (revised after supervisor feedback that the first version looked generic): a utility bar, masthead, main navigation, breadcrumbs, content panels, data tables and a footer. All styles live in one stylesheet, `frontend/src/styles/portal.css`, built on CSS variables.
+
+- **Colours:** primary green `#0b5845`, navy `#14304d` for headings and the footer, neutral borders `#d5dce1`, light grey page background; status colours only for badges and notices (success, information, warning, danger).
+- **Type:** system sans-serif at 16 px, 1.6 line height; no decorative fonts, emojis or gradients.
+- **Components:** square-cornered panels (4 px radius) with titled headers, tables for lists (lessons, paths, staff, reminders), status badges, tabs, labelled form groups, primary/secondary/danger buttons, touch targets ≥ 44 px, and a bottom tab bar on phones (< 760 px).
 - **Illustrations:** simple flat SVGs with brown-skinned figures and local foods, one per lesson, in the same palette.
 - **Accessibility:** audio for every lesson, FAQ answer and exercise; `aria-pressed`/`aria-current` on toggles and navigation; short sentences in plain Kinyarwanda.
 
@@ -216,8 +220,8 @@ All wireframes: [`designs/wireframes/`](designs/wireframes). UML diagrams (use c
 
 | Group | Tables |
 |---|---|
-| People | `users`, `staff` (role: admin or creator) |
-| Content | `categories`, `content` (lessons), `quiz_questions`, `faqs` |
+| People | `users`, `staff` (role: admin, creator or specialist), `specialist_topics` (which diseases each specialist reviews) |
+| Content | `categories`, `content` (lessons, with `reviewed_by`, `review_note`, `reviewed_at`), `quiz_questions`, `faqs` |
 | Learning paths and diseases | `curricula` (a path; with a condition it is also a disease), `curriculum_lessons` (ordered lessons in a path) |
 | Learner activity | `progress`, `quiz_attempts`, `reminders`, `questions`, `issues` |
 
@@ -243,8 +247,11 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 | `GET/POST /admin/content`, `PATCH /admin/content/:id` | Write and edit lessons (image, quiz, paths) | 🛡 admin, creator |
 | `PATCH /admin/content/:id/status`, `DELETE /admin/content/:id` | Publish, reject or delete a lesson | 🛡 admin |
 | `POST /admin/diseases`, `PATCH /admin/diseases/:id` | Add or edit a disease | 🛡 admin |
-| `POST /questions/:id/answer` | Answer a learner's question | 🛡 admin, creator |
-| `GET/POST /admin/creators` | List staff, create creator or admin accounts | 🛡 admin |
+| `POST /questions/:id/answer` | Answer a learner's question | 🛡 admin, creator, specialist |
+| `GET /review/queue` | Lessons waiting for this specialist (with quiz answers) and their review history | 🛡 specialist |
+| `POST /review/lessons/:id` | Approve a lesson, or request changes with a note | 🛡 specialist |
+| `PUT /admin/staff/:id/topics` | Set the diseases a specialist reviews | 🛡 admin |
+| `GET/POST /admin/creators` | List staff, create creator, specialist or admin accounts | 🛡 admin |
 | `POST/PATCH/DELETE /admin/faqs` | Manage the FAQ | 🛡 admin |
 | `GET/PATCH /admin/issues` | Review and resolve reports | 🛡 admin |
 | `GET /health` | Health check | Public |
@@ -280,7 +287,7 @@ Pilot scale (proposal: 30 participants) fits the free or smallest paid tiers of 
 4. **NCD module and knowledge check:** information per disease; take the five-question check before and after learning.
 5. **Exercises, reminders, help:** change the exercise level, add a reminder from a preset, search the FAQ and report a problem.
 6. **Offline:** in the production build, stop the servers and reload; the app and lessons still work, and reports wait in an outbox.
-7. **Staff:** a creator writes a lesson with an image, quiz and learning path; the admin reviews and publishes it, adds a new disease, and answers a learner's question.
+7. **Staff:** a creator writes a lesson with an image, quiz and learning path; a specialist for that disease approves it (or sends it back with a note); the admin publishes it, adds a new disease, and answers a learner's question.
 
 ---
 
@@ -288,5 +295,5 @@ Pilot scale (proposal: 30 participants) fits the free or smallest paid tiers of 
 
 - **Privacy by design:** diagnosed conditions and lifestyle answers never leave the device. The server only stores progress, quiz scores, reminders and questions, which contain no health details.
 - **Not a diagnosis tool:** Baho does not collect blood pressure or glucose readings and does not diagnose; every lesson carries a disclaimer advising a visit to the health centre.
-- **Deliberate MVP simplifications compared with the proposal:** email and password instead of phone and PIN; two staff roles (admin and creator) instead of three; one signed access token instead of an access/refresh pair.
+- **Deliberate MVP simplifications compared with the proposal:** email and password instead of phone and PIN; three staff roles (admin, creator, specialist) as in the proposal; one signed access token instead of an access/refresh pair.
 - **Content review:** the Kinyarwanda lessons and quizzes are drafts to be checked by a native speaker and a health professional before field testing.

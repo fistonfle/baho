@@ -1,14 +1,14 @@
 import type { FormEvent } from 'react';
 
-import { BrandMark } from '../ui';
+import { PageHeader } from '../ui';
 
 // Staff accounts are created by an admin, and the first admin comes from the
 // server's environment, so this screen only signs in and registers learners.
 type AuthMode = 'login' | 'register';
 
 const headings: Record<AuthMode, { title: string; text: string; button: string }> = {
-  login: { title: 'Injira muri konti yawe', text: 'Injira kugira ngo ukomeze amasomo yawe n\'ibyo wabitse.', button: 'Injira' },
-  register: { title: 'Fungura konti', text: 'Konti igufasha kubika ibibazo, ibyibutsa n\'aho ugeze mu masomo.', button: 'Fungura konti' }
+  login: { title: 'Injira muri konti', text: 'Abanyeshuri n\'abakozi b\'ubuzima binjirira hano.', button: 'Injira' },
+  register: { title: 'Fungura konti y\'umunyeshuri', text: 'Konti igufasha kubika aho ugeze, amanota, ibyibutsa n\'ibibazo wohereje.', button: 'Fungura konti' }
 };
 
 export function AuthScreen({
@@ -33,31 +33,25 @@ export function AuthScreen({
   };
 
   return (
-    <div className="screen auth-screen">
-      <div className="auth-layout">
-        <div className="auth-brand-row">
-          <BrandMark />
-          <span className="auth-brand-caption">Amakuru meza. Ubuzima bwiza.</span>
-        </div>
-        <form className="auth-card panel" onSubmit={submit}>
-          <div className="auth-heading">
-            <p className="eyebrow">Konti ya Baho</p>
-            <h2>{heading.title}</h2>
-            <p>{heading.text}</p>
-          </div>
-          {mode !== 'login' && (
-            <label className="field">
-              <span>Amazina yose</span>
-              <input autoComplete="name" value={form.name} onChange={(event) => onFormChange({ name: event.target.value })} required />
-            </label>
+    <div className="container form-page">
+      <PageHeader crumbs={[{ label: 'Ahabanza', onClick: onBack }, { label: heading.title }]} title={heading.title} lead={heading.text} />
+      <form className="panel" onSubmit={submit}>
+        <div className="panel-body">
+          {mode === 'register' && (
+            <div className="form-group">
+              <label htmlFor="auth-name">Amazina yose</label>
+              <input id="auth-name" className="input" autoComplete="name" value={form.name} onChange={(event) => onFormChange({ name: event.target.value })} required />
+            </div>
           )}
-          <label className="field">
-            <span>Imeyili</span>
-            <input type="email" autoComplete="email" value={form.email} onChange={(event) => onFormChange({ email: event.target.value })} required />
-          </label>
-          <label className="field">
-            <span>Ijambo ry'ibanga {mode !== 'login' && <small>(inyuguti nibura 8)</small>}</span>
+          <div className="form-group">
+            <label htmlFor="auth-email">Imeyili</label>
+            <input id="auth-email" className="input" type="email" autoComplete="email" value={form.email} onChange={(event) => onFormChange({ email: event.target.value })} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="auth-password">Ijambo ry'ibanga</label>
             <input
+              id="auth-password"
+              className="input"
               type="password"
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               value={form.password}
@@ -65,25 +59,17 @@ export function AuthScreen({
               minLength={8}
               required
             />
-          </label>
-          <button className="primary full" type="submit">{heading.button}</button>
-          <div className="auth-divider"><span>CYANGWA</span></div>
-          <div className="auth-alternatives">
-            {mode !== 'login' && (
-              <button className="auth-option" type="button" onClick={() => onModeChange('login')}>
-                Usanzwe ufite konti? <strong>Injira</strong>
-              </button>
-            )}
-            {mode !== 'register' && (
-              <button className="auth-option" type="button" onClick={() => onModeChange('register')}>
-                Nta konti ufite? <strong>Fungura konti</strong>
-              </button>
-            )}
+            {mode === 'register' && <span className="form-hint">Nibura inyuguti 8.</span>}
           </div>
-          <p className="auth-guest-note">Ushobora no gukoresha Baho nta konti. Amakuru yawe azabikwa kuri iyi telefoni.</p>
-          <button className="auth-back" type="button" onClick={onBack}>← Subira inyuma</button>
-        </form>
-      </div>
+          <button className="btn btn-primary btn-block" type="submit">{heading.button}</button>
+        </div>
+        <div className="panel-foot stack-sm">
+          {mode === 'login'
+            ? <p className="small">Nta konti ufite? <button type="button" className="btn-link" onClick={() => onModeChange('register')}>Fungura konti y'umunyeshuri</button></p>
+            : <p className="small">Usanzwe ufite konti? <button type="button" className="btn-link" onClick={() => onModeChange('login')}>Injira</button></p>}
+          <p className="small muted">Konti z'abakozi (abanditsi, inzobere n'abayobozi) zifungurwa n'umuyobozi wa Baho. Ushobora no gukoresha Baho nta konti.</p>
+        </div>
+      </form>
     </div>
   );
 }

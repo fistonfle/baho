@@ -3,8 +3,7 @@ import { Provider } from 'react-redux';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
-import './index.css';
-import './styles/features.css';
+import './styles/portal.css';
 import { store } from './store/store';
 import { registerServiceWorker } from './lib/offline';
 

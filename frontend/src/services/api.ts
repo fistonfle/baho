@@ -88,7 +88,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ answer })
     }),
-  createCreator: (payload: { fullName: string; email: string; password: string; role?: string }) =>
+  createCreator: (payload: { fullName: string; email: string; password: string; role?: string; topicIds?: number[] }) =>
     request<{ message: string; user: any }>('/admin/creators', {
       method: 'POST',
       body: JSON.stringify(payload)
@@ -103,6 +103,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
+  updateSpecialistTopics: (id: number, categoryIds: number[]) =>
+    request<{ message: string; categoryIds: number[] }>(`/admin/staff/${id}/topics`, { method: 'PUT', body: JSON.stringify({ categoryIds }) }),
+  getReviewQueue: () => request<{ lessons: any[] }>('/review/queue'),
+  reviewLesson: (id: number, decision: 'approve' | 'changes', note: string) =>
+    request<{ message: string; lesson: any }>(`/review/lessons/${id}`, { method: 'POST', body: JSON.stringify({ decision, note }) }),
   getAdminContent: () => request<{ content: any[] }>('/admin/content'),
   getCreators: () => request<{ staff: any[] }>('/admin/creators'),
   getAdminIssues: () => request<{ issues: any[] }>('/admin/issues'),

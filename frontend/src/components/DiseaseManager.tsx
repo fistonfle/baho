@@ -4,12 +4,11 @@ import { api, type DiseasePayload } from '../services/api';
 import { setCategories, setFeedbackMessage, upsertCurriculum } from '../store/appSlice';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import type { Curriculum } from '../types';
-
-const icons = ['✚', '❤', '◉', '♥', '🫁', '🧠', '🩸', '🦴', '👁', '🫀'];
+import { Panel } from './ui';
 
 type DiseaseForm = { name: string; icon: string; about: string; description: string; riskFactors: string; warningSigns: string; prevention: string };
 
-const emptyForm: DiseaseForm = { name: '', icon: '✚', about: '', description: '', riskFactors: '', warningSigns: '', prevention: '' };
+const emptyForm: DiseaseForm = { name: '', icon: '', about: '', description: '', riskFactors: '', warningSigns: '', prevention: '' };
 
 // One item per line in the form, a list in the API.
 const toLines = (items: string[]) => items.join('\n');
@@ -30,7 +29,7 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
     setEditingId(disease.id);
     setForm({
       name: disease.condition || '',
-      icon: disease.icon || '✚',
+      icon: disease.icon || '',
       about: disease.about,
       description: disease.description,
       riskFactors: toLines(disease.riskFactors),
@@ -71,65 +70,63 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
     }
   };
 
+  const field = (key: keyof DiseaseForm, label: string, hint?: string, multiline = true, placeholder = '') => (
+    <div className="form-group">
+      <label htmlFor={`disease-${key}`}>{label}</label>
+      {multiline
+        ? <textarea id={`disease-${key}`} className="input" value={form[key]} placeholder={placeholder} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))} />
+        : <input id={`disease-${key}`} className="input" value={form[key]} placeholder={placeholder} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))} />}
+      {hint && <span className="form-hint">{hint}</span>}
+    </div>
+  );
+
   return (
-    <section className="admin-section admin-two-col">
-      <form className="question-card disease-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-        <h3>{editingId ? 'Hindura amakuru y\'indwara' : 'Ongeraho indwara nshya'}</h3>
-        <p className="form-hint">Indwara nshya ihita igaragara mu gice cy'indwara, mu mwirondoro w'ubuzima no mu nzira z'imyigire.</p>
-        <label className="creator-field">
-          <span>Izina ry'indwara</span>
-          <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="Urugero: Asima" required />
-        </label>
-        <div className="creator-field">
-          <span>Ikimenyetso</span>
-          <div className="icon-picker" role="radiogroup" aria-label="Ikimenyetso cy'indwara">
-            {icons.map((icon) => (
-              <button type="button" key={icon} role="radio" aria-checked={form.icon === icon} className={form.icon === icon ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, icon }))}>{icon}</button>
-            ))}
+    <div className="layout-main-aside">
+      <Panel title={`Indwara ziri muri Baho (${diseases.length})`} description="Buri ndwara igira icyiciro cy'amasomo n'inzira y'imyigire." flush>
+        <div className="table-wrap">
+          <table className="table">
+            <thead><tr><th>Indwara</th><th>Amasomo yasohotse</th><th className="right">Igikorwa</th></tr></thead>
+            <tbody>
+              {diseases.map((disease) => (
+                <tr key={disease.id}>
+                  <td><strong>{disease.condition}</strong><div className="small muted">{disease.description}</div></td>
+                  <td>{disease.lessonIds.length}</td>
+                  <td className="right">
+                    <div className="actions">
+                      <button className="btn btn-secondary btn-sm" onClick={() => startEdit(disease)}>Hindura</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Andika isomo</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      <form className="panel" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+        <div className="panel-head">
+          <div>
+            <h2>{editingId ? 'Hindura amakuru y\'indwara' : 'Ongeraho indwara'}</h2>
+            <p>Indwara nshya igaragara mu gice cy'indwara, mu mwirondoro w'ubuzima no mu nzira z'imyigire.</p>
           </div>
         </div>
-        <label className="creator-field">
-          <span>Ni iki? (ibisobanuro)</span>
-          <textarea value={form.about} onChange={(event) => setForm((current) => ({ ...current, about: event.target.value }))} placeholder="Sobanura indwara mu nteruro nke zoroshye" required />
-        </label>
-        <label className="creator-field">
-          <span>Ibyongera ibyago (kimwe ku murongo)</span>
-          <textarea value={form.riskFactors} onChange={(event) => setForm((current) => ({ ...current, riskFactors: event.target.value }))} placeholder={'Umwotsi\nIvumbi'} />
-        </label>
-        <label className="creator-field">
-          <span>Ibimenyetso (kimwe ku murongo)</span>
-          <textarea value={form.warningSigns} onChange={(event) => setForm((current) => ({ ...current, warningSigns: event.target.value }))} placeholder="Guhumeka nabi" />
-        </label>
-        <label className="creator-field">
-          <span>Uko wayirinda (kimwe ku murongo)</span>
-          <textarea value={form.prevention} onChange={(event) => setForm((current) => ({ ...current, prevention: event.target.value }))} placeholder="Irinde umwotsi" />
-        </label>
-        <label className="creator-field">
-          <span>Interuro y'inzira y'imyigire (si ngombwa)</span>
-          <input value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Wige kubana neza n'iyi ndwara." />
-        </label>
-        <div className="creator-form-actions">
-          <button className="primary" type="submit">{editingId ? 'Bika impinduka' : 'Ongeraho indwara'}</button>
-          {editingId && <button type="button" className="creator-cancel" onClick={reset}>Hagarika</button>}
+        <div className="panel-body">
+          <div className="form-group">
+            <label htmlFor="disease-name">Izina ry'indwara</label>
+            <input id="disease-name" className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="Urugero: Asima" required />
+          </div>
+          {field('about', 'Ni iki?', 'Interuro nke zoroshye.')}
+          {field('riskFactors', 'Ibyongera ibyago', 'Kimwe ku murongo.')}
+          {field('warningSigns', 'Ibimenyetso', 'Kimwe ku murongo.')}
+          {field('prevention', 'Uko wayirinda', 'Kimwe ku murongo.')}
+          {field('description', 'Interuro y\'inzira y\'imyigire', 'Si ngombwa.', false)}
+        </div>
+        <div className="panel-foot form-actions">
+          <button className="btn btn-primary" type="submit">{editingId ? 'Bika impinduka' : 'Ongeraho indwara'}</button>
+          {editingId && <button type="button" className="btn btn-secondary" onClick={reset}>Hagarika</button>}
         </div>
       </form>
-
-      <div>
-        <h3 className="subheading">Indwara ziri muri Baho ({diseases.length})</h3>
-        {diseases.map((disease) => (
-          <article key={disease.id} className="disease-row">
-            <span className="disease-icon" aria-hidden="true">{disease.icon || '✚'}</span>
-            <div>
-              <strong>{disease.condition}</strong>
-              <p>Amasomo {disease.lessonIds.length} yasohotse</p>
-            </div>
-            <div className="admin-row-actions">
-              <button className="small-button" onClick={() => startEdit(disease)}>Hindura</button>
-              <button className="small-button approve" onClick={() => onWriteLesson(disease)}>+ Isomo</button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+    </div>
   );
 }

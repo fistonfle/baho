@@ -119,6 +119,16 @@ const createSchemaSql = `
   ALTER TABLE curricula ADD COLUMN IF NOT EXISTS warning_signs JSONB NOT NULL DEFAULT '[]';
   ALTER TABLE curricula ADD COLUMN IF NOT EXISTS prevention JSONB NOT NULL DEFAULT '[]';
 
+  CREATE TABLE IF NOT EXISTS specialist_topics (
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, category_id)
+  );
+
+  ALTER TABLE content ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  ALTER TABLE content ADD COLUMN IF NOT EXISTS review_note TEXT;
+  ALTER TABLE content ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
+
   CREATE TABLE IF NOT EXISTS curriculum_lessons (
     curriculum_id INTEGER REFERENCES curricula(id) ON DELETE CASCADE,
     content_id INTEGER REFERENCES content(id) ON DELETE CASCADE,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { AppNav } from './components/AppNav';
+import { SiteFooter, SiteHeader, TabBar } from './components/AppNav';
 import { AdminScreen } from './components/screens/AdminScreen';
 import { AuthScreen } from './components/screens/AuthScreen';
 import { CheckupScreen, loadKnowledgeResults } from './components/screens/CheckupScreen';
@@ -107,7 +107,7 @@ function App() {
     questionForm, authForm, authMode, authUser, feedbackMessage, faqItems, questions, isOnline,
     activeCategory, completedLessons, selectedNcdTopic, riskTags, curricula, categories, quizScores
   } = state;
-  const isStaff = authUser?.role === 'admin' || authUser?.role === 'creator';
+  const isStaff = ['admin', 'creator', 'specialist'].includes(authUser?.role ?? '');
 
   const [healthProfile, setHealthProfile] = useState<HealthProfile>(emptyHealthProfile);
   const [activePathSlug, setActivePathSlug] = useState<string | null>(() => localStorage.getItem(PATH_KEY));
@@ -212,7 +212,9 @@ function App() {
   // Staff data is only loaded when the staff area is opened.
   useEffect(() => {
     if (currentScreen !== 'admin' || !isStaff) return;
-    api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Ntibyashobotse kuzana amasomo.'));
+    if (authUser?.role !== 'specialist') {
+      api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Ntibyashobotse kuzana amasomo.'));
+    }
     api.getQuestions().then((response) => dispatch(setQuestions(response.questions.map(toQuestionItem)))).catch(() => undefined);
     if (authUser?.role === 'admin') {
       api.getCreators().then((response) => dispatch(setAdminCreators(response.staff))).catch(() => undefined);
@@ -545,6 +547,7 @@ function App() {
             onSignIn={() => openAuth('login')}
             onRegister={() => openAuth('register')}
             onSignOut={signOut}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'paths':
@@ -556,6 +559,7 @@ function App() {
             completedLessons={completedLessons}
             onChoose={(slug) => choosePath(slug)}
             onEditProfile={() => navigate('risk')}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'dashboard':
@@ -598,6 +602,7 @@ function App() {
             setSelectedLesson={(lesson) => dispatch(setSelectedLesson(lesson))}
             markLessonComplete={(id) => void markLessonComplete(id)}
             submitQuiz={submitQuiz}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'ncd':
@@ -610,12 +615,13 @@ function App() {
             onSelectTopic={(index) => dispatch(setSelectedNcdTopic(index))}
             onOpenLesson={openLesson}
             onStartCheckup={() => navigate('checkup')}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'checkup':
-        return <CheckupScreen onFinished={() => { setKnowledgeResults(loadKnowledgeResults()); logActivity(); }} onOpenNcd={() => navigate('ncd')} />;
+        return <CheckupScreen onFinished={() => { setKnowledgeResults(loadKnowledgeResults()); logActivity(); }} onOpenNcd={() => navigate('ncd')} onHome={() => navigate('dashboard')} />;
       case 'exercise':
-        return <ExerciseScreen onExerciseDone={(title) => { logActivity(); notify(`Wakoze neza! "${title}" yarangiye.`); }} />;
+        return <ExerciseScreen onExerciseDone={(title) => { logActivity(); notify(`Wakoze neza! "${title}" yarangiye.`); }} onHome={() => navigate('dashboard')} />;
       case 'reminders':
         return (
           <RemindersScreen
@@ -627,6 +633,7 @@ function App() {
             onAdd={() => void addReminder()}
             onDelete={(id) => void deleteReminder(id)}
             onEnableNotifications={() => void enableNotifications()}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'faq':
@@ -644,10 +651,11 @@ function App() {
             onAskQuestion={() => void askQuestion()}
             onReportIssue={() => void reportIssue()}
             onSignIn={() => openAuth()}
+            onHome={() => navigate('dashboard')}
           />
         );
       case 'admin':
-        return isStaff ? <AdminScreen /> : null;
+        return isStaff ? <AdminScreen onHome={() => navigate('dashboard')} /> : null;
       default:
         return null;
     }
@@ -655,30 +663,38 @@ function App() {
 
   const showNav = learnerScreens.includes(currentScreen) && !(currentScreen === 'risk' && riskFromOnboarding);
 
+  const showFrame = currentScreen !== 'risk' || !riskFromOnboarding;
+
   return (
-    <div className={`app-shell ${showNav ? 'with-nav' : ''}`}>
-      {showNav && (
-        <AppNav
+    <div className={`app-shell ${showNav ? 'with-tab-bar' : ''}`}>
+      <a className="skip-link" href="#main">Jya ku bikubiye</a>
+      {showFrame && (
+        <SiteHeader
           currentScreen={currentScreen}
           userName={authUser?.name || userName}
+          role={authUser?.role ?? null}
           isOnline={isOnline}
           isSignedIn={Boolean(authUser)}
           isStaff={isStaff}
+          showNav={showNav}
           onNavigate={navigate}
           onSignIn={() => openAuth()}
           onSignOut={signOut}
+          onHome={() => navigate(userName || authUser ? 'dashboard' : 'landing')}
         />
       )}
-      {!isOnline && showNav && (
-        <div className="offline-banner" role="status">
-          <span aria-hidden="true">⚡</span> Nta internet. Urakoresha amasomo wabitse kuri telefoni.
+      {!isOnline && (
+        <div className="offline-notice" role="status">
+          <div className="container">Nta internet ihari. Urakoresha amasomo wabitse kuri iyi telefoni; ibyo wohereje bizoherezwa internet nigaruka.</div>
         </div>
       )}
-      {renderScreen()}
+      <main id="main" className="site-main">{renderScreen()}</main>
+      {showFrame && <SiteFooter onNavigate={navigate} />}
+      {showNav && <TabBar currentScreen={currentScreen} onNavigate={navigate} />}
       {feedbackMessage && (
         <div className="toast" role="status" aria-live="polite">
           <p>{feedbackMessage}</p>
-          <button onClick={() => dispatch(setFeedbackMessage(''))} aria-label="Funga">×</button>
+          <button onClick={() => dispatch(setFeedbackMessage(''))} aria-label="Funga">Funga</button>
         </div>
       )}
     </div>

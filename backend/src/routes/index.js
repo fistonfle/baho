@@ -9,6 +9,7 @@ import { authenticate, requireRole } from '../modules/auth/security.js';
 import { createReminder, deleteReminder, getReminders } from '../modules/reminders/reminders.controller.js';
 import { completeLesson, getProgress } from '../modules/progress/progress.controller.js';
 import { getCurricula, patchDisease, postDisease, submitQuizAttempt } from '../modules/learning/learning.controller.js';
+import { getReviewQueue, putSpecialistTopics, reviewLesson } from '../modules/review/review.controller.js';
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.patch('/admin/faqs/:id', authenticate, requireRole('admin'), updateFaq);
 router.delete('/admin/faqs/:id', authenticate, requireRole('admin'), deleteFaq);
 router.get('/questions', authenticate, getQuestions);
 router.post('/questions', authenticate, createQuestion);
-router.post('/questions/:id/answer', authenticate, requireRole('admin', 'creator'), answerQuestion);
+router.post('/questions/:id/answer', authenticate, requireRole('admin', 'creator', 'specialist'), answerQuestion);
 router.post('/issues', createIssue);
 router.get('/reminders', authenticate, getReminders);
 router.post('/reminders', authenticate, createReminder);
@@ -37,6 +38,9 @@ router.post('/auth/login', login);
 router.post('/auth/register', register);
 router.post('/admin/creators', authenticate, requireRole('admin'), createCreator);
 router.get('/admin/creators', authenticate, requireRole('admin'), getCreators);
+router.put('/admin/staff/:id/topics', authenticate, requireRole('admin'), putSpecialistTopics);
+router.get('/review/queue', authenticate, requireRole('specialist'), getReviewQueue);
+router.post('/review/lessons/:id', authenticate, requireRole('specialist'), reviewLesson);
 router.post('/admin/content', authenticate, requireRole('admin', 'creator'), createContent);
 router.patch('/admin/content/:id', authenticate, requireRole('admin', 'creator'), updateContent);
 router.patch('/admin/content/:id/status', authenticate, requireRole('admin'), updateContentStatus);
