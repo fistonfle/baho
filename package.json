@@ -11,6 +11,8 @@
     "preview": "npm --prefix frontend run build && npm --prefix frontend run preview",
     "test": "npm --prefix backend run test",
     "test:backend": "npm --prefix backend run test",
-    "docker:up": "docker compose up --build"
+    "docker:up": "docker compose up --build",
+    "translations:export": "node scripts/translations/export.mjs",
+    "translations:apply": "node scripts/translations/apply.mjs"
   }
 }
