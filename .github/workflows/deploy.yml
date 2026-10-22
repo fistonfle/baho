@@ -1,0 +1,134 @@
+# Test, build and deploy Baho to the VM on every push to main (or by hand).
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   VM_HOST, VM_SSH_PORT, VM_USER, VM_SSH_KEY   SSH access to the VM
+# The VM needs /app/baho/.env (see deploy/.env.production.example) and the
+# Caddy block from deploy/Caddyfile.snippet before the first deploy.
+name: Test and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  APP_DIR: /app/baho
+
+jobs:
+  test:
+    name: Tests and build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Backend tests (demo mode, no database)
+        working-directory: backend
+        run: npm ci && npm test
+      - name: Frontend type check and build
+        working-directory: frontend
+        run: npm ci && npm run build
+
+  build:
+    name: Build ${{ matrix.part }} image
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        part: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.part }}
+          push: true
+          provenance: false
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/baho-${{ matrix.part }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/baho-${{ matrix.part }}:latest
+
+  deploy:
+    name: Deploy to VM
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make sure the app folder exists
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          port: ${{ secrets.VM_SSH_PORT }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: mkdir -p ${{ env.APP_DIR }}
+
+      - name: Copy the compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          port: ${{ secrets.VM_SSH_PORT }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: deploy/docker-compose.production.yml
+          target: ${{ env.APP_DIR }}/
+          strip_components: 1
+
+      - name: Pull the new images and restart
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_DIR: ${{ env.APP_DIR }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          port: ${{ secrets.VM_SSH_PORT }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          envs: IMAGE_TAG,GHCR_USER,GHCR_TOKEN,APP_DIR
+          command_timeout: 20m
+          script: |
+            set -e
+            cd "$APP_DIR"
+            if [ ! -f .env ]; then
+              echo "Missing $APP_DIR/.env. Create it from deploy/.env.production.example first."
+              exit 1
+            fi
+
+            # A registry login of Baho's own, so the VM's saved login used by the
+            # other stacks is not replaced by this short-lived token.
+            export DOCKER_CONFIG="$APP_DIR/.docker"
+            mkdir -p "$DOCKER_CONFIG"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            export IMAGE_TAG
+            docker compose -f docker-compose.production.yml pull
+            docker compose -f docker-compose.production.yml up -d
+            docker logout ghcr.io >/dev/null 2>&1 || true
+            docker compose -f docker-compose.production.yml ps
+
+            echo "Waiting for the API..."
+            for i in $(seq 1 30); do
+              health=$(docker exec baho-backend wget -qO- http://localhost:4000/api/v1/health 2>/dev/null || true)
+              case "$health" in
+                *postgres-connected*) echo "Baho is up: $health"; exit 0 ;;
+              esac
+              sleep 3
+            done
+            echo "The API did not report a database connection in 90 seconds."
+            docker logs --tail 60 baho-backend
+            exit 1

@@ -1,9 +1,10 @@
 // Baho service worker: keeps the app shell and audio lessons available offline.
-// Lesson text and FAQs come from the API on another origin; the app keeps its
-// own copy of those in localStorage (see src/lib/offline.ts), so the worker
-// leaves cross-origin requests alone.
+// Lesson text and FAQs come from the API (under /api/ on the same site when
+// deployed, or another origin in development); the app keeps its own copy of
+// those in localStorage (see src/lib/offline.ts), so the worker leaves API
+// requests alone and they always reach the server.
 // Bump the version when the caching rules change so old caches are removed.
-const VERSION = 'baho-v2';
+const VERSION = 'baho-v3';
 const SHELL_CACHE = `${VERSION}-shell`;
 const AUDIO_CACHE = `${VERSION}-audio`;
 
@@ -33,7 +34,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
   // Page navigations: try the network, fall back to the cached app shell.
   if (request.mode === 'navigate') {

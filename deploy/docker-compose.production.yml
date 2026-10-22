@@ -1,0 +1,66 @@
+# Baho on a shared VM, next to other stacks behind one Caddy.
+# Every name Docker treats as global starts with "baho" so nothing clashes:
+#
+#   project      baho
+#   containers   baho-postgres, baho-backend, baho-frontend
+#   pg volume    baho_baho_pg_data
+#
+# Only the backend and frontend join the Caddy network; PostgreSQL stays private.
+name: baho
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: baho-postgres
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-baho}
+      POSTGRES_USER: ${POSTGRES_USER:-baho}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - baho_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-baho} -d ${POSTGRES_DB:-baho}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+
+  baho-backend:
+    image: ghcr.io/fistonfle/baho-backend:${IMAGE_TAG:-latest}
+    container_name: baho-backend
+    restart: unless-stopped
+    mem_limit: 512m
+    expose:
+      - "4000"
+    env_file:
+      - .env
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-baho}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-baho}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - caddy
+
+  baho-frontend:
+    image: ghcr.io/fistonfle/baho-frontend:${IMAGE_TAG:-latest}
+    container_name: baho-frontend
+    restart: unless-stopped
+    mem_limit: 128m
+    expose:
+      - "80"
+    networks:
+      - caddy
+
+volumes:
+  baho_pg_data:
+
+networks:
+  caddy:
+    external: true
+    name: ${CADDY_NETWORK:-sagamba-net}
