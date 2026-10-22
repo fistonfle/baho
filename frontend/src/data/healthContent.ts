@@ -86,7 +86,7 @@ export const offlineDiseases: Curriculum[] = ncdTopics.map((topic, index) => ({
   prevention: topic.prevention
 }));
 
-export type ExerciseLevel = 'Nshya' | 'Hagati' | 'Nabimenyereye';
+export type ExerciseLevel = 'Iya abatangira' | 'Iyabageze Hagati' | 'Iyabisumbuye';
 
 export type Exercise = {
   id: string;
@@ -98,15 +98,15 @@ export type Exercise = {
 };
 
 export const exerciseLevels: { level: ExerciseLevel; hint: string }[] = [
-  { level: 'Nshya', hint: 'Ntabwo nkunda gukora imyitozo' },
-  { level: 'Hagati', hint: 'Nkora imyitozo rimwe na rimwe' },
-  { level: 'Nabimenyereye', hint: 'Nkora imyitozo kenshi' }
+  { level: 'Iya abatangira', hint: 'Ntabwo nkunda gukora imyitozo' },
+  { level: 'Iyabageze Hagati', hint: 'Nkora imyitozo rimwe na rimwe' },
+  { level: 'Iyabisumbuye', hint: 'Nkora imyitozo kenshi' }
 ];
 
 export const exercises: Exercise[] = [
   {
     id: 'walk-10',
-    level: 'Nshya',
+    level: 'Iya abatangira',
     title: 'Kugenda buhoro',
     minutes: 10,
     icon: '🚶',
@@ -114,7 +114,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'stretch',
-    level: 'Nshya',
+    level: 'Iya abatangira',
     title: 'Kurambura imitsi',
     minutes: 5,
     icon: '🙆',
@@ -122,7 +122,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'walk-30',
-    level: 'Hagati',
+    level: 'Iyabageze Hagati',
     title: 'Kugenda iminota 30',
     minutes: 30,
     icon: '🚶',
@@ -130,7 +130,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'farm',
-    level: 'Hagati',
+    level: 'Iyabageze Hagati',
     title: 'Imirimo yo mu murima',
     minutes: 30,
     icon: '🌱',
@@ -138,7 +138,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'brisk',
-    level: 'Nabimenyereye',
+    level: 'Iyabisumbuye',
     title: 'Kugenda vuba no kuzamuka umusozi',
     minutes: 40,
     icon: '⛰',
@@ -146,7 +146,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'dance',
-    level: 'Nabimenyereye',
+    level: 'Iyabisumbuye',
     title: 'Kubyina',
     minutes: 20,
     icon: '💃',

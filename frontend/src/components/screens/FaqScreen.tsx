@@ -110,7 +110,7 @@ export function FaqScreen({
               ) : (
                 <>
                   <p className="small">Injira cyangwa ufungure konti kugira ngo wohereze ibibazo ku nzobere z'ubuzima kandi urebe ibisubizo.</p>
-                  <button className="btn btn-secondary" onClick={onSignIn}>Injira muri konti</button>
+                  <button className="btn btn-secondary" onClick={onSignIn}>Injira</button>
                 </>
               )}
             </div>
@@ -128,7 +128,7 @@ export function FaqScreen({
           </section>
 
           <form className="panel" onSubmit={(event) => { event.preventDefault(); onReportIssue(); }}>
-            <div className="panel-head"><h2>Tanga raporo</h2></div>
+            <div className="panel-head"><h2>Tanga ikibazo</h2></div>
             <div className="panel-body">
               <div className="form-group">
                 <label htmlFor="issue-title">Ikibazo</label>

@@ -5,7 +5,7 @@ import { AudioPlayer } from '../AudioPlayer';
 import { PageHeader } from '../ui';
 
 export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (title: string) => void; onHome: () => void }) {
-  const [level, setLevel] = useState<ExerciseLevel>('Nshya');
+  const [level, setLevel] = useState<ExerciseLevel>('Iya abatangira');
   const levelExercises = exercises.filter((exercise) => exercise.level === level);
   const [openId, setOpenId] = useState(levelExercises[0].id);
   const [doneIds, setDoneIds] = useState<string[]>([]);

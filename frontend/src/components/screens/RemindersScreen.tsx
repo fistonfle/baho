@@ -39,7 +39,7 @@ export function RemindersScreen({
     <div className="container">
       <PageHeader
         crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Ibyibutsa' }]}
-        title="Ibyibutsa"
+        title="Ibyo tukwibutsa"
         lead={<>{isSignedIn ? 'Bibitswe kuri konti yawe.' : 'Bibitswe kuri iyi telefoni.'} {nextReminder && <>Igikurikira: <strong>{nextReminder.time}</strong>, {nextReminder.label}.</>}</>}
       />
       {!notificationsAllowed && 'Notification' in window && (
@@ -50,7 +50,7 @@ export function RemindersScreen({
       )}
       <div className="layout-main-aside">
         <section className="panel">
-          <div className="panel-head"><h2>Urutonde rw'ibyibutsa</h2></div>
+          <div className="panel-head"><h2>Urutonde rw'ibyo tukwibutsa</h2></div>
           <div className="panel-body flush">
             {sorted.length === 0 ? <Empty>Nta byibutsa urashyiraho.</Empty> : (
               <table className="table">
@@ -67,11 +67,11 @@ export function RemindersScreen({
               </table>
             )}
           </div>
-          <div className="panel-foot small muted">Ubutumwa bwo kwibutsa bugaragara igihe Baho ifunguye. Nta internet, ibyibutsa biguma bigaragara hano.</div>
+          <div className="panel-foot small muted">Ubutumwa bwo bwibyo tukwibutsa gukora bugaragara igihe Baho ifunguye. Nta internet, ibyo tukwibutsa bigaragara hano.</div>
         </section>
 
         <form className="panel" onSubmit={(event) => { event.preventDefault(); onAdd(); }}>
-          <div className="panel-head"><h2>Ongeraho icyibutsa</h2></div>
+          <div className="panel-head"><h2>Ongeraho icyo twakibutsa</h2></div>
           <div className="panel-body">
             <div className="form-group">
               <label htmlFor="reminder-preset">Icyitegererezo</label>

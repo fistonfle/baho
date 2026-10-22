@@ -154,7 +154,7 @@ export const seedLessons = [
     imageUrl: '/images/medicine.svg',
     quiz: [
       { question: 'Ufata imiti ariko wumva umeze neza. Ukora iki?', options: ['Ukomeza kuyifata nk\'uko muganga yabivuze', 'Uyihagarika', 'Uyifata rimwe mu cyumweru'], answerIndex: 0, explanation: 'Imiti ikora neza iyo ifashwe buri munsi.' },
-      { question: 'Ni iki cyagufasha kutibagirwa imiti?', options: ['Icyibutsa muri Baho', 'Kuyibika kure'], answerIndex: 0, explanation: 'Ibyibutsa bigufasha gufata imiti ku gihe.' }
+      { question: 'Ni iki cyagufasha kutibagirwa imiti?', options: ['Icyibutsa muri Baho', 'Kuyibika kure'], answerIndex: 0, explanation: 'Ibyo tukwibutsa bigufasha gufata imiti ku gihe.' }
     ]
   },
   {
@@ -190,7 +190,7 @@ export const seedLessons = [
 export const seedCurricula = [
   {
     slug: 'prevention',
-    title: 'Inzira yo kwirinda',
+    title: 'Ingingo yo kwirinda',
     condition: null,
     description: 'Amasomo y\'ibanze yo kwirinda indwara zitandura.',
     imageUrl: '/images/walking.svg',
@@ -198,7 +198,7 @@ export const seedCurricula = [
   },
   {
     slug: 'hypertension',
-    title: 'Inzira y\'umuvuduko w\'amaraso',
+    title: 'Ingingo y\'umuvuduko w\'amaraso',
     condition: 'Umuvuduko w\'amaraso ukabije',
     description: 'Wige kubana neza n\'umuvuduko w\'amaraso ukabije.',
     imageUrl: '/images/bp-check.svg',
@@ -212,7 +212,7 @@ export const seedCurricula = [
   },
   {
     slug: 'diabetes',
-    title: 'Inzira ya diyabete',
+    title: 'Ingingo ya diyabete',
     condition: 'Diyabete',
     description: 'Wige gucunga isukari n\'imibereho ya buri munsi.',
     imageUrl: '/images/glucose.svg',
@@ -226,7 +226,7 @@ export const seedCurricula = [
   },
   {
     slug: 'heart',
-    title: 'Inzira y\'umutima muzima',
+    title: 'Ingingo y\'umutima muzima',
     condition: 'Indwara z\'umutima',
     description: 'Wige kurinda umutima no kumenya ibimenyetso by\'ingenzi.',
     imageUrl: '/images/heart.svg',
@@ -240,7 +240,7 @@ export const seedCurricula = [
   },
   {
     slug: 'cancer',
-    title: 'Inzira yo kwirinda kanseri',
+    title: 'Ingingo yo kwirinda kanseri',
     condition: 'Kanseri',
     description: 'Kwipimisha kare n\'imibereho igabanya ibyago bya kanseri.',
     imageUrl: '/images/screening.svg',

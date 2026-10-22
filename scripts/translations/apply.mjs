@@ -100,7 +100,15 @@ if (updateDb && !dryRun) {
     if (before.includes('${')) continue;
     for (const [table, columns] of Object.entries(textColumns)) {
       for (const name of columns) {
-        rows += (await pool.query(`UPDATE ${table} SET ${name} = $2 WHERE ${name} = $1`, [before, corrected])).rowCount;
+        // Only touch columns that hold this text: PostgreSQL checks the new value's
+        // length against the column even when no row would change.
+        const found = await pool.query(`SELECT 1 FROM ${table} WHERE ${name} = $1::text LIMIT 1`, [before]);
+        if (!found.rowCount) continue;
+        try {
+          rows += (await pool.query(`UPDATE ${table} SET ${name} = $2::text WHERE ${name} = $1::text`, [before, corrected])).rowCount;
+        } catch (error) {
+          problems.push(`Database ${table}.${name}: ${error.message} ("${before.slice(0, 40)}")`);
+        }
       }
     }
     for (const [table, columns] of Object.entries(listColumns)) {

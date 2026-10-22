@@ -9,8 +9,8 @@ import { PageHeader } from '../ui';
 type AuthMode = 'login' | 'register';
 
 const headings: Record<AuthMode, { title: string; text: string; button: string }> = {
-  login: { title: 'Injira muri konti', text: 'Injira ukoresheje nimero ya telefoni na PIN yawe.', button: 'Injira' },
-  register: { title: 'Fungura konti', text: 'Ukeneye nimero ya telefoni gusa. Konti ibika aho ugeze, amanota, ibyibutsa n\'ibibazo wohereje.', button: 'Fungura konti' }
+  login: { title: 'Injira', text: 'Injira ukoresheje nimero ya telefoni na PIN yawe.', button: 'Injira' },
+  register: { title: 'Fungura konti', text: 'Ukeneye nimero ya telefoni gusa. Tubika aho ugeze wiga, amanota, ibyo dukwiye kukwibutsa n\'ibibazo watubajije.', button: 'Fungura konti' }
 };
 
 // Same rule as the server: 07X XXX XXXX with an MTN or Airtel prefix, with or without +250.
@@ -111,7 +111,7 @@ export function AuthScreen({
                   required
                 />
                 <span className="form-hint">
-                  {mode === 'register' ? 'Imibare 4 kugeza kuri 6. Ntuyibwire undi muntu.' : 'Nyuma yo kwibeshya inshuro 5, tegereza iminota 15.'}
+                  {mode === 'register' ? 'Shyiramo imibare 4 kugeza kuri 6. Ntuyibwire undi muntu.' : 'Nyuma yo kwibeshya inshuro 5, tegereza iminota 15.'}
                 </span>
               </div>
             </>
@@ -129,7 +129,7 @@ export function AuthScreen({
                 : <button type="button" className="btn-link" onClick={() => switchMethod(true)}>Staff sign-in (email)</button>}
             </p>
           )}
-          {!useEmail && <p className="small muted">Ushobora no gukoresha Baho nta konti; ibyo wize bibikwa kuri iyi telefoni.</p>}
+          {!useEmail && <p className="small muted">Ushobora no gukoresha Baho nta konti; ibyo wize bibikwa kuri iki gikoresho.</p>}
         </div>
       </form>
     </div>

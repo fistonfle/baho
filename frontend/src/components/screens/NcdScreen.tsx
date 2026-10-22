@@ -60,7 +60,7 @@ export function NcdScreen({
           <section className="panel">
             <div className="panel-head"><h2>Isuzuma ry'ubumenyi</h2></div>
             <div className="panel-body">
-              <p className="small">Ibibazo 5 byoroshye. Bikore mbere na nyuma yo kwiga urebe aho watereye imbere.</p>
+              <p className="small">Ibibazo 5 byoroshye. Bikore mbere na nyuma yo kwiga urebe aho wahereye imbere.</p>
               <button className="btn btn-primary btn-sm" onClick={onStartCheckup}>Tangira isuzuma</button>
             </div>
           </section>
@@ -82,7 +82,7 @@ export function NcdScreen({
 
             {diseaseLessons.length > 0 && (
               <>
-                <h3 className="section-title">Amasomo kuri {disease.condition}</h3>
+                <h3 className="section-title">Amasomo ku {disease.condition}</h3>
                 <table className="table">
                   <tbody>
                     {diseaseLessons.map((lesson, index) => (

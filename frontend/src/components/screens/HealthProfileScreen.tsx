@@ -42,11 +42,11 @@ export function HealthProfileScreen({
       <PageHeader
         crumbs={fromOnboarding ? [{ label: 'Kwiyandikisha' }, { label: 'Umwirondoro w\'ubuzima' }] : [{ label: 'Ahabanza', onClick: onSkip }, { label: 'Umwirondoro w\'ubuzima' }]}
         title="Umwirondoro w'ubuzima"
-        lead="Ibi bisubizo bidufasha kuguhitiramo inzira y'imyigire n'amasomo akubereye. Ni ubushake."
+        lead="Ibi bisubizo bidufasha kuguhitiramo ingingo y'imyigire n'amasomo akubereye. Ni ubushake."
       />
       {fromOnboarding && (
         <ol className="stepper">
-          <li className="done">1. Ingingo n'izina</li>
+          <li className="done">1. Ingingo zigushishikaje n'izina ryawe</li>
           <li className="current">2. Umwirondoro w'ubuzima (si ngombwa)</li>
         </ol>
       )}
@@ -56,7 +56,7 @@ export function HealthProfileScreen({
 
       <div className="stack">
         <section className="panel">
-          <div className="panel-head"><div><h2>1. Indwara muganga yakubwiye ko ufite</h2><p>Hitamo izireba, cyangwa "Nta na imwe".</p></div></div>
+          <div className="panel-head"><div><h2>1. Indwara bakubwiye ko ukeneye kwigaho</h2><p>Hitamo izo ushishikariye kumenya</p></div></div>
           <div className="panel-body">
             <div className="choice-grid">
               {conditionOptions.map((condition) => (
@@ -100,7 +100,7 @@ export function HealthProfileScreen({
             {tags.length === 0
               ? <p><strong>Nta byago bikomeye bigaragaye.</strong> Komeza imibereho myiza kandi wipimishe buri mwaka.</p>
               : <>
-                <p><strong>Tuzagushyirira imbere amasomo kuri:</strong> {tags.join(', ')}.</p>
+                <p><strong>Tuzagushyirira imbere amasomo kuri izi ngingo:</strong> {tags.join(', ')}.</p>
                 {tags.length >= 3 && <p>Turakugira inama yo kwipimisha umuvuduko w'amaraso n'isukari ku kigo nderabuzima.</p>}
               </>}
           </div>

@@ -156,7 +156,7 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
       <div className="audio-main">
         <div className="audio-meta">
           <strong>{playing ? 'Biri gusomwa' : progress >= 100 ? 'Warangije kumva' : 'Umva isomo mu ijwi'}</strong>
-          <span>{source === 'file' ? `${formatTime(elapsed)} / ${formatTime(duration)}` : 'Ijwi rya mudasobwa'}</span>
+          <span>{source === 'file' ? `${formatTime(elapsed)} / ${formatTime(duration)}` : 'Ijwi ryashyizweho'}</span>
         </div>
         <input
           className="audio-seek"

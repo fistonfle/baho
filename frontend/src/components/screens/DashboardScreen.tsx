@@ -66,7 +66,7 @@ export function DashboardScreen({
       <PageHeader
         crumbs={[{ label: 'Ahabanza' }]}
         title={`Muraho, ${userName || 'nshuti'}`}
-        lead="Aha ni ho ubona inzira yawe y'imyigire, aho ugeze n'amasomo akubereye."
+        lead="Aha ni ho ubona ingingo yawe y'imyigire, aho ugeze n'amasomo akubereye."
       />
 
       <div className="grid-4" style={{ marginBottom: 20 }}>
@@ -83,7 +83,7 @@ export function DashboardScreen({
         <div className="stat">
           <div className="stat-label">Impuzandengo y'amasuzuma</div>
           <div className="stat-value">{quizAverage === null ? '–' : `${quizAverage}%`}</div>
-          <div className="small muted">Amanota meza kuri buri somo</div>
+          <div className="small muted">Amanota kuri buri somo</div>
         </div>
         <div className="stat">
           <div className="stat-label">Isuzuma ry'ubumenyi</div>
@@ -96,9 +96,9 @@ export function DashboardScreen({
         <div className="stack">
           {activePath && progressInPath ? (
             <Panel
-              title={`Inzira yawe: ${activePath.title}`}
-              description={progressInPath.done === progressInPath.total ? 'Warangije iyi nzira yose.' : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}
-              actions={<button className="btn btn-secondary btn-sm" onClick={onViewPaths}>Hindura inzira</button>}
+              title={activePath.title}
+              description={progressInPath.done === progressInPath.total ? 'Warangije iyi ngingo yose.' : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}
+              actions={<button className="btn btn-secondary btn-sm" onClick={onViewPaths}>Hindura ingingo</button>}
               flush
               footer={nextLesson && (
                 <div className="row-between">
@@ -164,7 +164,7 @@ export function DashboardScreen({
           <Panel title="Umwirondoro w'ubuzima">
             <p className="small">{hasRiskCheck
               ? (riskTags.length ? `Twibanda kuri: ${riskTags.join(', ')}.` : 'Nta byago bikomeye byagaragaye.')
-              : 'Uzuza umwirondoro kugira ngo tuguhitiremo inzira ikubereye.'}</p>
+              : 'Uzuza umwirondoro kugira ngo tuguhitiremo ingingo ikubereye.'}</p>
             <p className="small muted">Ingingo wahisemo: {selectedInterests.join(', ') || 'nta n\'imwe'}.</p>
             <div className="row">
               <button className="btn btn-secondary btn-sm" onClick={onViewRiskCheck}>{hasRiskCheck ? 'Hindura umwirondoro' : 'Uzuza umwirondoro'}</button>

@@ -33,15 +33,14 @@ export function LandingScreen({
           <div>
             <h1>Inyigisho ku ndwara zitandura, mu Kinyarwanda</h1>
             <p className="lead">
-              Baho igufasha kumenya no kwirinda umuvuduko w'amaraso ukabije, diyabete, indwara z'umutima na kanseri.
-              Amasomo ni magufi, afite amajwi n'amashusho, kandi akora no mu gihe nta internet.
+              Baho igufasha kumenya no kwirinda indwara zirimo umuvuduko w'amaraso ukabije, diyabete, indwara z'umutima na kanseri. Amasomo ni magufi, afite amajwi n'amashusho, kandi akora no mu gihe nta internet iyo yabitswe.
             </p>
             <div className="row">
               <button className="btn btn-primary" onClick={onStart}>{returning ? 'Komeza kwiga' : 'Tangira kwiga'}</button>
               <button className="btn btn-secondary" onClick={onRegister}>Fungura konti ukoresheje telefoni</button>
             </div>
             <p className="muted small" style={{ marginTop: 12 }}>
-              Ni ubuntu, kandi ushobora kwiga nta konti. Usanzwe ufite konti? <button className="btn-link" onClick={onSignIn}>Injira</button>
+              Ni ubuntu kandi ushobora gukoresha Baho nta konti. Usanzwe ufite konti? <button className="btn-link" onClick={onSignIn}>Injira</button>
             </p>
           </div>
           <figure>
@@ -102,8 +101,8 @@ export function LandingScreen({
             <div className="panel-body">
               <ol className="steps">
                 <li>Hitamo ingingo zigushishikaje, wandike izina ryawe.</li>
-                <li>Uzuza umwirondoro w'ubuzima (si ngombwa). Ibisubizo biguma kuri telefoni yawe.</li>
-                <li>Kurikira inzira yawe: umva isomo, ukore isuzuma rito, urebe aho ugeze.</li>
+                <li>Ushobora no kuzuza umwirondoro w'ubuzima. Ayo makuru aguma kugikoresho cyawe kikoronabuhanga.</li>
+                <li>Kurikira ingingo yawe: umva isomo, ukore isuzuma rito, urebe aho ugeze wiga.</li>
               </ol>
             </div>
           </div>
