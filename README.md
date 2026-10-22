@@ -1,7 +1,8 @@
 # Baho
 
-**Baho** ("live" in Kinyarwanda) is a Kinyarwanda-first, audio-first web app that teaches rural communities in Rwanda how to prevent and live with non-communicable diseases (NCDs): high blood pressure, diabetes, heart disease and cancer. Learners get a personal learning path based on their health profile, listen to short illustrated lessons, check their understanding with quizzes, and keep learning when the network drops. Health professionals write the lessons, and an administrator reviews and publishes them.
+**Baho** ("live" in Kinyarwanda) is a Kinyarwanda-first, audio-first web app that teaches rural communities in Rwanda how to prevent and live with non-communicable diseases (NCDs): high blood pressure, diabetes, heart disease and cancer. Learners get a personal learning path based on their health profile, listen to short illustrated lessons, check their understanding with quizzes, and keep learning when the network drops. Health professionals write the lessons, a specialist for each disease approves them, and an administrator publishes them.
 
+- **Live app:** https://baho.filito.rw
 - **GitHub repository:** https://github.com/fistonfle/baho
 - **Video demo:** [demo/Baho-Demo.mp4](demo/Baho-Demo.mp4) ([watch on GitHub](https://github.com/fistonfle/baho/blob/main/demo/Baho-Demo.mp4))
 - **Capstone:** BSc Software Engineering, African Leadership University (FullStack track)
@@ -19,7 +20,7 @@
 5. [Designs](#designs)
 6. [Database schema](#database-schema)
 7. [API endpoints](#api-endpoints)
-8. [Deployment plan](#deployment-plan)
+8. [Deployment](#deployment)
 9. [Demo walkthrough](#demo-walkthrough)
 10. [Scope and privacy notes](#scope-and-privacy-notes)
 
@@ -259,10 +260,22 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 
 ---
 
-## Deployment plan
+## Deployment
 
-| Part | Platform | How |
+The app is live at **https://baho.filito.rw**, on a Linux server (Docker) shared with other projects behind a Caddy web server that provides HTTPS (Let's Encrypt).
+
+| Part | Runs as | Notes |
 |---|---|---|
+| Web app (PWA) | `baho-frontend` container (nginx serving the Vite build) | Same domain as the API; installable with **Add to home screen** |
+| REST API | `baho-backend` container (Node 20) | Reached at `https://baho.filito.rw/api/v1`; health check at `/api/v1/health` |
+| Database | `baho-postgres` container (PostgreSQL 16) | Private to the stack; tables and demo content are created on the first start |
+| Routing and HTTPS | Caddy | `/api/*` to the API, everything else to the web app (`deploy/Caddyfile.snippet`) |
+
+**Continuous deployment** (`.github/workflows/deploy.yml`): every push to `main` runs the backend tests and a frontend build, builds both Docker images and pushes them to GitHub Container Registry, then connects to the server over SSH, pulls the new images, restarts the stack and waits until the health check reports a database connection. Secrets (database password, token secret, first admin) live only in `/app/baho/.env` on the server.
+
+Server setup and the files involved are described in [docs/deployment.md](docs/deployment.md). For a health centre without reliable internet, the same compose file runs on a single laptop or small server on the local network.
+
+---|---|---|
 | Web app (PWA) | **Vercel** or **Netlify** (free tier, HTTPS by default) | Build command `npm run build` in `frontend/`, publish `frontend/dist`, set `VITE_API_BASE_URL=https://<api-host>/api/v1` |
 | REST API | **Render** or **Railway** (Docker web service) | Deploy `backend/` with its `Dockerfile` (start command `npm start`); set `DATABASE_URL`, `AUTH_TOKEN_SECRET` and the first-admin variables |
 | Database | Managed **PostgreSQL** (Render, Railway or Neon) | Create the database and copy its URL into `DATABASE_URL`; tables and seed content are created on the first start |
