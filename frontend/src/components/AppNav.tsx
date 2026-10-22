@@ -83,6 +83,7 @@ export function SiteHeader({
               <button
                 className={`account-link ${currentScreen === 'profile' ? 'active' : ''}`}
                 onClick={() => onNavigate('profile')}
+                aria-label={`Umwirondoro wanjye: ${userName || 'Umushyitsi'}`}
                 aria-current={currentScreen === 'profile' ? 'page' : undefined}
               >
                 <span className="account-initial" aria-hidden="true">{(userName || 'B').trim().charAt(0).toUpperCase()}</span>

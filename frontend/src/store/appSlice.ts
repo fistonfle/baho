@@ -51,6 +51,12 @@ export type AdminContentItem = {
   reviewNote?: string;
 };
 
+// Learners sign in with a phone number and PIN, staff with an email and password.
+// `identifier` holds whichever one is typed on the sign-in screen.
+export type AuthForm = { name: string; identifier: string; password: string };
+export type AuthUser = { id: number; name: string; email: string | null; phone?: string | null; role: string };
+const emptyAuthForm: AuthForm = { name: '', identifier: '', password: '' };
+
 export type StaffMember = { id: number; fullName: string; email: string; role: string; topicIds?: number[] };
 
 type CreatorForm = { fullName: string; email: string; password: string; role: string; topicIds: number[] };
@@ -94,9 +100,9 @@ interface AppState {
   issues: IssueReport[];
   issueForm: { title: string; description: string };
   creatorForm: CreatorForm;
-  authForm: { name: string; email: string; password: string };
+  authForm: AuthForm;
   authMode: 'login' | 'register';
-  authUser: { id: number; name: string; email: string; role: string } | null;
+  authUser: AuthUser | null;
   authToken: string | null;
   feedbackMessage: string;
   contentForm: ContentForm;
@@ -129,7 +135,7 @@ const initialState: AppState = {
   issues: defaultIssues,
   issueForm: { title: '', description: '' },
   creatorForm: emptyCreatorForm,
-  authForm: { name: '', email: '', password: '' },
+  authForm: emptyAuthForm,
   authMode: 'login',
   authUser: savedSession?.user ?? null,
   authToken: savedSession?.token ?? null,
@@ -285,19 +291,19 @@ const appSlice = createSlice({
         state.completedLessons = [...state.completedLessons, action.payload];
       }
     },
-    updateAuthForm: (state, action: PayloadAction<Partial<{ name: string; email: string; password: string }>>) => {
+    updateAuthForm: (state, action: PayloadAction<Partial<AuthForm>>) => {
       state.authForm = { ...state.authForm, ...action.payload };
     },
     setAuthMode: (state, action: PayloadAction<'login' | 'register'>) => {
       state.authMode = action.payload;
     },
-    setAuthenticatedUser: (state, action: PayloadAction<{ token: string; user: { id: number; name: string; email: string; role: string } }>) => {
+    setAuthenticatedUser: (state, action: PayloadAction<{ token: string; user: AuthUser }>) => {
       state.authToken = action.payload.token;
       state.authUser = action.payload.user;
       const isStaff = ['admin', 'creator', 'specialist'].includes(action.payload.user.role);
       // A staff sign-in on a shared device must not replace the learner's own profile name.
       if (!isStaff) state.userName = action.payload.user.name;
-      state.authForm = { name: '', email: '', password: '' };
+      state.authForm = emptyAuthForm;
       state.feedbackMessage = '';
       state.currentScreen = isStaff ? 'admin' : 'dashboard';
     },

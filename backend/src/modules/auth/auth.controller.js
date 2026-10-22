@@ -1,6 +1,7 @@
 import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
+import { clearFailures, isLocked, isPin, normalizePhone, recordFailure } from './phone.js';
 import { createToken, hashPassword, verifyPassword } from './security.js';
 import { setSpecialistTopics, topicsByUser } from '../review/review.service.js';
 
@@ -11,7 +12,8 @@ const normalizedEmail = (email) => String(email || '').trim().toLowerCase();
 const publicUser = (user, role = 'learner') => ({
   id: user.id,
   name: user.full_name ?? user.fullName ?? user.name,
-  email: user.email,
+  email: user.email ?? null,
+  phone: user.phone ?? null,
   language: user.preferred_language ?? user.preferredLanguage ?? 'Kinyarwanda',
   role
 });
@@ -124,58 +126,69 @@ export const createCreator = async (req, res) => {
   }
 };
 
+// Body: { identifier, password }. The identifier is a phone number (learners)
+// or an email address (staff); `email` and `phone` are accepted too.
 export const login = async (req, res) => {
-  const { email, password } = req.body || {};
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  const { identifier = req.body?.phone ?? req.body?.email, password } = req.body || {};
+  if (!identifier || !password) {
+    return res.status(400).json({ message: 'Phone number or email and a PIN or password are required' });
   }
 
-  const cleanEmail = normalizedEmail(email);
+  const byEmail = String(identifier).includes('@');
+  const key = byEmail ? normalizedEmail(identifier) : normalizePhone(identifier);
+  if (!key) return res.status(400).json({ message: 'Enter a valid Rwandan phone number' });
+  if (isLocked(key)) {
+    return res.status(429).json({ message: 'Too many wrong attempts. Try again in 15 minutes' });
+  }
+
+  const column = byEmail ? 'email' : 'phone';
+  let user = null;
+  let role = 'learner';
   try {
     const result = await pool.query(
-      "SELECT u.id, u.full_name, u.email, u.password_hash, u.preferred_language, COALESCE(s.role, 'learner') AS role FROM users u LEFT JOIN staff s ON s.user_id = u.id WHERE u.email = $1",
-      [cleanEmail]
+      `SELECT u.id, u.full_name, u.email, u.phone, u.password_hash, u.preferred_language, COALESCE(s.role, 'learner') AS role
+       FROM users u LEFT JOIN staff s ON s.user_id = u.id WHERE u.${column} = $1`,
+      [key]
     );
-    const user = result.rows[0];
-    if (user && verifyPassword(password, user.password_hash)) {
-      const identity = publicUser(user, user.role);
-      return res.json({ token: createToken(identity), user: identity });
-    }
-  } catch (error) {
-    const user = inMemoryStore.users.find((entry) => entry.email === cleanEmail);
-    if (user && verifyPassword(password, user.passwordHash)) {
-      const role = inMemoryStore.staff.find((entry) => entry.userId === user.id)?.role || 'learner';
-      const identity = publicUser(user, role);
-      return res.json({ token: createToken(identity), user: identity });
-    }
+    user = result.rows[0] ? { ...result.rows[0], passwordHash: result.rows[0].password_hash } : null;
+    role = user?.role ?? role;
+  } catch {
+    user = inMemoryStore.users.find((entry) => entry[column] === key) ?? null;
+    role = inMemoryStore.staff.find((entry) => entry.userId === user?.id)?.role || 'learner';
   }
-  return res.status(401).json({ message: 'Invalid email or password' });
+
+  if (user && verifyPassword(password, user.passwordHash)) {
+    clearFailures(key);
+    const identity = publicUser(user, role);
+    return res.json({ token: createToken(identity), user: identity });
+  }
+  recordFailure(key);
+  return res.status(401).json({ message: 'Invalid phone number, email or PIN' });
 };
 
+// Learners register with a name, a Rwandan phone number and a 4-6 digit PIN.
 export const register = async (req, res) => {
-  const { name, email, password } = req.body || {};
-
-  if (!name?.trim() || !email?.trim() || !password || String(password).length < 8) {
-    return res.status(400).json({ message: 'Name, email and a password of at least 8 characters are required' });
+  const { name, phone, pin = req.body?.password } = req.body || {};
+  const cleanPhone = normalizePhone(phone);
+  if (!name?.trim() || !cleanPhone || !isPin(pin)) {
+    return res.status(400).json({ message: 'A name, a valid Rwandan phone number and a PIN of 4 to 6 digits are required' });
   }
-  const cleanEmail = normalizedEmail(email);
   try {
     const result = await pool.query(
-      'INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, full_name, email, preferred_language',
-      [name.trim(), cleanEmail, hashPassword(password)]
+      'INSERT INTO users (full_name, phone, password_hash) VALUES ($1, $2, $3) RETURNING id, full_name, email, phone, preferred_language',
+      [name.trim(), cleanPhone, hashPassword(pin)]
     );
     const identity = publicUser(result.rows[0]);
     return res.status(201).json({ message: 'Registration successful', user: identity, token: createToken(identity) });
   } catch (error) {
-    if (error.code === '23505') return res.status(409).json({ message: 'An account with that email already exists' });
+    if (error.code === '23505') return res.status(409).json({ message: 'An account with that phone number already exists' });
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not save the account' });
     }
-    if (inMemoryStore.users.some((user) => user.email === cleanEmail)) {
-      return res.status(409).json({ message: 'An account with that email already exists' });
+    if (inMemoryStore.users.some((user) => user.phone === cleanPhone)) {
+      return res.status(409).json({ message: 'An account with that phone number already exists' });
     }
-    const user = { id: Date.now(), fullName: name.trim(), email: cleanEmail, passwordHash: hashPassword(password) };
+    const user = { id: Date.now(), fullName: name.trim(), email: null, phone: cleanPhone, passwordHash: hashPassword(pin) };
     inMemoryStore.users.push(user);
     const identity = publicUser(user);
     return res.status(201).json({ message: 'Registration successful in demo mode', user: identity, token: createToken(identity) });

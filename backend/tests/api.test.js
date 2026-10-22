@@ -94,8 +94,8 @@ test('Admin routes reject anonymous users and learner role escalation', async ()
 
     const registerResponse = await postJson(`${baseUrl}/api/v1/auth/register`, {
       name: 'Learner One',
-      email: 'learner@example.test',
-      password: 'learner-pass-123'
+      phone: '078 123 4567',
+      pin: '2580'
     });
     assert.equal(registerResponse.status, 201);
     const learner = await registerResponse.json();
@@ -116,21 +116,41 @@ test('Admin routes reject anonymous users and learner role escalation', async ()
 test('Registered users can log in and duplicate registrations are rejected', async () => {
   const { server, baseUrl } = await startServer();
   try {
+    // The same number written another way still finds the account.
     const loginResponse = await postJson(`${baseUrl}/api/v1/auth/login`, {
-      email: 'learner@example.test',
-      password: 'learner-pass-123'
+      identifier: '+250781234567',
+      password: '2580'
     });
     assert.equal(loginResponse.status, 200);
     const login = await loginResponse.json();
     assert.equal(login.user.role, 'learner');
+    assert.equal(login.user.phone, '+250781234567');
     learnerToken = login.token;
 
     const duplicate = await postJson(`${baseUrl}/api/v1/auth/register`, {
       name: 'Learner Duplicate',
-      email: 'learner@example.test',
-      password: 'learner-pass-123'
+      phone: '0781234567',
+      pin: '1111'
     });
     assert.equal(duplicate.status, 409);
+  } finally {
+    server.close();
+  }
+});
+
+test('Phone sign-up checks the number and PIN, and wrong PINs lock the number', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    const register = (body) => postJson(`${baseUrl}/api/v1/auth/register`, body);
+    assert.equal((await register({ name: 'No Number', phone: '0712345678', pin: '1234' })).status, 400, 'not a Rwandan mobile prefix');
+    assert.equal((await register({ name: 'Short', phone: '078123', pin: '1234' })).status, 400);
+    assert.equal((await register({ name: 'Weak PIN', phone: '0791112233', pin: '12' })).status, 400);
+    assert.equal((await register({ name: 'Letters', phone: '0791112233', pin: 'abcd' })).status, 400);
+    assert.equal((await register({ name: 'Uwimana', phone: '250 79 111 2233', pin: '4826' })).status, 201);
+
+    const login = (password) => postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0791112233', password });
+    for (let attempt = 0; attempt < 5; attempt += 1) assert.equal((await login('0000')).status, 401);
+    assert.equal((await login('4826')).status, 429, 'locked even with the right PIN');
   } finally {
     server.close();
   }
@@ -293,8 +313,8 @@ test('Learner questions are authenticated and private to their owner', async () 
 
     const secondLearnerResponse = await postJson(`${baseUrl}/api/v1/auth/register`, {
       name: 'Learner Two',
-      email: 'learner-two@example.test',
-      password: 'learner-two-pass-123'
+      phone: '0721234567',
+      pin: '13579'
     });
     const secondLearner = await secondLearnerResponse.json();
     const privateList = await fetch(`${baseUrl}/api/v1/questions`, { headers: { Authorization: `Bearer ${secondLearner.token}` } });

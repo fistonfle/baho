@@ -45,11 +45,11 @@
 | Reminders with quick presets and browser notifications | `screens/RemindersScreen.tsx` | FR04 |
 | Searchable FAQ with audio answers, questions to health workers, issue reports | `screens/FaqScreen.tsx` | FR18, FR19 |
 | Offline: service worker for the app shell, images and audio; local copy of lessons; outbox for reports written offline | `public/sw.js`, `lib/offline.ts` | FR06, FR19 |
-| Responsive layout: bottom navigation on phones, top navigation on laptops | `components/AppNav.tsx`, `styles/features.css` | FR15, NFR10 |
+| Responsive layout: bottom navigation on phones, top navigation on laptops | `components/AppNav.tsx`, `styles/portal.css` | FR15, NFR10 |
 | Staff area with tabs: review queue, lessons (image, learning paths, quiz editor), diseases, learner questions, staff accounts, reports, FAQ | `screens/AdminScreen.tsx` | FR12, FR16, FR17 |
 | Installable PWA (manifest and icons) | `public/manifest.webmanifest` | NFR08 |
 
-**Roles.** *Learners* can use Baho as guests or with an account (an account keeps progress, quiz scores, reminders and questions on the server). *Creators* (health professionals) write lessons with an image, a quiz and learning paths and send them for review; they cannot publish. *Specialists* are assigned one or more diseases by an admin; every lesson on those diseases must be approved by a specialist (who sees the full lesson and the quiz answers) before it can be published, or sent back to the creator with a note. *Admins* publish approved lessons, add diseases, answer questions and manage staff and specialist assignments.
+**Roles.** *Learners* can use Baho as guests or with an account (an account keeps progress, quiz scores, reminders and questions on the server). Because most people have a phone but no email address, learners register and sign in with a **Rwandan mobile number and a 4–6 digit PIN**, like mobile money; any written form of the number works (`078 123 4567`, `+250781234567`). Five wrong PINs lock the number for 15 minutes. Staff sign in with an email and password. *Creators* (health professionals) write lessons with an image, a quiz and learning paths and send them for review; they cannot publish. *Specialists* are assigned one or more diseases by an admin; every lesson on those diseases must be approved by a specialist (who sees the full lesson and the quiz answers) before it can be published, or sent back to the creator with a note. *Admins* publish approved lessons, add diseases, answer questions and manage staff and specialist assignments.
 
 **Lesson workflow:** `draft` → `review` → `approved` (by a specialist of that disease) → `published`. A lesson sent back is `rejected` with the specialist's note shown to the creator. The rule is enforced by the API: publishing a lesson whose disease has a specialist returns `409` until it is approved. Diseases without a specialist are published by an admin directly.
 
@@ -65,7 +65,7 @@
 | Audio | HTML5 Audio + **Web Speech API** | Plays recorded Kinyarwanda MP3s; reads lessons aloud when no recording exists yet |
 | Backend | **Node.js + Express** | Lightweight REST API in the same language as the frontend |
 | Database | **PostgreSQL** (`pg` driver) | Relational data with foreign keys (users, lessons, paths, quizzes, attempts) |
-| Auth | scrypt password hashing + HMAC-signed bearer tokens, role middleware | No extra dependencies; staff routes are protected on the server |
+| Auth | Phone + PIN for learners, email + password for staff; scrypt hashing, lockout after repeated wrong PINs, HMAC-signed bearer tokens, role middleware | No extra dependencies; staff routes are protected on the server |
 | Tests | Node's built-in test runner | 15 API tests, including the full staff workflow |
 | DevOps | **Docker / Docker Compose**, Git + GitHub | Reproducible API and database environment |
 
@@ -235,7 +235,8 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 
 | Method and path | Purpose | Access |
 |---|---|---|
-| `POST /auth/register`, `POST /auth/login` | Create a learner account, sign in (returns a token) | Public |
+| `POST /auth/register` | Create a learner account: `{ name, phone, pin }` | Public |
+| `POST /auth/login` | Sign in with `{ identifier, password }`: a phone number and PIN, or a staff email and password (returns a token) | Public |
 | `GET /categories`, `GET /content`, `GET /content/:id` | Topics and published lessons (with image and quiz) | Public |
 | `GET /curricula` | Learning paths and diseases with their ordered lessons | Public |
 | `GET /faq` | Frequently asked questions | Public |
@@ -295,5 +296,5 @@ Pilot scale (proposal: 30 participants) fits the free or smallest paid tiers of 
 
 - **Privacy by design:** diagnosed conditions and lifestyle answers never leave the device. The server only stores progress, quiz scores, reminders and questions, which contain no health details.
 - **Not a diagnosis tool:** Baho does not collect blood pressure or glucose readings and does not diagnose; every lesson carries a disclaimer advising a visit to the health centre.
-- **Deliberate MVP simplifications compared with the proposal:** email and password instead of phone and PIN; three staff roles (admin, creator, specialist) as in the proposal; one signed access token instead of an access/refresh pair.
+- **Deliberate MVP simplifications compared with the proposal:** phone number and PIN for learners as in the proposal (no SMS verification yet); three staff roles (admin, creator, specialist) as in the proposal; one signed access token instead of an access/refresh pair.
 - **Content review:** the Kinyarwanda lessons and quizzes are drafts to be checked by a native speaker and a health professional before field testing.

@@ -1,4 +1,4 @@
--- Baho PostgreSQL schema (13 tables). See designs/erd.svg for the diagram.
+-- Baho PostgreSQL schema (14 tables). See designs/erd.svg for the diagram.
 -- The backend creates and migrates these tables automatically on start-up
 -- (backend/src/config/db.js); this file is the readable reference.
 
@@ -7,17 +7,18 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(160) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,              -- scrypt with a random salt
+    email VARCHAR(160) UNIQUE,                        -- staff sign in with email
+    phone VARCHAR(16) UNIQUE,                         -- learners sign in with a phone number (+2507XXXXXXXX)
+    password_hash VARCHAR(255) NOT NULL,              -- scrypt with a random salt (password or PIN)
     preferred_language VARCHAR(50) DEFAULT 'Kinyarwanda',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- A user with a staff row is an admin or a creator (health professional).
+-- A user with a staff row is an admin, a creator or a specialist (health professionals).
 CREATE TABLE IF NOT EXISTS staff (
     id SERIAL PRIMARY KEY,
     user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(40) NOT NULL,                        -- 'admin' | 'creator'
+    role VARCHAR(40) NOT NULL,                        -- 'admin' | 'creator' | 'specialist'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -39,9 +40,19 @@ CREATE TABLE IF NOT EXISTS content (
     body TEXT NOT NULL,
     audio_url VARCHAR(255),
     image_url VARCHAR(255),
-    status VARCHAR(30) DEFAULT 'published',          -- draft | review | published | rejected
+    status VARCHAR(30) DEFAULT 'published',          -- draft | review | approved | published | rejected
+    reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,  -- specialist who approved or sent it back
+    review_note TEXT,
+    reviewed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- The diseases (categories) each specialist reviews; a specialist can have many.
+CREATE TABLE IF NOT EXISTS specialist_topics (
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, category_id)
 );
 
 CREATE TABLE IF NOT EXISTS quiz_questions (
