@@ -29,9 +29,10 @@ const learnerItems: NavItem[] = [
 ];
 
 const roleNames: Record<string, string> = {
-  admin: 'Umuyobozi',
-  creator: 'Umwanditsi',
-  specialist: 'Inzobere',
+  // Staff roles are shown in English, like the rest of the staff portal.
+  admin: 'Admin',
+  creator: 'Writer',
+  specialist: 'Specialist',
   learner: 'Umunyeshuri'
 };
 
@@ -65,7 +66,7 @@ export function SiteHeader({
   // The knowledge check belongs to the NCD section, the health profile and paths to home.
   const activeScreen = currentScreen === 'checkup' ? 'ncd' : ['risk', 'paths'].includes(currentScreen) ? 'dashboard' : currentScreen;
   const items = [...learnerItems, { screen: 'faq' as Screen, label: 'Ubufasha', icon: '' }];
-  if (isStaff) items.push({ screen: 'admin', label: 'Ubuyobozi', icon: '' });
+  if (isStaff) items.push({ screen: 'admin', label: 'Staff portal', icon: '' });
 
   return (
     <>

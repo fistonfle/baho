@@ -27,8 +27,8 @@ import type { Curriculum, QuizQuestion } from '../../types';
 import { DiseaseManager } from '../DiseaseManager';
 import { Empty, LessonStatusBadge, PageHeader, Panel, StatusBadge } from '../ui';
 
-const roleNames: Record<string, string> = { admin: 'Umuyobozi', creator: 'Umwanditsi', specialist: 'Inzobere' };
-const issueStatus: Record<string, string> = { Open: 'Nshya', 'In review': 'Iri gusuzumwa', Resolved: 'Yakemuwe' };
+const roleNames: Record<string, string> = { admin: 'Admin', creator: 'Writer', specialist: 'Specialist' };
+const issueStatus: Record<string, string> = { Open: 'New', 'In review': 'In review', Resolved: 'Resolved' };
 
 // Illustrations shipped in frontend/public/images that staff can pick from.
 const imageChoices = ['bp-heart', 'bp-check', 'plate', 'salt', 'water', 'glucose', 'heart', 'stroke', 'screening', 'walking', 'medicine', 'foot-care', 'no-smoking']
@@ -36,7 +36,7 @@ const imageChoices = ['bp-heart', 'bp-check', 'plate', 'salt', 'water', 'glucose
 
 const emptyQuestion: QuizQuestion = { question: '', options: ['', ''], answerIndex: 0, explanation: '' };
 
-const formatDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString('rw-RW', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+const formatDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 // ---------------------------------------------------------------------------
 // Lesson editor (admins and creators)
@@ -53,7 +53,7 @@ function QuizEditor({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (quiz:
 
   return (
     <div className="form-group span-2">
-      <span className="form-label">Isuzuma ry'isomo ({quiz.length} {quiz.length === 1 ? 'ikibazo' : 'ibibazo'})</span>
+      <span className="form-label">Lesson quiz ({quiz.length} {quiz.length === 1 ? 'question' : 'questions'})</span>
       {quiz.length > 0 && (
         <table className="table" style={{ marginBottom: 8 }}>
           <tbody>
@@ -61,9 +61,9 @@ function QuizEditor({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (quiz:
               <tr key={index}>
                 <td>
                   <strong>{index + 1}. {item.question}</strong>
-                  <div className="small muted">{item.options.map((option, optionIndex) => (optionIndex === item.answerIndex ? `${option} (igisubizo)` : option)).join(' · ')}</div>
+                  <div className="small muted">{item.options.map((option, optionIndex) => (optionIndex === item.answerIndex ? `${option} (answer)` : option)).join(' · ')}</div>
                 </td>
-                <td className="right"><button type="button" className="btn btn-danger btn-sm" onClick={() => onChange(quiz.filter((_, position) => position !== index))}>Siba</button></td>
+                <td className="right"><button type="button" className="btn btn-danger btn-sm" onClick={() => onChange(quiz.filter((_, position) => position !== index))}>Delete</button></td>
               </tr>
             ))}
           </tbody>
@@ -71,7 +71,7 @@ function QuizEditor({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (quiz:
       )}
       {quiz.length < 10 && (
         <div className="quiz-editor stack-sm">
-          <input className="input" value={draft.question} onChange={(event) => setDraft((current) => ({ ...current, question: event.target.value }))} placeholder="Ikibazo gishya" aria-label="Ikibazo gishya" />
+          <input className="input" value={draft.question} onChange={(event) => setDraft((current) => ({ ...current, question: event.target.value }))} placeholder="New question" aria-label="New question" />
           {draft.options.map((option, index) => (
             <label key={index} className="row" style={{ flexWrap: 'nowrap' }}>
               <input
@@ -79,7 +79,7 @@ function QuizEditor({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (quiz:
                 name="quiz-correct"
                 checked={draft.answerIndex === index}
                 onChange={() => setDraft((current) => ({ ...current, answerIndex: index }))}
-                aria-label={`Igisubizo ${String.fromCharCode(65 + index)} ni cyo cy'ukuri`}
+                aria-label={`Answer ${String.fromCharCode(65 + index)} is correct`}
               />
               <input
                 className="input"
@@ -88,18 +88,18 @@ function QuizEditor({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (quiz:
                   const value = event.target.value;
                   setDraft((current) => ({ ...current, options: current.options.map((item, position) => (position === index ? value : item)) }));
                 }}
-                placeholder={`Igisubizo ${String.fromCharCode(65 + index)}`}
+                placeholder={`Answer ${String.fromCharCode(65 + index)}`}
               />
             </label>
           ))}
-          <input className="input" value={draft.explanation} onChange={(event) => setDraft((current) => ({ ...current, explanation: event.target.value }))} placeholder="Ibisobanuro (si ngombwa)" aria-label="Ibisobanuro" />
+          <input className="input" value={draft.explanation} onChange={(event) => setDraft((current) => ({ ...current, explanation: event.target.value }))} placeholder="Explanation (optional)" aria-label="Explanation" />
           <div className="row">
             {draft.options.length < 4 && (
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDraft((current) => ({ ...current, options: [...current.options, ''] }))}>Ongeraho igisubizo</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDraft((current) => ({ ...current, options: [...current.options, ''] }))}>Add answer</button>
             )}
-            <button type="button" className="btn btn-primary btn-sm" onClick={addQuestion} disabled={!canAdd}>Ongeraho ikibazo</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={addQuestion} disabled={!canAdd}>Add question</button>
           </div>
-          <span className="form-hint">Kanda akaziga kari imbere y'igisubizo cy'ukuri.</span>
+          <span className="form-hint">Select the circle next to the correct answer.</span>
         </div>
       )}
     </div>
@@ -124,40 +124,40 @@ function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator: boolea
     <form className="panel creator-content-form" onSubmit={(event) => { event.preventDefault(); onSave('review'); }}>
       <div className="panel-head">
         <div>
-          <h2>{editingContentId ? 'Hindura isomo' : 'Isomo rishya'}</h2>
-          <p>{reviewed ? 'Iki cyiciro gifite inzobere: isomo rizabanza kwemezwa nayo mbere yo gusohoka.' : 'Iki cyiciro nta nzobere gifite: umuyobozi asohora isomo nyuma yo kurisoma.'}</p>
+          <h2>{editingContentId ? 'Edit lesson' : 'New lesson'}</h2>
+          <p>{reviewed ? 'This topic has a specialist: the lesson must be approved by them before it is published.' : 'This topic has no specialist: an admin publishes the lesson after reading it.'}</p>
         </div>
-        {editingContentId && <StatusBadge label="Uri guhindura" tone="info" />}
+        {editingContentId && <StatusBadge label="Editing" tone="info" />}
       </div>
       <div className="panel-body">
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="lesson-category">Icyiciro (indwara cyangwa ingingo)</label>
+            <label htmlFor="lesson-category">Topic (disease or subject)</label>
             <select id="lesson-category" className="input" value={contentForm.categoryId} onChange={(event) => dispatch(updateContentForm({ categoryId: Number(event.target.value) }))}>
               {categories.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label htmlFor="lesson-title">Umutwe w'isomo</label>
+            <label htmlFor="lesson-title">Lesson title</label>
             <input id="lesson-title" className="input" value={contentForm.title} onChange={(event) => dispatch(updateContentForm({ title: event.target.value }))} required />
           </div>
           <div className="form-group span-2">
-            <label htmlFor="lesson-summary">Incamake</label>
+            <label htmlFor="lesson-summary">Summary</label>
             <input id="lesson-summary" className="input" value={contentForm.summary} onChange={(event) => dispatch(updateContentForm({ summary: event.target.value }))} />
           </div>
           <div className="form-group span-2">
-            <label htmlFor="lesson-body">Ibikubiye mu isomo</label>
+            <label htmlFor="lesson-body">Lesson text</label>
             <textarea id="lesson-body" className="input" value={contentForm.body} onChange={(event) => dispatch(updateContentForm({ body: event.target.value }))} required />
-            <span className="form-hint">Koresha interuro ngufi n'amagambo yoroshye.</span>
+            <span className="form-hint">Write the lesson in Kinyarwanda, with short sentences and simple words.</span>
           </div>
           <div className="form-group span-2">
-            <label htmlFor="lesson-audio">Ijwi (MP3, si ngombwa)</label>
-            <input id="lesson-audio" className="input" value={contentForm.audioUrl} onChange={(event) => dispatch(updateContentForm({ audioUrl: event.target.value }))} placeholder="/audio/isomo.mp3" />
-            <span className="form-hint">Nta jwi rihari, Baho isoma isomo ikoresheje ijwi rya mudasobwa.</span>
+            <label htmlFor="lesson-audio">Audio (MP3, optional)</label>
+            <input id="lesson-audio" className="input" value={contentForm.audioUrl} onChange={(event) => dispatch(updateContentForm({ audioUrl: event.target.value }))} placeholder="/audio/lesson.mp3" />
+            <span className="form-hint">Without a recording, Baho reads the lesson aloud with the device's voice.</span>
           </div>
           <div className="form-group span-2">
-            <span className="form-label">Ishusho y'isomo</span>
-            <div className="image-picker" role="radiogroup" aria-label="Ishusho y'isomo">
+            <span className="form-label">Lesson image</span>
+            <div className="image-picker" role="radiogroup" aria-label="Lesson image">
               {imageChoices.map((url) => (
                 <button
                   type="button"
@@ -174,7 +174,7 @@ function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator: boolea
           </div>
           {curricula.length > 0 && (
             <div className="form-group span-2">
-              <span className="form-label">Inzira z'imyigire zirimo iri somo</span>
+              <span className="form-label">Learning paths that include this lesson</span>
               <div className="checkbox-row">
                 {curricula.map((curriculum) => (
                   <label key={curriculum.id} className="check path-check">
@@ -189,18 +189,18 @@ function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator: boolea
         </div>
       </div>
       <div className="panel-foot form-actions creator-form-actions">
-        <button type="button" className="btn btn-secondary" onClick={() => onSave('draft')}>Bika nk'umushinga</button>
+        <button type="button" className="btn btn-secondary" onClick={() => onSave('draft')}>Save as draft</button>
         {isCreator
-          ? <button type="submit" className="btn btn-primary">Ohereza kugira ngo risuzumwe</button>
+          ? <button type="submit" className="btn btn-primary">Submit for review</button>
           : reviewed
-            ? <button type="submit" className="btn btn-primary">Ohereza ku nzobere</button>
+            ? <button type="submit" className="btn btn-primary">Send to specialist</button>
             : <>
-              <button type="submit" className="btn btn-secondary">Shyira mu isuzuma</button>
-              <button type="button" className="btn btn-primary" onClick={() => onSave('published')}>Sohora</button>
+              <button type="submit" className="btn btn-secondary">Move to review</button>
+              <button type="button" className="btn btn-primary" onClick={() => onSave('published')}>Publish</button>
             </>}
         {editingContentId && (
           <button type="button" className="btn btn-link" onClick={() => { dispatch(setEditingContentId(null)); dispatch(updateContentForm(emptyContentForm)); }}>
-            Hagarika guhindura
+            Cancel editing
           </button>
         )}
       </div>
@@ -217,10 +217,10 @@ function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' |
       <p style={{ whiteSpace: 'pre-line' }}>{lesson.body}</p>
       {lesson.quiz && lesson.quiz.length > 0 && (
         <div>
-          <strong className="small">Isuzuma ({lesson.quiz.length})</strong>
+          <strong className="small">Quiz ({lesson.quiz.length})</strong>
           <ol className="small">
             {lesson.quiz.map((question, index) => (
-              <li key={index}>{question.question} <span className="muted">Igisubizo: {question.options[question.answerIndex]}</span></li>
+              <li key={index}>{question.question} <span className="muted">Answer: {question.options[question.answerIndex]}</span></li>
             ))}
           </ol>
         </div>
@@ -243,22 +243,22 @@ function SpecialistWorkspace({ tab }: { tab: 'pending' | 'history' }) {
   const categoryName = (id?: number) => categories.find((category) => category.id === id)?.name ?? '';
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
 
-  const load = () => api.getReviewQueue().then((response) => setLessons(response.lessons)).catch(() => notify('Ntibyashobotse kuzana amasomo yo gusuzuma.'));
+  const load = () => api.getReviewQueue().then((response) => setLessons(response.lessons)).catch(() => notify('Could not load the lessons to review.'));
   useEffect(() => { void load(); }, []);
 
   const decide = async (id: number, decision: 'approve' | 'changes') => {
     if (decision === 'changes' && !note.trim()) {
-      notify('Andika icyo umwanditsi agomba gukosora.');
+      notify('Write what the writer needs to change.');
       return;
     }
     try {
       await api.reviewLesson(id, decision, note.trim());
-      notify(decision === 'approve' ? 'Isomo ryemejwe. Umuyobozi ashobora kurisohora.' : 'Isomo ryasubijwe umwanditsi n\'inama zawe.');
+      notify(decision === 'approve' ? 'Lesson approved. An admin can now publish it.' : 'Lesson sent back to the writer with your note.');
       setOpenId(null);
       setNote('');
       await load();
     } catch {
-      notify('Ntibyashobotse kubika isuzuma.');
+      notify('Could not save your review.');
     }
   };
 
@@ -266,13 +266,13 @@ function SpecialistWorkspace({ tab }: { tab: 'pending' | 'history' }) {
 
   return (
     <Panel
-      title={tab === 'pending' ? 'Amasomo ategereje isuzuma ryawe' : 'Amasomo wasuzumye'}
-      description={tab === 'pending' ? 'Soma isomo n\'isuzuma ryaryo, hanyuma wemeze cyangwa usabe ko rikosorwa.' : undefined}
+      title={tab === 'pending' ? 'Lessons waiting for your review' : 'Lessons you reviewed'}
+      description={tab === 'pending' ? 'Read the lesson and its quiz, then approve it or request changes.' : undefined}
       flush
     >
-      {visible.length === 0 ? <Empty>{tab === 'pending' ? 'Nta somo ritegereje isuzuma ryawe.' : 'Ntabwo urasuzuma isomo.'}</Empty> : (
+      {visible.length === 0 ? <Empty>{tab === 'pending' ? 'No lessons are waiting for your review.' : 'You have not reviewed any lessons yet.'}</Empty> : (
         <table className="table">
-          <thead><tr><th>Isomo</th><th>Umwanditsi</th><th>Imiterere</th><th className="right">Igikorwa</th></tr></thead>
+          <thead><tr><th>Lesson</th><th>Writer</th><th>Status</th><th className="right">Actions</th></tr></thead>
           <tbody>
             {visible.map((lesson) => (
               <tr key={lesson.id}>
@@ -285,19 +285,19 @@ function SpecialistWorkspace({ tab }: { tab: 'pending' | 'history' }) {
                       {tab === 'pending' && (
                         <>
                           <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label htmlFor={`note-${lesson.id}`}>Inama ku mwanditsi</label>
-                            <textarea id={`note-${lesson.id}`} className="input" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ngombwa niba usaba ko rikosorwa" />
+                            <label htmlFor={`note-${lesson.id}`}>Note to the writer</label>
+                            <textarea id={`note-${lesson.id}`} className="input" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Required when requesting changes" />
                           </div>
                           <div className="row">
-                            <button className="btn btn-primary btn-sm" onClick={() => void decide(lesson.id, 'approve')}>Emeza isomo</button>
-                            <button className="btn btn-danger btn-sm" onClick={() => void decide(lesson.id, 'changes')}>Saba ko rikosorwa</button>
+                            <button className="btn btn-primary btn-sm" onClick={() => void decide(lesson.id, 'approve')}>Approve lesson</button>
+                            <button className="btn btn-danger btn-sm" onClick={() => void decide(lesson.id, 'changes')}>Request changes</button>
                           </div>
                         </>
                       )}
                     </div>
                   )}
                 </td>
-                <td>{lesson.creatorName || 'Umuyobozi'}</td>
+                <td>{lesson.creatorName || 'Admin'}</td>
                 <td>
                   <LessonStatusBadge status={lesson.status} />
                   {lesson.reviewNote && tab === 'history' && <div className="small muted" style={{ marginTop: 4 }}>{lesson.reviewNote}</div>}
@@ -305,7 +305,7 @@ function SpecialistWorkspace({ tab }: { tab: 'pending' | 'history' }) {
                 </td>
                 <td className="right">
                   <button className="btn btn-secondary btn-sm" onClick={() => { setOpenId(openId === lesson.id ? null : lesson.id); setNote(''); }}>
-                    {openId === lesson.id ? 'Funga' : tab === 'pending' ? 'Suzuma' : 'Soma'}
+                    {openId === lesson.id ? 'Close' : tab === 'pending' ? 'Review' : 'Read'}
                   </button>
                 </td>
               </tr>
@@ -333,11 +333,11 @@ function StaffPanel() {
 
   const createStaff = async () => {
     if (!creatorForm.fullName.trim() || !creatorForm.email.trim() || creatorForm.password.length < 8) {
-      notify('Uzuza amazina, imeyili n\'ijambo ry\'ibanga rigizwe n\'inyuguti nibura 8.');
+      notify('Enter a full name, an email and a password of at least 8 characters.');
       return;
     }
     if (creatorForm.role === 'specialist' && creatorForm.topicIds.length === 0) {
-      notify('Hitamo nibura indwara imwe inzobere izasuzuma.');
+      notify('Choose at least one disease for the specialist to review.');
       return;
     }
     try {
@@ -349,34 +349,34 @@ function StaffPanel() {
         topicIds: creatorForm.role === 'specialist' ? creatorForm.topicIds : []
       });
       dispatch(addCreatorLocal(response.user));
-      notify(`Konti ya ${roleNames[creatorForm.role].toLowerCase()} yafunguwe.`);
+      notify(`Account created for the new ${roleNames[creatorForm.role].toLowerCase()}.`);
     } catch {
-      notify('Ntibyashobotse gufungura konti. Imeyili ishobora kuba isanzwe ikoreshwa.');
+      notify('Could not create the account. The email may already be in use.');
     }
   };
 
   const saveTopics = async (member: StaffMember) => {
     if (editTopics.length === 0) {
-      notify('Inzobere igomba kugira nibura indwara imwe.');
+      notify('A specialist needs at least one disease.');
       return;
     }
     try {
       const response = await api.updateSpecialistTopics(member.id, editTopics);
       dispatch(setAdminCreators(staff.map((item) => (item.id === member.id ? { ...item, topicIds: response.categoryIds } : item))));
       setEditingId(null);
-      notify('Indwara z\'inzobere zahinduwe.');
+      notify('Specialist diseases updated.');
     } catch {
-      notify('Ntibyashobotse kubika.');
+      notify('Could not save.');
     }
   };
 
   return (
     <div className="layout-main-aside">
-      <Panel title="Abakozi ba Baho" description="Abanditsi bategura amasomo, inzobere zikemeza amasomo y'indwara zabo, abayobozi bagasohora." flush>
-        {staff.length === 0 ? <Empty>Nta bakozi barashyirwaho.</Empty> : (
+      <Panel title="Baho staff" description="Writers draft lessons, specialists approve lessons on their diseases, admins publish." flush>
+        {staff.length === 0 ? <Empty>No staff accounts yet.</Empty> : (
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Izina</th><th>Uruhare</th><th>Indwara asuzuma</th><th className="right">Igikorwa</th></tr></thead>
+              <thead><tr><th>Name</th><th>Role</th><th>Reviews</th><th className="right">Actions</th></tr></thead>
               <tbody>
                 {staff.map((member) => (
                   <tr key={member.id}>
@@ -394,15 +394,15 @@ function StaffPanel() {
                             ))}
                           </div>
                           <div className="row">
-                            <button className="btn btn-primary btn-sm" onClick={() => void saveTopics(member)}>Bika</button>
-                            <button className="btn btn-secondary btn-sm" onClick={() => setEditingId(null)}>Reka</button>
+                            <button className="btn btn-primary btn-sm" onClick={() => void saveTopics(member)}>Save</button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
                           </div>
                         </div>
                       ) : topicNames(member.topicIds ?? [])}
                     </td>
                     <td className="right">
                       {member.role === 'specialist' && editingId !== member.id && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => { setEditingId(member.id); setEditTopics(member.topicIds ?? []); }}>Hindura indwara</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => { setEditingId(member.id); setEditTopics(member.topicIds ?? []); }}>Change diseases</button>
                       )}
                     </td>
                   </tr>
@@ -414,31 +414,31 @@ function StaffPanel() {
       </Panel>
 
       <form className="panel" onSubmit={(event) => { event.preventDefault(); void createStaff(); }}>
-        <div className="panel-head"><h2>Ongeraho umukozi</h2></div>
+        <div className="panel-head"><h2>Add staff member</h2></div>
         <div className="panel-body">
           <div className="form-group">
-            <label htmlFor="staff-name">Amazina yose</label>
+            <label htmlFor="staff-name">Full name</label>
             <input id="staff-name" className="input" value={creatorForm.fullName} onChange={(event) => dispatch(updateCreatorForm({ fullName: event.target.value }))} required />
           </div>
           <div className="form-group">
-            <label htmlFor="staff-email">Imeyili</label>
+            <label htmlFor="staff-email">Email</label>
             <input id="staff-email" className="input" type="email" value={creatorForm.email} onChange={(event) => dispatch(updateCreatorForm({ email: event.target.value }))} required />
           </div>
           <div className="form-group">
-            <label htmlFor="staff-password">Ijambo ry'ibanga ry'agateganyo</label>
+            <label htmlFor="staff-password">Temporary password</label>
             <input id="staff-password" className="input" type="password" minLength={8} value={creatorForm.password} onChange={(event) => dispatch(updateCreatorForm({ password: event.target.value }))} required />
           </div>
           <div className="form-group">
-            <label htmlFor="staff-role">Uruhare</label>
+            <label htmlFor="staff-role">Role</label>
             <select id="staff-role" className="input" value={creatorForm.role} onChange={(event) => dispatch(updateCreatorForm({ role: event.target.value }))}>
-              <option value="creator">Umwanditsi: ategura amasomo</option>
-              <option value="specialist">Inzobere: yemeza amasomo y'indwara ze</option>
-              <option value="admin">Umuyobozi: acunga byose</option>
+              <option value="creator">Writer: drafts lessons</option>
+              <option value="specialist">Specialist: approves lessons on their diseases</option>
+              <option value="admin">Admin: manages everything</option>
             </select>
           </div>
           {creatorForm.role === 'specialist' && (
             <fieldset className="form-group" style={{ border: 0, padding: 0 }}>
-              <legend className="form-label">Indwara inzobere izasuzuma</legend>
+              <legend className="form-label">Diseases this specialist reviews</legend>
               <div className="stack-sm">
                 {categories.map((category) => (
                   <label key={category.id} className="check">
@@ -449,7 +449,7 @@ function StaffPanel() {
               </div>
             </fieldset>
           )}
-          <button className="btn btn-primary" type="submit">Fungura konti</button>
+          <button className="btn btn-primary" type="submit">Create account</button>
         </div>
       </form>
     </div>
@@ -494,7 +494,7 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
 
   const saveContent = async (status: string) => {
     if (!contentForm.title.trim() || !contentForm.body.trim()) {
-      notify('Andika umutwe n\'ibikubiye mu isomo.');
+      notify('Enter the lesson title and text.');
       return;
     }
     const payload = {
@@ -513,13 +513,13 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       const saved = response.content;
       dispatch(editingContentId ? updateContentLocal(saved) : addContentLocal(saved));
       const messages: Record<string, string> = {
-        draft: 'Umushinga wabitswe.',
-        review: specialistTopics.has(payload.categoryId) || isCreator ? 'Isomo ryoherejwe ku isuzuma.' : 'Isomo ryashyizwe mu isuzuma.',
-        published: 'Isomo ryasohotse.'
+        draft: 'Draft saved.',
+        review: specialistTopics.has(payload.categoryId) || isCreator ? 'Lesson submitted for review.' : 'Lesson moved to review.',
+        published: 'Lesson published.'
       };
-      notify(messages[saved.status] ?? 'Isomo ryabitswe.');
+      notify(messages[saved.status] ?? 'Lesson saved.');
     } catch {
-      notify('Ntibyashobotse kubika isomo. Reba amakuru wongere ugerageze.');
+      notify('Could not save the lesson. Check the fields and try again.');
     }
   };
 
@@ -551,35 +551,35 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
     try {
       const response = await api.updateContentStatus(id, status);
       dispatch(setAdminContent(adminContent.map((item) => (item.id === id ? { ...item, status: response.content.status } : item))));
-      notify(status === 'published' ? 'Isomo ryasohotse. Abiga bararibona.' : 'Isomo ryasubijwe umwanditsi.');
+      notify(status === 'published' ? 'Lesson published. Learners can now see it.' : 'Lesson sent back to the writer.');
     } catch (error) {
-      notify(error instanceof Error && error.message.includes('specialist') ? 'Iri somo rigomba kubanza kwemezwa n\'inzobere.' : 'Ntibyashobotse guhindura uko isomo rihagaze.');
+      notify(error instanceof Error && error.message.includes('specialist') ? 'This lesson must be approved by a specialist first.' : 'Could not change the lesson status.');
     }
   };
 
   const removeContent = async (id: number) => {
-    if (!window.confirm('Urashaka gusiba iri somo burundu?')) return;
+    if (!window.confirm('Delete this lesson permanently?')) return;
     try {
       await api.deleteContent(id);
       dispatch(setAdminContent(adminContent.filter((item) => item.id !== id)));
-      notify('Isomo ryasibwe.');
+      notify('Lesson deleted.');
     } catch {
-      notify('Ntibyashobotse gusiba isomo.');
+      notify('Could not delete the lesson.');
     }
   };
 
   const answerQuestion = async (id: number) => {
     const answer = (answerDrafts[id] || '').trim();
     if (!answer) {
-      notify('Andika igisubizo mbere yo kucyohereza.');
+      notify('Write an answer before sending it.');
       return;
     }
     try {
       const data = await api.answerQuestion(id, answer);
       dispatch(answerQuestionSuccess({ id, answer: data.question.answer }));
-      notify('Igisubizo cyoherejwe.');
+      notify('Answer sent.');
     } catch {
-      notify('Ntibyashobotse kohereza igisubizo.');
+      notify('Could not send the answer.');
     }
   };
 
@@ -588,21 +588,21 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       const response = await api.updateIssueStatus(id, status);
       dispatch(setIssues(issues.map((issue) => (issue.id === id ? response.issue : issue))));
     } catch {
-      notify('Ntibyashobotse guhindura imiterere ya raporo.');
+      notify('Could not update the report status.');
     }
   };
 
   const createFaq = async () => {
     if (!faqForm.question.trim() || !faqForm.answer.trim()) {
-      notify('Andika ikibazo n\'igisubizo.');
+      notify('Enter a question and an answer.');
       return;
     }
     try {
       const response = await api.createFaq({ question: faqForm.question.trim(), answer: faqForm.answer.trim() });
       dispatch(addFaqLocal(response.faq));
-      notify('Ikibazo n\'igisubizo byongeweho.');
+      notify('Question and answer added.');
     } catch {
-      notify('Ntibyashobotse kongeraho ikibazo.');
+      notify('Could not add the question.');
     }
   };
 
@@ -611,57 +611,57 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
     try {
       const response = await api.updateFaq(faq.id, { question: faq.question, answer: faq.answer });
       dispatch(updateFaqLocal(response.faq));
-      notify('Byahinduwe.');
+      notify('Saved.');
     } catch {
-      notify('Ntibyashobotse guhindura.');
+      notify('Could not save the change.');
     }
   };
 
   const removeFaq = async (id?: number) => {
-    if (!id || !window.confirm('Gusiba iki kibazo?')) return;
+    if (!id || !window.confirm('Delete this question?')) return;
     try {
       await api.deleteFaq(id);
       dispatch(removeFaqLocal(id));
     } catch {
-      notify('Ntibyashobotse gusiba.');
+      notify('Could not delete.');
     }
   };
 
   const tabs: { id: Tab; label: string; count?: number; roles: string[] }[] = [
-    { id: 'review', label: 'Isuzuma no gusohora', count: readyToPublish, roles: ['admin'] },
-    { id: 'pending', label: 'Ibitegereje isuzuma', roles: ['specialist'] },
-    { id: 'history', label: 'Nasuzumye', roles: ['specialist'] },
-    { id: 'content', label: isCreator ? 'Amasomo yanjye' : 'Amasomo', roles: ['admin', 'creator'] },
-    { id: 'diseases', label: 'Indwara', roles: ['admin'] },
-    { id: 'questions', label: 'Ibibazo by\'abiga', count: pendingQuestions.length, roles: ['admin', 'creator', 'specialist'] },
-    { id: 'staff', label: 'Abakozi', roles: ['admin'] },
-    { id: 'issues', label: 'Raporo', count: openIssues.length, roles: ['admin'] },
-    { id: 'faq', label: 'Ibibazo bikunze kubazwa', roles: ['admin'] }
+    { id: 'review', label: 'Review and publish', count: readyToPublish, roles: ['admin'] },
+    { id: 'pending', label: 'Waiting for review', roles: ['specialist'] },
+    { id: 'history', label: 'Reviewed', roles: ['specialist'] },
+    { id: 'content', label: isCreator ? 'My lessons' : 'Lessons', roles: ['admin', 'creator'] },
+    { id: 'diseases', label: 'Diseases', roles: ['admin'] },
+    { id: 'questions', label: 'Learner questions', count: pendingQuestions.length, roles: ['admin', 'creator', 'specialist'] },
+    { id: 'staff', label: 'Staff', roles: ['admin'] },
+    { id: 'issues', label: 'Reports', count: openIssues.length, roles: ['admin'] },
+    { id: 'faq', label: 'FAQ', roles: ['admin'] }
   ];
 
   const statusCell = (item: AdminContentItem) => (
     <>
       <LessonStatusBadge status={item.status === 'review' && specialistTopics.has(item.categoryId ?? 0) ? 'review' : item.status} />
-      {item.status === 'review' && specialistTopics.has(item.categoryId ?? 0) && <div className="small muted">Itegereje inzobere</div>}
+      {item.status === 'review' && specialistTopics.has(item.categoryId ?? 0) && <div className="small muted">Waiting for specialist</div>}
       {item.reviewerName && ['approved', 'published', 'rejected'].includes(item.status) && (
-        <div className="small muted">{item.status === 'rejected' ? 'Yasubijwe na' : 'Yemejwe na'} {item.reviewerName}</div>
+        <div className="small muted">{item.status === 'rejected' ? 'Sent back by' : 'Approved by'} {item.reviewerName}</div>
       )}
     </>
   );
 
   const contentTable = (items: AdminContentItem[], mode: 'review' | 'all') => (
-    items.length === 0 ? <Empty>{mode === 'review' ? 'Nta somo ritegereje isuzuma cyangwa gusohorwa.' : 'Nta masomo arahari.'}</Empty> : (
+    items.length === 0 ? <Empty>{mode === 'review' ? 'No lessons are waiting for review or publishing.' : 'No lessons yet.'}</Empty> : (
       <div className="table-wrap">
         <table className="table">
-          <thead><tr><th>Isomo</th><th>Umwanditsi</th><th>Imiterere</th><th className="right">Igikorwa</th></tr></thead>
+          <thead><tr><th>Lesson</th><th>Writer</th><th>Status</th><th className="right">Actions</th></tr></thead>
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
                 <td>
                   <strong>{item.title}</strong>
-                  <div className="small muted">{categoryName(item.categoryId)} · Ibibazo {item.quiz?.length ?? 0}</div>
+                  <div className="small muted">{categoryName(item.categoryId)} · Questions {item.quiz?.length ?? 0}</div>
                   {item.status === 'rejected' && item.reviewNote && (
-                    <p className="alert alert-danger small" style={{ marginTop: 8 }}><strong>Inama y'inzobere:</strong> {item.reviewNote}</p>
+                    <p className="alert alert-danger small" style={{ marginTop: 8 }}><strong>Specialist's note:</strong> {item.reviewNote}</p>
                   )}
                   {previewId === item.id && <div style={{ marginTop: 10 }}><LessonPreview lesson={item} /></div>}
                 </td>
@@ -669,14 +669,14 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
                 <td>{statusCell(item)}</td>
                 <td className="right">
                   <div className="actions">
-                    <button className="btn btn-secondary btn-sm" onClick={() => setPreviewId(previewId === item.id ? null : item.id)}>{previewId === item.id ? 'Funga' : 'Soma'}</button>
-                    {(isAdmin || ['draft', 'review', 'rejected'].includes(item.status)) && <button className="btn btn-secondary btn-sm" onClick={() => editContent(item)}>Hindura</button>}
+                    <button className="btn btn-secondary btn-sm" onClick={() => setPreviewId(previewId === item.id ? null : item.id)}>{previewId === item.id ? 'Close' : 'Read'}</button>
+                    {(isAdmin || ['draft', 'review', 'rejected'].includes(item.status)) && <button className="btn btn-secondary btn-sm" onClick={() => editContent(item)}>Edit</button>}
                     {isAdmin && item.status !== 'published' && (
-                      <button className="btn btn-primary btn-sm" disabled={!canPublish(item)} title={canPublish(item) ? '' : 'Ritegereje kwemezwa n\'inzobere'} onClick={() => void changeContentStatus(item.id, 'published')}>Sohora</button>
+                      <button className="btn btn-primary btn-sm" disabled={!canPublish(item)} title={canPublish(item) ? '' : 'Waiting for specialist approval'} onClick={() => void changeContentStatus(item.id, 'published')}>Publish</button>
                     )}
-                    {isAdmin && mode === 'review' && <button className="btn btn-danger btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Subiza</button>}
-                    {isAdmin && mode === 'all' && item.status === 'published' && <button className="btn btn-secondary btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Kura ku rubuga</button>}
-                    {isAdmin && mode === 'all' && <button className="btn btn-danger btn-sm" onClick={() => void removeContent(item.id)}>Siba</button>}
+                    {isAdmin && mode === 'review' && <button className="btn btn-danger btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Send back</button>}
+                    {isAdmin && mode === 'all' && item.status === 'published' && <button className="btn btn-secondary btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Unpublish</button>}
+                    {isAdmin && mode === 'all' && <button className="btn btn-danger btn-sm" onClick={() => void removeContent(item.id)}>Delete</button>}
                   </div>
                 </td>
               </tr>
@@ -687,23 +687,23 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
     )
   );
 
-  const title = isSpecialist ? 'Isuzuma ry\'inzobere' : isCreator ? 'Umwanya w\'umwanditsi' : 'Ubuyobozi';
+  const title = isSpecialist ? 'Specialist review' : isCreator ? 'Writer workspace' : 'Staff portal';
   const lead = isSpecialist
-    ? 'Emeza amasomo y\'indwara ushinzwe mbere y\'uko asohoka, cyangwa usabe ko akosorwa.'
+    ? 'Approve lessons on your diseases before they are published, or ask for changes.'
     : isCreator
-      ? 'Tegura amasomo. Azasuzumwa n\'inzobere n\'umuyobozi mbere yo kugera ku biga.'
-      : 'Genzura amasomo, abakozi, indwara, ibibazo by\'abiga na raporo.';
+      ? 'Draft lessons in Kinyarwanda. A specialist and an admin check them before learners see them.'
+      : 'Manage lessons, staff, diseases, learner questions and reports.';
 
   return (
     <div className="container admin-screen">
-      <PageHeader crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: title }]} title={title} lead={<>{lead} <span className="muted">Winjiye nka {authUser?.name} ({roleNames[role]}).</span></>} />
+      <PageHeader crumbs={[{ label: 'Home', onClick: onHome }, { label: title }]} title={title} lead={<>{lead} <span className="muted">Signed in as {authUser?.name} ({roleNames[role]}).</span></>} />
 
       {isAdmin && (
         <div className="grid-4" style={{ marginBottom: 20 }}>
-          <div className="stat"><div className="stat-label">Ategereje inzobere</div><div className="stat-value">{adminContent.filter((item) => item.status === 'review').length}</div></div>
-          <div className="stat"><div className="stat-label">Yiteguye gusohorwa</div><div className="stat-value">{readyToPublish}</div></div>
-          <div className="stat"><div className="stat-label">Amasomo yasohotse</div><div className="stat-value">{adminContent.filter((item) => item.status === 'published').length}</div></div>
-          <div className="stat"><div className="stat-label">Ibibazo bitarasubizwa</div><div className="stat-value">{pendingQuestions.length}</div></div>
+          <div className="stat"><div className="stat-label">Waiting for specialist</div><div className="stat-value">{adminContent.filter((item) => item.status === 'review').length}</div></div>
+          <div className="stat"><div className="stat-label">Ready to publish</div><div className="stat-value">{readyToPublish}</div></div>
+          <div className="stat"><div className="stat-label">Published lessons</div><div className="stat-value">{adminContent.filter((item) => item.status === 'published').length}</div></div>
+          <div className="stat"><div className="stat-label">Unanswered questions</div><div className="stat-value">{pendingQuestions.length}</div></div>
         </div>
       )}
 
@@ -716,7 +716,7 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       </div>
 
       {tab === 'review' && (
-        <Panel title="Isuzuma no gusohora" description="Amasomo y'indwara zifite inzobere asohorwa nyuma y'uko inzobere iyemeje." flush>
+        <Panel title="Review and publish" description="Lessons on diseases with a specialist can be published once the specialist approves them." flush>
           {contentTable(reviewQueue, 'review')}
         </Panel>
       )}
@@ -726,7 +726,7 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       {tab === 'content' && (
         <div className="stack">
           <ContentForm isCreator={isCreator} needsSpecialist={needsSpecialist} onSave={(status) => void saveContent(status)} />
-          <Panel title={isCreator ? `Amasomo yanjye (${adminContent.length})` : `Amasomo yose (${adminContent.length})`} flush>
+          <Panel title={isCreator ? `My lessons (${adminContent.length})` : `All lessons (${adminContent.length})`} flush>
             {contentTable(adminContent, 'all')}
           </Panel>
         </div>
@@ -735,30 +735,30 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       {tab === 'diseases' && <DiseaseManager onWriteLesson={writeLessonFor} />}
 
       {tab === 'questions' && (
-        <Panel title="Ibibazo by'abiga" description="Subiza mu magambo yoroshye. Igisubizo kigaragara ku wabajije." flush>
-          {questions.length === 0 ? <Empty>Nta bibazo birahari.</Empty> : (
+        <Panel title="Learner questions" description="Answer in simple Kinyarwanda. The learner who asked sees the answer." flush>
+          {questions.length === 0 ? <Empty>No questions yet.</Empty> : (
             <table className="table">
-              <thead><tr><th>Ikibazo</th><th>Imiterere</th></tr></thead>
+              <thead><tr><th>Question</th><th>Status</th></tr></thead>
               <tbody>
                 {questions.map((question) => (
                   <tr key={question.id}>
                     <td>
                       <strong>{question.question}</strong>
                       <div className="small muted">{question.topic}</div>
-                      {question.answer && <p className="small" style={{ marginTop: 6 }}>Igisubizo: {question.answer}</p>}
+                      {question.answer && <p className="small" style={{ marginTop: 6 }}>Answer: {question.answer}</p>}
                       {question.status !== 'Answered' && (
                         <div className="stack-sm" style={{ marginTop: 8 }}>
                           <textarea
                             className="input"
-                            aria-label={`Igisubizo ku kibazo: ${question.question}`}
+                            aria-label={`Answer to: ${question.question}`}
                             value={answerDrafts[question.id] || ''}
                             onChange={(event) => dispatch(updateAnswerDraft({ id: question.id, answer: event.target.value }))}
                           />
-                          <div><button className="btn btn-primary btn-sm" onClick={() => void answerQuestion(question.id)}>Ohereza igisubizo</button></div>
+                          <div><button className="btn btn-primary btn-sm" onClick={() => void answerQuestion(question.id)}>Send answer</button></div>
                         </div>
                       )}
                     </td>
-                    <td><StatusBadge label={question.status === 'Answered' ? 'Yasubijwe' : 'Itegereje'} tone={question.status === 'Answered' ? 'success' : 'warning'} /></td>
+                    <td><StatusBadge label={question.status === 'Answered' ? 'Answered' : 'Pending'} tone={question.status === 'Answered' ? 'success' : 'warning'} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -770,16 +770,16 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
       {tab === 'staff' && <StaffPanel />}
 
       {tab === 'issues' && (
-        <Panel title="Raporo z'abakoresha" flush>
-          {issues.length === 0 ? <Empty>Nta raporo zirahari.</Empty> : (
+        <Panel title="User reports" flush>
+          {issues.length === 0 ? <Empty>No reports yet.</Empty> : (
             <table className="table">
-              <thead><tr><th>Raporo</th><th className="right">Imiterere</th></tr></thead>
+              <thead><tr><th>Reports</th><th className="right">Status</th></tr></thead>
               <tbody>
                 {issues.map((issue) => (
                   <tr key={issue.id}>
                     <td><strong>{issue.title}</strong><div className="small muted">{issue.description}</div></td>
                     <td className="right">
-                      <select className="input" style={{ width: 170 }} value={issue.status} onChange={(event) => void changeIssueStatus(issue.id, event.target.value)} aria-label="Imiterere ya raporo">
+                      <select className="input" style={{ width: 170 }} value={issue.status} onChange={(event) => void changeIssueStatus(issue.id, event.target.value)} aria-label="Report status">
                         {Object.entries(issueStatus).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                       </select>
                     </td>
@@ -793,18 +793,18 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
 
       {tab === 'faq' && (
         <div className="layout-main-aside">
-          <Panel title="Ibibazo bikunze kubazwa" flush>
+          <Panel title="FAQ" flush>
             <table className="table">
               <tbody>
                 {faqItems.map((faq) => (
                   <tr key={faq.id ?? faq.question}>
                     <td className="stack-sm">
-                      <input className="input" value={faq.question} aria-label="Ikibazo" onChange={(event) => { if (faq.id !== undefined) dispatch(updateFaqLocal({ id: faq.id, question: event.target.value, answer: faq.answer })); }} />
-                      <textarea className="input" value={faq.answer} aria-label="Igisubizo" onChange={(event) => { if (faq.id !== undefined) dispatch(updateFaqLocal({ id: faq.id, question: faq.question, answer: event.target.value })); }} />
+                      <input className="input" value={faq.question} aria-label="Question" onChange={(event) => { if (faq.id !== undefined) dispatch(updateFaqLocal({ id: faq.id, question: event.target.value, answer: faq.answer })); }} />
+                      <textarea className="input" value={faq.answer} aria-label="Answer" onChange={(event) => { if (faq.id !== undefined) dispatch(updateFaqLocal({ id: faq.id, question: faq.question, answer: event.target.value })); }} />
                       {faq.id && (
                         <div className="row">
-                          <button className="btn btn-primary btn-sm" onClick={() => void saveFaq(faq)}>Bika</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => void removeFaq(faq.id)}>Siba</button>
+                          <button className="btn btn-primary btn-sm" onClick={() => void saveFaq(faq)}>Save</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => void removeFaq(faq.id)}>Delete</button>
                         </div>
                       )}
                     </td>
@@ -814,17 +814,17 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
             </table>
           </Panel>
           <form className="panel" onSubmit={(event) => { event.preventDefault(); void createFaq(); }}>
-            <div className="panel-head"><h2>Ongeraho ikibazo</h2></div>
+            <div className="panel-head"><h2>Add question</h2></div>
             <div className="panel-body">
               <div className="form-group">
-                <label htmlFor="faq-question">Ikibazo</label>
+                <label htmlFor="faq-question">Question</label>
                 <input id="faq-question" className="input" value={faqForm.question} onChange={(event) => dispatch(updateFaqForm({ question: event.target.value }))} required />
               </div>
               <div className="form-group">
-                <label htmlFor="faq-answer">Igisubizo</label>
+                <label htmlFor="faq-answer">Answer</label>
                 <textarea id="faq-answer" className="input" value={faqForm.answer} onChange={(event) => dispatch(updateFaqForm({ answer: event.target.value }))} required />
               </div>
-              <button className="btn btn-primary" type="submit">Ongeraho</button>
+              <button className="btn btn-primary" type="submit">Add</button>
             </div>
           </form>
         </div>

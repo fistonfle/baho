@@ -76,11 +76,11 @@ export function StatusBadge({ label, tone = 'neutral' }: { label: string; tone?:
 
 // Lesson workflow: draft -> review -> approved (specialist) -> published; rejected = changes requested.
 export const lessonStatus: Record<string, { label: string; tone: Tone }> = {
-  draft: { label: 'Umushinga', tone: 'neutral' },
-  review: { label: 'Itegereje isuzuma', tone: 'warning' },
-  approved: { label: 'Byemejwe n\'inzobere', tone: 'info' },
-  published: { label: 'Yasohotse', tone: 'success' },
-  rejected: { label: 'Igomba gukosorwa', tone: 'danger' }
+  draft: { label: 'Draft', tone: 'neutral' },
+  review: { label: 'In review', tone: 'warning' },
+  approved: { label: 'Approved by specialist', tone: 'info' },
+  published: { label: 'Published', tone: 'success' },
+  rejected: { label: 'Changes requested', tone: 'danger' }
 };
 
 export function LessonStatusBadge({ status }: { status: string }) {

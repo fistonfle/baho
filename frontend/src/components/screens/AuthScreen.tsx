@@ -37,7 +37,8 @@ export function AuthScreen({
 }) {
   const [staffLogin, setStaffLogin] = useState(staffSignIn);
   const useEmail = mode === 'login' && staffLogin;
-  const heading = useEmail ? { ...headings.login, text: 'Abakozi binjira bakoresheje imeyili n\'ijambo ry\'ibanga.' } : headings[mode];
+  // The staff side of Baho is in English; learners see Kinyarwanda.
+  const heading = useEmail ? { title: 'Staff sign-in', text: 'Writers, specialists and admins sign in with the email and password from their admin.', button: 'Sign in' } : headings[mode];
 
   const switchMethod = (staff: boolean) => {
     setStaffLogin(staff);
@@ -59,7 +60,7 @@ export function AuthScreen({
 
   return (
     <div className="container form-page">
-      <PageHeader crumbs={[{ label: 'Ahabanza', onClick: onBack }, { label: heading.title }]} title={heading.title} lead={heading.text} />
+      <PageHeader crumbs={[{ label: useEmail ? 'Home' : 'Ahabanza', onClick: onBack }, { label: heading.title }]} title={heading.title} lead={heading.text} />
       <form className="panel" onSubmit={submit} noValidate>
         <div className="panel-body">
           {mode === 'register' && (
@@ -71,11 +72,11 @@ export function AuthScreen({
           {useEmail ? (
             <>
               <div className="form-group">
-                <label htmlFor="auth-email">Imeyili</label>
+                <label htmlFor="auth-email">Email</label>
                 <input id="auth-email" className="input" type="email" autoComplete="username" value={form.identifier} onChange={(event) => onFormChange({ identifier: event.target.value })} required />
               </div>
               <div className="form-group">
-                <label htmlFor="auth-password">Ijambo ry'ibanga</label>
+                <label htmlFor="auth-password">Password</label>
                 <input id="auth-password" className="input" type="password" autoComplete="current-password" value={form.password} onChange={(event) => onFormChange({ password: event.target.value })} required />
               </div>
             </>
@@ -118,17 +119,17 @@ export function AuthScreen({
           <button className="btn btn-primary btn-block" type="submit">{heading.button}</button>
         </div>
         <div className="panel-foot stack-sm">
-          {mode === 'login'
+          {useEmail ? null : mode === 'login'
             ? <p className="small">Nta konti ufite? <button type="button" className="btn-link" onClick={() => { switchMethod(false); onModeChange('register'); }}>Fungura konti ukoresheje telefoni</button></p>
             : <p className="small">Usanzwe ufite konti? <button type="button" className="btn-link" onClick={() => onModeChange('login')}>Injira</button></p>}
           {mode === 'login' && (
             <p className="small">
               {useEmail
                 ? <button type="button" className="btn-link" onClick={() => switchMethod(false)}>Injira ukoresheje nimero ya telefoni</button>
-                : <>Uri umukozi wa Baho? <button type="button" className="btn-link" onClick={() => switchMethod(true)}>Injira ukoresheje imeyili</button></>}
+                : <button type="button" className="btn-link" onClick={() => switchMethod(true)}>Staff sign-in (email)</button>}
             </p>
           )}
-          <p className="small muted">Ushobora no gukoresha Baho nta konti; ibyo wize bibikwa kuri iyi telefoni.</p>
+          {!useEmail && <p className="small muted">Ushobora no gukoresha Baho nta konti; ibyo wize bibikwa kuri iyi telefoni.</p>}
         </div>
       </form>
     </div>

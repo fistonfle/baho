@@ -54,7 +54,7 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
       prevention: fromLines(form.prevention)
     };
     if (!payload.name || !payload.about || !payload.riskFactors.length || !payload.warningSigns.length || !payload.prevention.length) {
-      notify('Uzuza izina, ibisobanuro n\'urutonde rumwe nibura muri buri gice.');
+      notify('Fill in the name, the description and at least one item in each list.');
       return;
     }
     try {
@@ -63,10 +63,10 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
       if (!editingId && response.disease.categoryId && !categories.some((category) => category.id === response.disease.categoryId)) {
         dispatch(setCategories([...categories, { id: response.disease.categoryId, name: payload.name, slug: response.disease.slug }]));
       }
-      notify(editingId ? 'Amakuru y\'indwara yahinduwe.' : `"${payload.name}" yongeweho. Ubu ushobora kwandika amasomo kuri yo.`);
+      notify(editingId ? 'Disease information updated.' : `"${payload.name}" added. You can now write lessons for it.`);
       reset();
     } catch (error) {
-      notify(error instanceof Error && error.message.includes('already exists') ? 'Iyi ndwara isanzwe ihari.' : 'Ntibyashobotse kubika indwara.');
+      notify(error instanceof Error && error.message.includes('already exists') ? 'This disease already exists.' : 'Could not save the disease.');
     }
   };
 
@@ -82,10 +82,10 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
 
   return (
     <div className="layout-main-aside">
-      <Panel title={`Indwara ziri muri Baho (${diseases.length})`} description="Buri ndwara igira icyiciro cy'amasomo n'inzira y'imyigire." flush>
+      <Panel title={`Diseases in Baho (${diseases.length})`} description="Each disease has its own lesson topic and learning path." flush>
         <div className="table-wrap">
           <table className="table">
-            <thead><tr><th>Indwara</th><th>Amasomo yasohotse</th><th className="right">Igikorwa</th></tr></thead>
+            <thead><tr><th>Diseases</th><th>Published lessons</th><th className="right">Actions</th></tr></thead>
             <tbody>
               {diseases.map((disease) => (
                 <tr key={disease.id}>
@@ -93,8 +93,8 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
                   <td>{disease.lessonIds.length}</td>
                   <td className="right">
                     <div className="actions">
-                      <button className="btn btn-secondary btn-sm" onClick={() => startEdit(disease)}>Hindura</button>
-                      <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Andika isomo</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => startEdit(disease)}>Edit</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Write lesson</button>
                     </div>
                   </td>
                 </tr>
@@ -107,24 +107,24 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
       <form className="panel" onSubmit={(event) => { event.preventDefault(); void save(); }}>
         <div className="panel-head">
           <div>
-            <h2>{editingId ? 'Hindura amakuru y\'indwara' : 'Ongeraho indwara'}</h2>
-            <p>Indwara nshya igaragara mu gice cy'indwara, mu mwirondoro w'ubuzima no mu nzira z'imyigire.</p>
+            <h2>{editingId ? 'Edit disease information' : 'Add disease'}</h2>
+            <p>A new disease appears in the learners' disease section, health profile and learning paths. Write its information in Kinyarwanda.</p>
           </div>
         </div>
         <div className="panel-body">
           <div className="form-group">
-            <label htmlFor="disease-name">Izina ry'indwara</label>
-            <input id="disease-name" className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="Urugero: Asima" required />
+            <label htmlFor="disease-name">Disease name (Kinyarwanda)</label>
+            <input id="disease-name" className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="e.g. Asima" required />
           </div>
-          {field('about', 'Ni iki?', 'Interuro nke zoroshye.')}
-          {field('riskFactors', 'Ibyongera ibyago', 'Kimwe ku murongo.')}
-          {field('warningSigns', 'Ibimenyetso', 'Kimwe ku murongo.')}
-          {field('prevention', 'Uko wayirinda', 'Kimwe ku murongo.')}
-          {field('description', 'Interuro y\'inzira y\'imyigire', 'Si ngombwa.', false)}
+          {field('about', 'What is it?', 'A few simple sentences.')}
+          {field('riskFactors', 'Risk factors', 'One per line.')}
+          {field('warningSigns', 'Warning signs', 'One per line.')}
+          {field('prevention', 'Prevention', 'One per line.')}
+          {field('description', 'Learning path tagline', 'Optional.', false)}
         </div>
         <div className="panel-foot form-actions">
-          <button className="btn btn-primary" type="submit">{editingId ? 'Bika impinduka' : 'Ongeraho indwara'}</button>
-          {editingId && <button type="button" className="btn btn-secondary" onClick={reset}>Hagarika</button>}
+          <button className="btn btn-primary" type="submit">{editingId ? 'Save changes' : 'Add disease'}</button>
+          {editingId && <button type="button" className="btn btn-secondary" onClick={reset}>Cancel</button>}
         </div>
       </form>
     </div>
