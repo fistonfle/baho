@@ -2,8 +2,10 @@ import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { attachLearningData, saveCurriculumLinks, saveQuiz, validateQuiz } from '../learning/learning.service.js';
+import { topicHasSpecialist } from '../review/review.service.js';
 
-const statusValues = new Set(['draft', 'review', 'published', 'rejected']);
+// draft -> review -> approved (by a specialist) -> published; rejected = changes requested.
+const statusValues = new Set(['draft', 'review', 'approved', 'published', 'rejected']);
 const isConnectionFailure = isDatabaseUnavailable;
 const mapContent = (row) => ({
   id: row.id,
@@ -14,8 +16,22 @@ const mapContent = (row) => ({
   body: row.body,
   audioUrl: row.audio_url ?? row.audioUrl ?? '',
   imageUrl: row.image_url ?? row.imageUrl ?? '',
-  status: row.status
+  status: row.status,
+  creatorName: row.creator_name ?? row.creatorName ?? '',
+  reviewedBy: row.reviewed_by ?? row.reviewedBy ?? null,
+  reviewerName: row.reviewer_name ?? row.reviewerName ?? '',
+  reviewNote: row.review_note ?? row.reviewNote ?? '',
+  reviewedAt: row.reviewed_at ?? row.reviewedAt ?? null
 });
+
+const userName = (id) => inMemoryStore.users.find((user) => user.id === id)?.fullName ?? '';
+
+// In a topic that has a specialist, a lesson can only be published after the
+// specialist approved it; a request to publish earlier is sent to review instead.
+const allowedStatus = async (categoryId, requested, current) => {
+  if (requested !== 'published' || ['approved', 'published'].includes(current)) return requested;
+  return (await topicHasSpecialist(categoryId)) ? 'review' : requested;
+};
 
 // Saves the optional quiz and learning-path links sent with a lesson.
 const saveLearningInput = async (contentId, body) => {
@@ -133,17 +149,24 @@ export const deleteFaq = async (req, res) => {
   }
 };
 
+const adminContentQuery = `
+  SELECT c.*, w.full_name AS creator_name, r.full_name AS reviewer_name
+  FROM content c
+  LEFT JOIN users w ON w.id = c.creator_id
+  LEFT JOIN users r ON r.id = c.reviewed_by`;
+
 export const getAdminContent = async (req, res) => {
   try {
     const result = req.user?.role === 'creator'
-      ? await pool.query('SELECT * FROM content WHERE creator_id = $1 ORDER BY created_at DESC, id DESC', [req.user.id])
-      : await pool.query('SELECT * FROM content ORDER BY created_at DESC, id DESC');
+      ? await pool.query(`${adminContentQuery} WHERE c.creator_id = $1 ORDER BY c.created_at DESC, c.id DESC`, [req.user.id])
+      : await pool.query(`${adminContentQuery} ORDER BY c.created_at DESC, c.id DESC`);
     return res.json({ content: await attachLearningData(result.rows.map(mapContent), { includeLinks: true }) });
   } catch (error) {
     if (!isConnectionFailure(error)) return res.status(503).json({ message: 'Could not load admin content' });
-    const content = req.user?.role === 'creator'
+    const content = (req.user?.role === 'creator'
       ? inMemoryStore.content.filter((entry) => entry.creatorId === req.user.id)
-      : [...inMemoryStore.content];
+      : [...inMemoryStore.content]
+    ).map((entry) => ({ ...entry, creatorName: userName(entry.creatorId), reviewerName: userName(entry.reviewedBy) }));
     return res.json({ content: await attachLearningData(content.map(mapContent), { includeLinks: true }) });
   }
 };
@@ -152,9 +175,10 @@ export const createContent = async (req, res) => {
   const { categoryId, title, summary = '', body, audioUrl = '', imageUrl = '' } = req.body || {};
   const inputError = learningInputError(req.body);
   if (inputError) return res.status(400).json({ message: inputError });
-  const status = req.user?.role === 'admin'
+  const requestedStatus = req.user?.role === 'admin'
     ? (req.body?.status || 'draft')
     : (req.body?.status === 'draft' ? 'draft' : 'review');
+  const status = await allowedStatus(Number(categoryId), requestedStatus, null);
 
   if (!Number.isInteger(Number(categoryId)) || !title?.trim() || !body?.trim()) {
     return res.status(400).json({ message: 'Category, title and body are required' });
@@ -206,9 +230,7 @@ export const updateContent = async (req, res) => {
     return res.status(403).json({ message: 'Creators may only save drafts or submit content for review' });
   }
   try {
-    const existingResult = req.user?.role === 'creator'
-      ? await pool.query('SELECT id, creator_id, status FROM content WHERE id = $1', [id])
-      : await pool.query('SELECT id, creator_id, status FROM content WHERE id = $1', [id]);
+    const existingResult = await pool.query('SELECT id, creator_id, status FROM content WHERE id = $1', [id]);
     const existing = existingResult.rows[0];
     if (!existing) return res.status(404).json({ message: 'Content not found' });
     if (req.user?.role === 'creator' && Number(existing.creator_id) !== Number(req.user.id)) {
@@ -219,7 +241,8 @@ export const updateContent = async (req, res) => {
     }
     const result = await pool.query(
       `UPDATE content SET category_id = $1, title = $2, summary = $3, body = $4, audio_url = $5, image_url = $6, status = COALESCE($7, status), updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *`,
-      [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, imageUrl.trim() || null, status || null, id]
+      [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, imageUrl.trim() || null,
+        status ? await allowedStatus(Number(categoryId), status, existing.status) : null, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Content not found' });
     await saveLearningInput(id, req.body);
@@ -236,7 +259,8 @@ export const updateContent = async (req, res) => {
       return res.status(403).json({ message: 'Published content cannot be edited by creators' });
     }
     const existing = inMemoryStore.content[index];
-    const nextStatus = status && ['draft', 'review'].includes(status) ? status : existing.status;
+    const allowed = req.user?.role === 'creator' ? ['draft', 'review'] : [...statusValues];
+    const nextStatus = status && allowed.includes(status) ? await allowedStatus(Number(categoryId), status, existing.status) : existing.status;
     inMemoryStore.content[index] = {
       ...existing,
       ...mapContent({
@@ -280,7 +304,11 @@ export const updateContentStatus = async (req, res) => {
   if (!Number.isInteger(id) || id <= 0 || !statusValues.has(status)) {
     return res.status(400).json({ message: 'A valid content id and status are required' });
   }
+  const needsApproval = { message: 'A specialist must approve this lesson before it is published' };
   try {
+    const current = (await pool.query('SELECT category_id, status FROM content WHERE id = $1', [id])).rows[0];
+    if (!current) return res.status(404).json({ message: 'Content not found' });
+    if ((await allowedStatus(current.category_id, status, current.status)) !== status) return res.status(409).json(needsApproval);
     const result = await pool.query(
       'UPDATE content SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
       [status, id]
@@ -291,6 +319,7 @@ export const updateContentStatus = async (req, res) => {
     if (!isConnectionFailure(error)) return res.status(503).json({ message: 'Could not update content status' });
     const content = inMemoryStore.content.find((entry) => entry.id === id);
     if (!content) return res.status(404).json({ message: 'Content not found' });
+    if ((await allowedStatus(content.categoryId, status, content.status)) !== status) return res.status(409).json(needsApproval);
     content.status = status;
     return res.json({ message: 'Content status updated in demo mode', content });
   }

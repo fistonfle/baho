@@ -1,6 +1,7 @@
 import { getWeek } from '../../lib/activity';
 import { pathProgress, type RankedLesson } from '../../lib/personalization';
 import type { Curriculum, Interest, Lesson } from '../../types';
+import { PageHeader, Panel } from '../ui';
 
 export function DashboardScreen({
   userName,
@@ -58,161 +59,131 @@ export function DashboardScreen({
   const progressPercent = Math.round((completedCount / Math.max(totalLessons, 1)) * 100);
   const week = getWeek();
 
+  const activeDays = week.filter((day) => day.active).length;
+
   return (
-    <div className="screen dashboard-screen">
-      <main className="dashboard-main">
-        <section className="dashboard-welcome">
-          <div>
-            <p className="eyebrow">IKIGO CYAWE CY'UBUZIMA</p>
-            <h1>Muraho, {userName || 'nshuti'}.</h1>
-            <p>Witeguye kwiga ikintu gishya ku buzima bwawe uyu munsi?</p>
-          </div>
-        </section>
+    <div className="container">
+      <PageHeader
+        crumbs={[{ label: 'Ahabanza' }]}
+        title={`Muraho, ${userName || 'nshuti'}`}
+        lead="Aha ni ho ubona inzira yawe y'imyigire, aho ugeze n'amasomo akubereye."
+      />
 
-        {activePath && progressInPath ? (
-          <section className="path-hero">
-            <div className="path-hero-main">
-              <span className="dashboard-hero-kicker"><span /> INZIRA YAWE</span>
-              <h2>{activePath.title}</h2>
-              <p>{progressInPath.done === progressInPath.total
-                ? 'Warangije iyi nzira yose. Ni byiza cyane!'
-                : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}</p>
-              <div className="path-hero-bar"><span style={{ width: `${(progressInPath.done / Math.max(progressInPath.total, 1)) * 100}%` }} /></div>
-              <div className="path-hero-actions">
-                {nextLesson && (
-                  <button className="dashboard-hero-button" onClick={() => onOpenLesson(nextLesson)}>
-                    ▶ {pathNext ? 'Komeza' : 'Umva isomo'}: {nextLesson.title}
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <div className="stat">
+          <div className="stat-label">Amasomo warangije</div>
+          <div className="stat-value">{completedCount} <small>kuri {totalLessons}</small></div>
+          <div className="progress"><span style={{ width: `${progressPercent}%` }} /></div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Iminsi wiga ukurikiranya</div>
+          <div className="stat-value">{streak} <small>{streak === 1 ? 'umunsi' : 'iminsi'}</small></div>
+          <div className="small muted">Wize iminsi {activeDays} mu minsi 7 ishize</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Impuzandengo y'amasuzuma</div>
+          <div className="stat-value">{quizAverage === null ? '–' : `${quizAverage}%`}</div>
+          <div className="small muted">Amanota meza kuri buri somo</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Isuzuma ry'ubumenyi</div>
+          <div className="stat-value">{knowledgeScore ? <>{knowledgeScore.latest}<small> / {knowledgeScore.total}</small></> : '–'}</div>
+          <div className="small muted">{knowledgeScore ? `Ubwa mbere: ${knowledgeScore.first}/${knowledgeScore.total}` : 'Ntiwararikora'}</div>
+        </div>
+      </div>
+
+      <div className="layout-main-aside">
+        <div className="stack">
+          {activePath && progressInPath ? (
+            <Panel
+              title={`Inzira yawe: ${activePath.title}`}
+              description={progressInPath.done === progressInPath.total ? 'Warangije iyi nzira yose.' : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}
+              actions={<button className="btn btn-secondary btn-sm" onClick={onViewPaths}>Hindura inzira</button>}
+              flush
+              footer={nextLesson && (
+                <div className="row-between">
+                  <span className="small muted">Isomo rikurikira: <strong>{nextLesson.title}</strong></span>
+                  <button className="btn btn-primary" onClick={() => onOpenLesson(nextLesson)}>{pathNext ? 'Komeza kwiga' : 'Fungura isomo'}</button>
+                </div>
+              )}
+            >
+              <ol className="list path-list">
+                {pathLessons.map((lesson, index) => {
+                  const done = completedLessons.includes(lesson.id);
+                  const current = lesson.id === progressInPath.nextId;
+                  return (
+                    <li key={lesson.id}>
+                      <button className={`list-button ${current ? 'current' : ''}`} onClick={() => onOpenLesson(lesson)}>
+                        <span className={`step-no ${done ? 'done' : current ? 'next' : ''}`}>{done ? '✓' : index + 1}</span>
+                        <span className="grow">
+                          <strong>{lesson.title}</strong>
+                          <small>{lesson.category} · {lesson.duration}</small>
+                        </span>
+                        {done && <span className="badge badge-success">Warirangije</span>}
+                        {current && <span className="badge badge-info">Isomo rikurikira</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </Panel>
+          ) : (
+            <Panel title="Isomo rikurikira">
+              {nextLesson ? (
+                <div className="row-between">
+                  <div><strong>{nextLesson.title}</strong><p className="muted small">{nextLesson.summary}</p></div>
+                  <button className="btn btn-primary" onClick={() => onOpenLesson(nextLesson)}>Fungura isomo</button>
+                </div>
+              ) : <p className="muted">Amasomo arategurwa.</p>}
+            </Panel>
+          )}
+
+          <Panel
+            title={activePath ? 'Andi masomo akubereye' : 'Amasomo akubereye'}
+            description={`Ashingiye ku ngingo wahisemo${hasRiskCheck ? ' n\'umwirondoro wawe w\'ubuzima' : ''}.`}
+            actions={<button className="btn-link" onClick={onViewLibrary}>Reba amasomo yose</button>}
+            flush
+          >
+            <ul className="list">
+              {forYou.map(({ lesson, reasons }) => (
+                <li key={lesson.id}>
+                  <button className="list-button" onClick={() => onOpenLesson(lesson)}>
+                    <span className="grow">
+                      <strong>{lesson.title}</strong>
+                      <small>{lesson.category} · {lesson.duration}{reasons.length > 0 && ` · ${reasons.join(', ')}`}</small>
+                    </span>
+                    <span className="btn btn-secondary btn-sm">Fungura</span>
                   </button>
-                )}
-                <button className="path-change" onClick={onViewPaths}>Hindura inzira</button>
-              </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+
+        <aside className="stack">
+          <Panel title="Umwirondoro w'ubuzima">
+            <p className="small">{hasRiskCheck
+              ? (riskTags.length ? `Twibanda kuri: ${riskTags.join(', ')}.` : 'Nta byago bikomeye byagaragaye.')
+              : 'Uzuza umwirondoro kugira ngo tuguhitiremo inzira ikubereye.'}</p>
+            <p className="small muted">Ingingo wahisemo: {selectedInterests.join(', ') || 'nta n\'imwe'}.</p>
+            <div className="row">
+              <button className="btn btn-secondary btn-sm" onClick={onViewRiskCheck}>{hasRiskCheck ? 'Hindura umwirondoro' : 'Uzuza umwirondoro'}</button>
+              <button className="btn-link small" onClick={onEditInterests}>Hindura ingingo</button>
             </div>
-            <ol className="path-steps">
-              {pathLessons.map((lesson, index) => {
-                const done = completedLessons.includes(lesson.id);
-                const current = lesson.id === progressInPath.nextId;
-                return (
-                  <li key={lesson.id} className={done ? 'done' : current ? 'current' : ''}>
-                    <button onClick={() => onOpenLesson(lesson)}>
-                      <span className="path-step-mark">{done ? '✓' : index + 1}</span>
-                      <span className="path-step-title">{lesson.title}</span>
-                      {current && <span className="path-step-next">Ubu</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        ) : (
-          <section className="dashboard-hero">
-            <div className="dashboard-hero-copy">
-              <span className="dashboard-hero-kicker"><span /> ISOMO RIKURIKIRA</span>
-              {nextLesson ? <>
-                <h2>{nextLesson.title}</h2>
-                <p>{nextLesson.summary}</p>
-                <button className="dashboard-hero-button" onClick={() => onOpenLesson(nextLesson)}>▶ Umva isomo</button>
-              </> : <>
-                <h2>Amasomo arategurwa</h2>
-                <p>Garuka vuba urebe amakuru mashya y'ubuzima.</p>
-              </>}
-            </div>
-          </section>
-        )}
-
-        <section className="dashboard-stats" aria-label="Uko uhagaze">
-          <article className="dashboard-stat progress-stat">
-            <span className="stat-icon stat-icon-green" aria-hidden="true">↗</span>
-            <div className="stat-content">
-              <span className="stat-label">Amasomo warangije</span>
-              <strong>{completedCount}<small> / {totalLessons}</small></strong>
-              <div className="progress-bar"><span style={{ width: `${progressPercent}%` }} /></div>
-              <small>{progressPercent}% by'amasomo yose</small>
-            </div>
-          </article>
-          <article className="dashboard-stat streak-stat">
-            <span className="stat-icon stat-icon-gold" aria-hidden="true">🔥</span>
-            <div className="stat-content">
-              <span className="stat-label">Iminsi wiga ukurikiranya</span>
-              <strong>{streak} <small>{streak === 1 ? 'umunsi' : 'iminsi'}</small></strong>
-              <div className="week-row" aria-label="Iminsi 7 ishize">
-                {week.map((day, index) => (
-                  <span key={index} className={day.active ? 'active' : ''} title={day.label}>{day.label}</span>
-                ))}
-              </div>
-            </div>
-          </article>
-          <article className="dashboard-stat quiz-stat">
-            <span className="stat-icon stat-icon-blue" aria-hidden="true">✓</span>
-            <div className="stat-content">
-              <span className="stat-label">Amanota y'amasuzuma</span>
-              <strong>{quizAverage === null ? '–' : `${quizAverage}%`}</strong>
-              <small>{quizAverage === null ? 'Kora isuzuma nyuma y\'isomo' : 'Impuzandengo y\'amanota yawe meza'}</small>
-            </div>
-          </article>
-        </section>
-
-        <section className="dashboard-actions-row">
-          <button className="action-card risk-card" onClick={onViewRiskCheck}>
-            <span className="action-card-icon" aria-hidden="true">🩺</span>
-            <span>
-              <strong>{hasRiskCheck ? 'Umwirondoro w\'ubuzima' : 'Uzuza umwirondoro w\'ubuzima'}</strong>
-              <small>{hasRiskCheck
-                ? (riskTags.length ? `Twibanda kuri: ${riskTags.slice(0, 2).join(', ')}` : 'Nta byago bikomeye byagaragaye')
-                : 'Bidufasha kuguhitiramo inzira y\'imyigire'}</small>
-            </span>
-            <span className="help-arrow" aria-hidden="true">→</span>
-          </button>
-          <button className="action-card quiz-card" onClick={onViewCheckup}>
-            <span className="action-card-icon" aria-hidden="true">✓</span>
-            <span>
-              <strong>Gerageza ubumenyi bwawe</strong>
-              <small>{knowledgeScore
-                ? `Ubwa mbere: ${knowledgeScore.first}/${knowledgeScore.total} · Ubu: ${knowledgeScore.latest}/${knowledgeScore.total}`
-                : 'Ibibazo 5 ku ndwara zitandura'}</small>
-            </span>
-            <span className="help-arrow" aria-hidden="true">→</span>
-          </button>
-        </section>
-
-        <section className="dashboard-lessons">
-          <div className="section-heading">
-            <div><p className="eyebrow">BYAGUTEGURIWE</p><h2>{activePath ? 'Andi masomo akubereye' : 'Amasomo akubereye'}</h2></div>
-            <button className="text-link" onClick={onViewLibrary}>Reba amasomo yose <span aria-hidden="true">→</span></button>
-          </div>
-          <p className="for-you-explainer">
-            Dushingiye ku ngingo wahisemo
-            {selectedInterests.length > 0 && <> ({selectedInterests.slice(0, 3).join(', ')}{selectedInterests.length > 3 ? '…' : ''})</>}
-            {hasRiskCheck && ' n\'isuzuma ryawe'}. <button className="inline-link" onClick={onEditInterests}>Hindura</button>
-          </p>
-          <div className="dashboard-lesson-grid">
-            {forYou.map(({ lesson, reasons }, index) => (
-              <article className={`dashboard-lesson-card lesson-card-${index + 1}`} key={lesson.id}>
-                <div className="lesson-card-top"><span className="lesson-category">{lesson.category}</span><span className="lesson-duration">🎧 {lesson.duration}</span></div>
-                <h3>{lesson.title}</h3>
-                <p>{lesson.summary}</p>
-                {reasons.length > 0 && (
-                  <div className="reason-row">
-                    {reasons.map((reason) => <span key={reason} className={`reason-chip ${reason === 'Warirangije' ? 'done' : ''}`}>{reason === 'Warirangije' ? '✓ ' : ''}{reason}</span>)}
-                  </div>
-                )}
-                <button className="lesson-card-link" onClick={() => onOpenLesson(lesson)}>Fungura isomo <span aria-hidden="true">→</span></button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <p className="tip-banner"><span aria-hidden="true">💡</span> <strong>Inama y'uyu munsi:</strong> {healthTip}</p>
-
-        <section className="dashboard-bottom-row">
-          <button className="dashboard-help-card" onClick={onViewFaq}>
-            <span className="help-icon" aria-hidden="true">?</span>
-            <span><strong>Ukeneye ubufasha?</strong><small>Reba ibisubizo cyangwa utange ikibazo.</small></span>
-            <span className="help-arrow" aria-hidden="true">→</span>
-          </button>
-        </section>
-      </main>
-
-      <footer className="dashboard-footer"><span>BAHO<span className="brand-period">.</span></span><span>Wige neza. Wite ku buzima bwawe.</span></footer>
+          </Panel>
+          <Panel title="Isuzuma ry'ubumenyi">
+            <p className="small">Ibibazo 5 ku ndwara zitandura. Bikore mbere na nyuma yo kwiga urebe aho watereye imbere.</p>
+            <button className="btn btn-secondary btn-sm" onClick={onViewCheckup}>Tangira isuzuma</button>
+          </Panel>
+          <Panel title="Inama y'uyu munsi">
+            <p className="small">{healthTip}</p>
+          </Panel>
+          <Panel title="Ukeneye ubufasha?">
+            <p className="small">Reba ibibazo bikunze kubazwa, ubaze inzobere cyangwa utange raporo.</p>
+            <button className="btn btn-secondary btn-sm" onClick={onViewFaq}>Jya ku bufasha</button>
+          </Panel>
+        </aside>
+      </div>
     </div>
   );
 }

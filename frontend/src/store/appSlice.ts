@@ -46,7 +46,15 @@ export type AdminContentItem = {
   imageUrl?: string;
   quiz?: QuizQuestion[];
   curriculumIds?: number[];
+  creatorName?: string;
+  reviewerName?: string;
+  reviewNote?: string;
 };
+
+export type StaffMember = { id: number; fullName: string; email: string; role: string; topicIds?: number[] };
+
+type CreatorForm = { fullName: string; email: string; password: string; role: string; topicIds: number[] };
+const emptyCreatorForm: CreatorForm = { fullName: '', email: '', password: '', role: 'creator', topicIds: [] };
 
 // A guest's data is read before the first render. Loading it later in an effect
 // let the "save" effects write the empty defaults over it first.
@@ -85,7 +93,7 @@ interface AppState {
   reminderForm: { time: string; label: string };
   issues: IssueReport[];
   issueForm: { title: string; description: string };
-  creatorForm: { fullName: string; email: string; password: string; role: string };
+  creatorForm: CreatorForm;
   authForm: { name: string; email: string; password: string };
   authMode: 'login' | 'register';
   authUser: { id: number; name: string; email: string; role: string } | null;
@@ -97,7 +105,7 @@ interface AppState {
   faqItems: { id?: number; question: string; answer: string }[];
   faqForm: { question: string; answer: string };
   questions: QuestionItem[];
-  adminCreators: { id: number; fullName: string; email: string; role: string }[];
+  adminCreators: StaffMember[];
   adminContent: AdminContentItem[];
   curricula: Curriculum[];
   categories: Category[];
@@ -120,7 +128,7 @@ const initialState: AppState = {
   reminderForm: { time: '21:00', label: 'Soma isomo ryo mu buzima' },
   issues: defaultIssues,
   issueForm: { title: '', description: '' },
-  creatorForm: { fullName: '', email: '', password: '', role: 'creator' },
+  creatorForm: emptyCreatorForm,
   authForm: { name: '', email: '', password: '' },
   authMode: 'login',
   authUser: savedSession?.user ?? null,
@@ -192,12 +200,12 @@ const appSlice = createSlice({
     updateIssueForm: (state, action: PayloadAction<Partial<{ title: string; description: string }>>) => {
       state.issueForm = { ...state.issueForm, ...action.payload };
     },
-    updateCreatorForm: (state, action: PayloadAction<Partial<{ fullName: string; email: string; password: string; role: string }>>) => {
+    updateCreatorForm: (state, action: PayloadAction<Partial<CreatorForm>>) => {
       state.creatorForm = { ...state.creatorForm, ...action.payload };
     },
-    addCreatorLocal: (state, action: PayloadAction<{ id: number; fullName: string; email: string; role: string }>) => {
+    addCreatorLocal: (state, action: PayloadAction<StaffMember>) => {
       state.adminCreators = [action.payload, ...state.adminCreators];
-      state.creatorForm = { fullName: '', email: '', password: '', role: 'creator' };
+      state.creatorForm = emptyCreatorForm;
     },
     updateContentForm: (state, action: PayloadAction<Partial<ContentForm>>) => {
       state.contentForm = { ...state.contentForm, ...action.payload };
@@ -286,7 +294,7 @@ const appSlice = createSlice({
     setAuthenticatedUser: (state, action: PayloadAction<{ token: string; user: { id: number; name: string; email: string; role: string } }>) => {
       state.authToken = action.payload.token;
       state.authUser = action.payload.user;
-      const isStaff = action.payload.user.role === 'admin' || action.payload.user.role === 'creator';
+      const isStaff = ['admin', 'creator', 'specialist'].includes(action.payload.user.role);
       // A staff sign-in on a shared device must not replace the learner's own profile name.
       if (!isStaff) state.userName = action.payload.user.name;
       state.authForm = { name: '', email: '', password: '' };
@@ -325,7 +333,7 @@ const appSlice = createSlice({
     setAdminContent: (state, action: PayloadAction<AdminContentItem[]>) => {
       state.adminContent = action.payload;
     },
-    setAdminCreators: (state, action: PayloadAction<{ id: number; fullName: string; email: string; role: string }[]>) => {
+    setAdminCreators: (state, action: PayloadAction<StaffMember[]>) => {
       state.adminCreators = action.payload;
     }
   }

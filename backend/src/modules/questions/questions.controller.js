@@ -3,7 +3,7 @@ import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 
 export const getQuestions = async (req, res) => {
-  const isStaff = ['admin', 'creator'].includes(req.user?.role);
+  const isStaff = ['admin', 'creator', 'specialist'].includes(req.user?.role);
   try {
     const result = isStaff
       ? await pool.query('SELECT * FROM questions ORDER BY id DESC')

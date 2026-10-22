@@ -199,7 +199,7 @@ export const validateDisease = (body, { partial = false } = {}) => {
 };
 
 const diseaseFields = (body) => ({
-  icon: String(body.icon || '✚').slice(0, 8),
+  icon: String(body.icon || '').slice(0, 8),
   about: body.about.trim(),
   description: String(body.description || '').trim() || `Wige byinshi kuri ${body.name?.trim() || 'iyi ndwara'}.`,
   imageUrl: String(body.imageUrl || '').trim(),

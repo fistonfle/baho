@@ -2,6 +2,9 @@ import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { createToken, hashPassword, verifyPassword } from './security.js';
+import { setSpecialistTopics, topicsByUser } from '../review/review.service.js';
+
+const staffRoles = ['creator', 'specialist', 'admin'];
 
 const normalizedEmail = (email) => String(email || '').trim().toLowerCase();
 
@@ -18,7 +21,8 @@ export const getCreators = async (_req, res) => {
     const result = await pool.query(
       'SELECT u.id, u.full_name AS "fullName", u.email, s.role FROM users u JOIN staff s ON s.user_id = u.id ORDER BY s.role, u.created_at DESC'
     );
-    return res.json({ staff: result.rows });
+    const topics = await topicsByUser();
+    return res.json({ staff: result.rows.map((member) => ({ ...member, topicIds: topics[member.id] || [] })) });
   } catch (error) {
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not load creator accounts' });
@@ -29,15 +33,19 @@ export const getCreators = async (_req, res) => {
         return membership ? { id: user.id, fullName: user.fullName, email: user.email, role: membership.role } : null;
       })
       .filter(Boolean);
-    return res.json({ staff });
+    const topics = await topicsByUser();
+    return res.json({ staff: staff.map((member) => ({ ...member, topicIds: topics[member.id] || [] })) });
   }
 };
 
 export const createCreator = async (req, res) => {
-  const { fullName, email, password, role = 'creator' } = req.body || {};
+  const { fullName, email, password, role = 'creator', topicIds = [] } = req.body || {};
 
-  if (!['creator', 'admin'].includes(role)) {
-    return res.status(400).json({ message: 'Role must be creator or admin' });
+  if (!staffRoles.includes(role)) {
+    return res.status(400).json({ message: 'Role must be creator, specialist or admin' });
+  }
+  if (role === 'specialist' && (!Array.isArray(topicIds) || topicIds.length === 0)) {
+    return res.status(400).json({ message: 'Choose at least one topic for the specialist' });
   }
 
   if (!fullName?.trim() || !email?.trim() || !password || String(password).length < 8) {
@@ -62,6 +70,7 @@ export const createCreator = async (req, res) => {
       );
       user = result.rows[0];
       await client.query('INSERT INTO staff (user_id, role) VALUES ($1, $2)', [user.id, role]);
+      if (role === 'specialist') await setSpecialistTopics(user.id, topicIds, client);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -76,7 +85,8 @@ export const createCreator = async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role
+        role,
+        topicIds: role === 'specialist' ? topicIds.map(Number) : []
       }
     });
   } catch (error) {
@@ -99,6 +109,7 @@ export const createCreator = async (req, res) => {
 
     inMemoryStore.users.push(user);
     inMemoryStore.staff.push({ id: Date.now() + 1, userId: user.id, role });
+    if (role === 'specialist') await setSpecialistTopics(user.id, topicIds);
 
     return res.status(201).json({
       message: 'Creator created successfully',
@@ -106,7 +117,8 @@ export const createCreator = async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role
+        role,
+        topicIds: role === 'specialist' ? topicIds.map(Number) : []
       }
     });
   }

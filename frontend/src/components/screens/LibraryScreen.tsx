@@ -1,7 +1,7 @@
 import type { Lesson, QuizScore } from '../../types';
 import { AudioPlayer } from '../AudioPlayer';
 import { LessonQuiz } from '../LessonQuiz';
-import { Disclaimer } from '../ui';
+import { Disclaimer, PageHeader } from '../ui';
 
 // On phones the player sits below the list, so bring it into view.
 export const scrollToPlayer = () => {
@@ -20,7 +20,8 @@ export function LibraryScreen({
   setActiveCategory,
   setSelectedLesson,
   markLessonComplete,
-  submitQuiz
+  submitQuiz,
+  onHome
 }: {
   lessons: Lesson[];
   topics: string[];
@@ -33,6 +34,7 @@ export function LibraryScreen({
   setSelectedLesson: (value: Lesson) => void;
   markLessonComplete: (lessonId: number) => void;
   submitQuiz: (lessonId: number, answers: number[]) => Promise<{ score: number; total: number; correct: boolean[] }>;
+  onHome: () => void;
 }) {
   // Only show filters for categories that actually have lessons.
   const categories = ['All', ...topics.filter((interest) => lessons.some((lesson) => lesson.category === interest))];
@@ -42,76 +44,81 @@ export function LibraryScreen({
   const hasQuiz = selectedLesson.quiz?.length > 0;
 
   return (
-    <div className="screen dynamic-screen library-screen">
-      <div className="panel-section">
-        <p className="eyebrow">Ibikubiyemo</p>
-        <h2>Amasomo y'ubuzima</h2>
-        <p className="screen-intro">{completedLessons.length} kuri {lessons.length} warangije</p>
+    <div className="container">
+      <PageHeader
+        crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Amasomo' }, { label: selectedLesson.title }]}
+        title="Amasomo"
+        lead={`Warangije amasomo ${completedLessons.length} kuri ${lessons.length}.`}
+      />
+      <div className="layout-aside-main">
+        <section className="panel">
+          <div className="panel-head"><h2>Urutonde rw'amasomo</h2></div>
+          <div className="filter-bar">
+            <label className="visually-hidden" htmlFor="lesson-filter">Icyiciro</label>
+            <select id="lesson-filter" className="input" value={activeCategory} onChange={(event) => setActiveCategory(event.target.value)}>
+              {categories.map((category) => <option key={category} value={category}>{category === 'All' ? 'Ibyiciro byose' : category}</option>)}
+            </select>
+          </div>
+          <ul className="list lesson-list">
+            {filteredLessons.length === 0 && <li className="empty">Nta masomo ari muri iki cyiciro.</li>}
+            {filteredLessons.map((lesson) => {
+              const done = completedLessons.includes(lesson.id);
+              const score = quizScores.find((item) => item.contentId === lesson.id);
+              return (
+                <li key={lesson.id}>
+                  <button className={`list-button ${selectedLesson.id === lesson.id ? 'current' : ''}`} onClick={() => { setSelectedLesson(lesson); scrollToPlayer(); }}>
+                    <span className="grow">
+                      <strong>{lesson.title}</strong>
+                      <small>{lesson.category} · {lesson.duration}</small>
+                    </span>
+                    {done && <span className="badge badge-success">{score ? `${score.score}/${score.total}` : 'Ryarangiye'}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-        <div className="category-row" role="tablist" aria-label="Ibyiciro by'amasomo">
-          {categories.map((category) => (
-            <button
-              key={category}
-              role="tab"
-              aria-selected={activeCategory === category}
-              className={`tiny-button ${activeCategory === category ? 'active' : ''}`}
-              onClick={() => setActiveCategory(category)}
-            >
-              {category === 'All' ? 'Byose' : category}
-            </button>
-          ))}
-        </div>
-
-        <div className="list-stack">
-          {filteredLessons.length === 0 && <p className="text-muted">Nta masomo ari muri iki cyiciro.</p>}
-          {filteredLessons.map((lesson) => {
-            const done = completedLessons.includes(lesson.id);
-            const score = quizScores.find((item) => item.contentId === lesson.id);
-            return (
-              <button key={lesson.id} className={`list-item ${selectedLesson.id === lesson.id ? 'selected' : ''}`} onClick={() => { setSelectedLesson(lesson); scrollToPlayer(); }}>
-                <span className={`lesson-check ${done ? 'done' : ''}`} aria-label={done ? 'Warirangije' : 'Ntirirarangira'}>{done ? '✓' : '▶'}</span>
-                <div>
-                  <strong>{lesson.title}</strong>
-                  <span>{lesson.category} · {lesson.duration}</span>
-                </div>
-                {score && <span className="lesson-score">{score.score}/{score.total}</span>}
+        <article className="panel audio-panel">
+          <div className="panel-body">
+            {selectedLesson.imageUrl && (
+              <figure className="article-figure"><img src={selectedLesson.imageUrl} alt="" /></figure>
+            )}
+            <h2 style={{ fontSize: '1.4rem' }}>{selectedLesson.title}</h2>
+            <div className="article-meta">
+              <span>Icyiciro: {selectedLesson.category}</span>
+              <span>Igihe: {selectedLesson.duration}</span>
+              {isComplete && <span className="badge badge-success">Warirangije</span>}
+            </div>
+            <div className="article-body">
+              {selectedLesson.body.split('\n').filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </div>
+            <AudioPlayer
+              text={`${selectedLesson.title}. ${selectedLesson.body}`}
+              audioUrl={selectedLesson.audioUrl}
+              onFinished={hasQuiz ? undefined : () => markLessonComplete(selectedLesson.id)}
+            />
+            {hasQuiz ? (
+              <LessonQuiz
+                lessonId={selectedLesson.id}
+                questions={selectedLesson.quiz}
+                bestScore={bestScore}
+                onSubmit={(answers) => submitQuiz(selectedLesson.id, answers)}
+              />
+            ) : (
+              <button className="btn btn-primary" onClick={() => markLessonComplete(selectedLesson.id)} disabled={isComplete}>
+                {isComplete ? 'Warangije iri somo' : 'Narangije iri somo'}
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="panel-section audio-panel">
-        {selectedLesson.imageUrl && <img className="lesson-image" src={selectedLesson.imageUrl} alt="" />}
-        <p className="eyebrow">{selectedLesson.category}</p>
-        <h3>{selectedLesson.title}</h3>
-        <div className="lesson-body">
-          {selectedLesson.body.split('\n').filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-        </div>
-        <AudioPlayer
-          text={`${selectedLesson.title}. ${selectedLesson.body}`}
-          audioUrl={selectedLesson.audioUrl}
-          onFinished={hasQuiz ? undefined : () => markLessonComplete(selectedLesson.id)}
-        />
-        {hasQuiz ? (
-          <LessonQuiz
-            lessonId={selectedLesson.id}
-            questions={selectedLesson.quiz}
-            bestScore={bestScore}
-            onSubmit={(answers) => submitQuiz(selectedLesson.id, answers)}
-          />
-        ) : (
-          <button className={`complete-button ${isComplete ? 'done' : ''}`} onClick={() => markLessonComplete(selectedLesson.id)} disabled={isComplete}>
-            {isComplete ? '✓ Warangije iri somo' : 'Narangije iri somo'}
-          </button>
-        )}
-        {isComplete && nextInPath && (
-          <button className="next-lesson" onClick={() => { setSelectedLesson(nextInPath); window.scrollTo({ top: 0, behavior: 'smooth' }); scrollToPlayer(); }}>
-            <span>Isomo rikurikira mu nzira yawe</span>
-            <strong>{nextInPath.title} →</strong>
-          </button>
-        )}
-        <Disclaimer />
+            )}
+            {isComplete && nextInPath && (
+              <div className="alert alert-info row-between" style={{ marginTop: 16 }}>
+                <span>Isomo rikurikira mu nzira yawe: <strong>{nextInPath.title}</strong></span>
+                <button className="btn btn-primary btn-sm" onClick={() => { setSelectedLesson(nextInPath); window.scrollTo({ top: 0, behavior: 'smooth' }); scrollToPlayer(); }}>Komeza</button>
+              </div>
+            )}
+            <div style={{ marginTop: 16 }}><Disclaimer /></div>
+          </div>
+        </article>
       </div>
     </div>
   );

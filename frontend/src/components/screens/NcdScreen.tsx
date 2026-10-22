@@ -1,6 +1,6 @@
 import type { Curriculum, Lesson } from '../../types';
 import { AudioPlayer } from '../AudioPlayer';
-import { Disclaimer } from '../ui';
+import { Disclaimer, PageHeader } from '../ui';
 
 // NCD module. Diseases come from the API, so a disease added by staff appears
 // here with its information and the lessons written for it.
@@ -11,7 +11,8 @@ export function NcdScreen({
   selectedTopic,
   onSelectTopic,
   onOpenLesson,
-  onStartCheckup
+  onStartCheckup,
+  onHome
 }: {
   diseases: Curriculum[];
   lessons: Lesson[];
@@ -20,6 +21,7 @@ export function NcdScreen({
   onSelectTopic: (index: number) => void;
   onOpenLesson: (lesson: Lesson) => void;
   onStartCheckup: () => void;
+  onHome: () => void;
 }) {
   const disease = diseases[selectedTopic] ?? diseases[0];
   if (!disease) return null;
@@ -35,67 +37,71 @@ export function NcdScreen({
   ].join(' ');
 
   return (
-    <div className="screen dynamic-screen ncd-screen">
-      <div className="panel-section">
-        <p className="eyebrow">Indwara zitandura</p>
-        <h2>Menya, wirinde</h2>
-        <p className="screen-intro">Hitamo indwara wifuza kumenyaho byinshi.</p>
-        <div className="module-grid">
-          {diseases.map((item, index) => (
-            <button
-              key={item.id}
-              className={`module-card ${disease.id === item.id ? 'active' : ''}`}
-              aria-pressed={disease.id === item.id}
-              onClick={() => onSelectTopic(index)}
-            >
-              <span className="module-icon" aria-hidden="true">{item.icon || '✚'}</span>
-              <span>{item.condition}</span>
-            </button>
-          ))}
-        </div>
-        <div className="checkup-callout">
-          <strong>Gerageza ubumenyi bwawe</strong>
-          <p>Ibibazo 5 byoroshye. Bikora mbere na nyuma yo kwiga.</p>
-          <button className="primary" onClick={onStartCheckup}>Tangira isuzuma</button>
-        </div>
-      </div>
+    <div className="container">
+      <PageHeader
+        crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Indwara zitandura' }, { label: disease.condition ?? '' }]}
+        title="Indwara zitandura"
+        lead="Menya buri ndwara: icyo ari cyo, ibyongera ibyago, ibimenyetso n'uko wayirinda."
+      />
+      <div className="layout-aside-main">
+        <aside className="stack">
+          <section className="panel">
+            <div className="panel-head"><h2>Indwara</h2></div>
+            <ul className="list">
+              {diseases.map((item, index) => (
+                <li key={item.id}>
+                  <button className={`list-button ${disease.id === item.id ? 'current' : ''}`} aria-pressed={disease.id === item.id} onClick={() => onSelectTopic(index)}>
+                    <span className="grow"><strong>{item.condition}</strong><small>Amasomo {item.lessonIds.length}</small></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="panel">
+            <div className="panel-head"><h2>Isuzuma ry'ubumenyi</h2></div>
+            <div className="panel-body">
+              <p className="small">Ibibazo 5 byoroshye. Bikore mbere na nyuma yo kwiga urebe aho watereye imbere.</p>
+              <button className="btn btn-primary btn-sm" onClick={onStartCheckup}>Tangira isuzuma</button>
+            </div>
+          </section>
+        </aside>
 
-      <div className="panel-section ncd-detail">
-        {disease.imageUrl && <img className="lesson-image" src={disease.imageUrl} alt="" />}
-        <p className="eyebrow">Indwara</p>
-        <h3>{disease.condition}</h3>
-        <p>{disease.about}</p>
-        <AudioPlayer text={narration} />
-        <div className="ncd-columns">
-          <section className="ncd-block risk">
-            <h4>Ibyongera ibyago</h4>
-            <ul>{disease.riskFactors.map((item) => <li key={item}>{item}</li>)}</ul>
-          </section>
-          <section className="ncd-block warning">
-            <h4>Ibimenyetso</h4>
-            <ul>{disease.warningSigns.map((item) => <li key={item}>{item}</li>)}</ul>
-          </section>
-          <section className="ncd-block prevent">
-            <h4>Uko wayirinda</h4>
-            <ul>{disease.prevention.map((item) => <li key={item}>{item}</li>)}</ul>
-          </section>
-        </div>
+        <article className="panel">
+          <div className="panel-body">
+            {disease.imageUrl && <figure className="article-figure"><img src={disease.imageUrl} alt="" /></figure>}
+            <h2 style={{ fontSize: '1.4rem' }}>{disease.condition}</h2>
+            <div className="article-body" style={{ marginTop: 8 }}><p>{disease.about}</p></div>
+            <AudioPlayer text={narration} />
 
-        {diseaseLessons.length > 0 && (
-          <section className="disease-lessons">
-            <h4>Amasomo kuri {disease.condition} ({diseaseLessons.length})</h4>
-            {diseaseLessons.map((lesson, index) => (
-              <button key={lesson.id} className="disease-lesson" onClick={() => onOpenLesson(lesson)}>
-                <span className={`lesson-check ${completedLessons.includes(lesson.id) ? 'done' : ''}`}>
-                  {completedLessons.includes(lesson.id) ? '✓' : index + 1}
-                </span>
-                <span>{lesson.title}</span>
-                <span aria-hidden="true">→</span>
-              </button>
-            ))}
-          </section>
-        )}
-        <Disclaimer />
+            <h3 className="section-title">Ibyongera ibyago</h3>
+            <ul className="fact-list">{disease.riskFactors.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3 className="section-title">Ibimenyetso byo kwitondera</h3>
+            <ul className="fact-list">{disease.warningSigns.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3 className="section-title">Uko wayirinda</h3>
+            <ul className="fact-list">{disease.prevention.map((item) => <li key={item}>{item}</li>)}</ul>
+
+            {diseaseLessons.length > 0 && (
+              <>
+                <h3 className="section-title">Amasomo kuri {disease.condition}</h3>
+                <table className="table">
+                  <tbody>
+                    {diseaseLessons.map((lesson, index) => (
+                      <tr key={lesson.id}>
+                        <td style={{ width: 32 }}>{index + 1}.</td>
+                        <td><strong>{lesson.title}</strong><div className="small muted">{lesson.summary}</div></td>
+                        <td className="right">
+                          {completedLessons.includes(lesson.id) && <span className="badge badge-success" style={{ marginRight: 8 }}>Ryarangiye</span>}
+                          <button className="btn btn-secondary btn-sm" onClick={() => onOpenLesson(lesson)}>Fungura</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+            <div style={{ marginTop: 16 }}><Disclaimer /></div>
+          </div>
+        </article>
       </div>
     </div>
   );

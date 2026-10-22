@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { knowledgeCheck } from '../../data/healthContent';
+import { PageHeader } from '../ui';
 
 export type KnowledgeResult = { date: string; score: number; total: number };
 
@@ -29,7 +30,7 @@ const speak = (text: string) => {
 
 // Five-item NCD knowledge check (same items as Appendix A). Taking it before
 // and after the NCD module shows the learner, and the researcher, the change.
-export function CheckupScreen({ onFinished, onOpenNcd }: { onFinished: () => void; onOpenNcd: () => void }) {
+export function CheckupScreen({ onFinished, onOpenNcd, onHome }: { onFinished: () => void; onOpenNcd: () => void; onHome: () => void }) {
   const [index, setIndex] = useState(0);
   const [choices, setChoices] = useState<number[]>([]);
   const [revealed, setRevealed] = useState(false);
@@ -63,64 +64,81 @@ export function CheckupScreen({ onFinished, onOpenNcd }: { onFinished: () => voi
     setRevealed(false);
   };
 
+  const header = (
+    <PageHeader
+      crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Indwara zitandura', onClick: onOpenNcd }, { label: 'Isuzuma ry\'ubumenyi' }]}
+      title="Isuzuma ry'ubumenyi"
+      lead="Ibibazo bitanu ku ndwara zitandura. Bikore mbere na nyuma yo kwiga."
+    />
+  );
+
   if (done) {
     const first = results[0];
     const improved = results.length > 1 && score > first.score;
     return (
-      <div className="screen dynamic-screen checkup-screen">
-        <div className="panel-section checkup-card">
-          <p className="eyebrow">Isuzuma ry'ubumenyi</p>
-          <div className="score-ring" style={{ ['--score' as string]: `${(score / knowledgeCheck.length) * 100}%` }}>
-            <strong>{score}/{knowledgeCheck.length}</strong>
+      <div className="container narrow">
+        {header}
+        <section className="panel">
+          <div className="panel-head"><h2>Ibisubizo</h2></div>
+          <div className="panel-body stack">
+            <div className="score-box">
+              <div className="quiz-score">{score} / {knowledgeCheck.length}</div>
+              <div className="muted">{score === knowledgeCheck.length ? 'Wasubije neza byose.' : score >= 3 ? 'Wakoze neza.' : 'Komeza wige amasomo.'}</div>
+            </div>
+            {results.length > 1 ? (
+              <table className="table">
+                <thead><tr><th>Isuzuma</th><th className="right">Amanota</th></tr></thead>
+                <tbody>
+                  <tr><td>Ubwa mbere</td><td className="right">{first.score} / {first.total}</td></tr>
+                  <tr><td>Ubu</td><td className="right">{score} / {knowledgeCheck.length} {improved && <span className="badge badge-success">Watereye imbere</span>}</td></tr>
+                </tbody>
+              </table>
+            ) : <p className="alert alert-info">Iga amasomo ku ndwara zitandura, hanyuma wongere ukore isuzuma urebe aho watereye imbere.</p>}
           </div>
-          <h2>{score === knowledgeCheck.length ? 'Ni byiza cyane!' : score >= 3 ? 'Wakoze neza!' : 'Komeza wige!'}</h2>
-          {results.length > 1 && (
-            <p className="score-compare">
-              Ubwa mbere: <strong>{first.score}/{first.total}</strong> → Ubu: <strong>{score}/{knowledgeCheck.length}</strong>
-              {improved && <span className="score-up"> ↑ Watereye imbere</span>}
-            </p>
-          )}
-          {results.length === 1 && <p>Iga amasomo ku ndwara zitandura, hanyuma wongere ugerageze urebe aho watereye imbere.</p>}
-          <div className="action-row">
-            <button className="secondary" onClick={restart}>Ongera ugerageze</button>
-            <button className="primary" onClick={onOpenNcd}>Iga ku ndwara</button>
+          <div className="panel-foot row">
+            <button className="btn btn-primary" onClick={onOpenNcd}>Iga ku ndwara</button>
+            <button className="btn btn-secondary" onClick={restart}>Ongera ukore isuzuma</button>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="screen dynamic-screen checkup-screen">
-      <div className="panel-section checkup-card">
-        <div className="row-between">
-          <p className="eyebrow">Ikibazo cya {index + 1} kuri {knowledgeCheck.length}</p>
-          <button className="listen-chip" onClick={() => speak(`${question.question} ${question.options.join('. ')}`)}>🔊 Umva</button>
+    <div className="container narrow">
+      {header}
+      <section className="panel">
+        <div className="panel-head">
+          <div><h2>Ikibazo cya {index + 1} kuri {knowledgeCheck.length}</h2></div>
+          <button className="btn btn-secondary btn-sm" onClick={() => speak(`${question.question} ${question.options.join('. ')}`)}>Umva ikibazo</button>
         </div>
-        <div className="quiz-progress"><span style={{ width: `${(index / knowledgeCheck.length) * 100}%` }} /></div>
-        <h2>{question.question}</h2>
-        <div className="quiz-options">
-          {question.options.map((option, optionIndex) => {
-            const state = !revealed ? '' : optionIndex === question.answer ? 'correct' : optionIndex === choices[index] ? 'wrong' : 'dim';
-            return (
-              <button key={option} className={`quiz-option ${state}`} onClick={() => choose(optionIndex)} disabled={revealed}>
-                <span className="quiz-letter">{String.fromCharCode(65 + optionIndex)}</span>
-                {option}
-              </button>
-            );
-          })}
+        <div className="panel-body">
+          <div className="progress" style={{ marginBottom: 16 }}><span style={{ width: `${(index / knowledgeCheck.length) * 100}%` }} /></div>
+          <fieldset className="quiz-question">
+            <legend style={{ fontSize: '1.05rem' }}>{question.question}</legend>
+            {question.options.map((option, optionIndex) => {
+              const state = !revealed ? '' : optionIndex === question.answer ? 'correct' : optionIndex === choices[index] ? 'wrong' : 'dim';
+              return (
+                <button key={option} className={`quiz-option ${state}`} onClick={() => choose(optionIndex)} disabled={revealed}>
+                  <span className="quiz-letter">{String.fromCharCode(65 + optionIndex)}</span>
+                  {option}
+                </button>
+              );
+            })}
+          </fieldset>
+          {revealed && (
+            <p className={`alert small ${choices[index] === question.answer ? 'alert-success' : 'alert-danger'}`} role="status">
+              <strong>{choices[index] === question.answer ? 'Ni byo.' : 'Si byo.'}</strong> {question.explanation}
+            </p>
+          )}
         </div>
-        {revealed && (
-          <div className={`quiz-feedback ${choices[index] === question.answer ? 'correct' : 'wrong'}`} role="status">
-            <strong>{choices[index] === question.answer ? '✓ Ni byo!' : '✗ Si byo.'}</strong> {question.explanation}
-          </div>
-        )}
-        <div className="checkup-footer">
-          <button className="primary" onClick={next} disabled={!revealed}>
-            {index === knowledgeCheck.length - 1 ? 'Reba amanota' : 'Ikibazo gikurikira →'}
+        <div className="panel-foot row-between">
+          <span className="small muted">Hitamo igisubizo kimwe.</span>
+          <button className="btn btn-primary" onClick={next} disabled={!revealed}>
+            {index === knowledgeCheck.length - 1 ? 'Reba amanota' : 'Ikibazo gikurikira'}
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

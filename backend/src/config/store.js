@@ -23,6 +23,7 @@ export const inMemoryStore = {
     lesson.quiz.map((item, position) => ({ id: `${lessonId(lesson.title)}-${position}`, contentId: lessonId(lesson.title), position, ...item }))
   ),
   quizAttempts: [],
+  specialistTopics: [],
   faqs: seedFaqs.map((faq, index) => ({ id: index + 1, ...faq })),
   issues: [],
   questions: []

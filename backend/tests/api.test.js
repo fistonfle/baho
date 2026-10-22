@@ -512,3 +512,88 @@ test('Admin adds a new disease and a creator writes a lesson, quiz and image for
     server.close();
   }
 });
+
+test('A specialist must approve lessons in their topic before an admin can publish them', async () => {
+  const { server, baseUrl } = await startServer();
+  const patchJson = (url, body, token) => fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body)
+  });
+  const login = async (email, password) => (await (await postJson(`${baseUrl}/api/v1/auth/login`, { email, password })).json()).token;
+  try {
+    // The admin creates specialists; each one needs at least one topic.
+    const noTopics = await postJson(`${baseUrl}/api/v1/admin/creators`, {
+      fullName: 'Dr. No Topic', email: 'no.topic@example.test', password: 'specialist-pass-1', role: 'specialist'
+    }, adminToken);
+    assert.equal(noTopics.status, 400);
+    const created = await postJson(`${baseUrl}/api/v1/admin/creators`, {
+      fullName: 'Dr. Diabetes', email: 'dr.diabetes@example.test', password: 'specialist-pass-1', role: 'specialist', topicIds: [3]
+    }, adminToken);
+    assert.equal(created.status, 201);
+    assert.deepEqual((await created.json()).user.topicIds, [3]);
+    await postJson(`${baseUrl}/api/v1/admin/creators`, {
+      fullName: 'Dr. Cancer', email: 'dr.cancer@example.test', password: 'specialist-pass-1', role: 'specialist', topicIds: [5]
+    }, adminToken);
+    const diabetesToken = await login('dr.diabetes@example.test', 'specialist-pass-1');
+    const cancerToken = await login('dr.cancer@example.test', 'specialist-pass-1');
+
+    const { staff } = await (await fetch(`${baseUrl}/api/v1/admin/creators`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+    assert.deepEqual(staff.find((member) => member.email === 'dr.diabetes@example.test').topicIds, [3]);
+
+    // A creator submits a diabetes lesson; the admin cannot publish it yet.
+    const submitted = await postJson(`${baseUrl}/api/v1/admin/content`, {
+      categoryId: 3, title: 'Isukari n\'imbuto', body: 'Imbuto zirimo isukari karemano.', status: 'review'
+    }, creatorToken);
+    const lesson = (await submitted.json()).content;
+    assert.equal(lesson.status, 'review');
+    const earlyPublish = await patchJson(`${baseUrl}/api/v1/admin/content/${lesson.id}/status`, { status: 'published' }, adminToken);
+    assert.equal(earlyPublish.status, 409);
+
+    // Only specialists of that topic see and review it.
+    const notMine = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'approve' }, cancerToken);
+    assert.equal(notMine.status, 403);
+    const creatorQueue = await fetch(`${baseUrl}/api/v1/review/queue`, { headers: { Authorization: `Bearer ${creatorToken}` } });
+    assert.equal(creatorQueue.status, 403);
+    const queue = (await (await fetch(`${baseUrl}/api/v1/review/queue`, { headers: { Authorization: `Bearer ${diabetesToken}` } })).json()).lessons;
+    assert.ok(queue.some((item) => item.id === lesson.id && item.status === 'review'));
+
+    // Asking for changes needs a note and sends the lesson back to the creator.
+    const noNote = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'changes' }, diabetesToken);
+    assert.equal(noNote.status, 400);
+    const changes = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'changes', note: 'Vuga ko imbuto zifite fibre.' }, diabetesToken);
+    const returned = (await changes.json()).lesson;
+    assert.equal(returned.status, 'rejected');
+    assert.equal(returned.reviewNote, 'Vuga ko imbuto zifite fibre.');
+
+    const resubmitted = await patchJson(`${baseUrl}/api/v1/admin/content/${lesson.id}`, {
+      categoryId: 3, title: 'Isukari n\'imbuto', body: 'Imbuto zirimo isukari karemano na fibre.', status: 'review'
+    }, creatorToken);
+    assert.equal((await resubmitted.json()).content.status, 'review');
+
+    const approved = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'approve' }, diabetesToken);
+    assert.equal((await approved.json()).lesson.status, 'approved');
+    const twice = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'approve' }, diabetesToken);
+    assert.equal(twice.status, 409);
+
+    // Now the admin can publish, and the reviewer is shown in the staff list.
+    const published = await patchJson(`${baseUrl}/api/v1/admin/content/${lesson.id}/status`, { status: 'published' }, adminToken);
+    assert.equal(published.status, 200);
+    const adminView = (await (await fetch(`${baseUrl}/api/v1/admin/content`, { headers: { Authorization: `Bearer ${adminToken}` } })).json()).content;
+    assert.equal(adminView.find((item) => item.id === lesson.id).reviewerName, 'Dr. Diabetes');
+
+    // An admin's own lesson in that topic also goes to the specialist first.
+    const adminLesson = await postJson(`${baseUrl}/api/v1/admin/content`, {
+      categoryId: 3, title: 'Inkweto zikwiriye', body: 'Ambara inkweto zikwiriye.', status: 'published'
+    }, adminToken);
+    assert.equal((await adminLesson.json()).content.status, 'review');
+
+    // Topics without a specialist keep the simple admin workflow.
+    const nutrition = await postJson(`${baseUrl}/api/v1/admin/content`, {
+      categoryId: 1, title: 'Amazi', body: 'Nywa amazi.', status: 'published'
+    }, adminToken);
+    assert.equal((await nutrition.json()).content.status, 'published');
+  } finally {
+    server.close();
+  }
+});
