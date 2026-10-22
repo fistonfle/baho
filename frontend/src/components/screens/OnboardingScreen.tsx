@@ -40,7 +40,7 @@ export function OnboardingScreen({
         lead="Hitamo ingingo wifuza kwigaho. Ibi bidufasha kukwereka amasomo akubereye."
       />
       <ol className="stepper">
-        <li className="current">1. Ingingo n'izina</li>
+        <li className="current">1. Ingingo zigushishikaje n'izina ryawe</li>
         <li>2. Umwirondoro w'ubuzima (si ngombwa)</li>
       </ol>
       <form className="panel" onSubmit={(event) => { event.preventDefault(); submit(); }}>

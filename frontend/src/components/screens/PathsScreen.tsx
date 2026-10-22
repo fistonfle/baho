@@ -22,17 +22,17 @@ export function PathsScreen({
   return (
     <div className="container">
       <PageHeader
-        crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Inzira z\'imyigire' }]}
-        title="Inzira z'imyigire"
-        lead="Buri nzira ni urutonde rw'amasomo ateguwe ku ndwara runaka. Izagutoranyirijwe zishingiye ku mwirondoro wawe w'ubuzima."
+        crumbs={[{ label: 'Ahabanza', onClick: onHome }, { label: 'Ingingo z\'imyigire' }]}
+        title="Ingingo z'imyigire"
+        lead="Buri ngingo ni urutonde rw'amasomo ateguwe ku ndwara runaka. Izagutoranyirijwe zishingiye ku mwirondoro wawe w'ubuzima."
         actions={<button className="btn btn-secondary" onClick={onEditProfile}>Hindura umwirondoro</button>}
       />
       <Panel flush>
-        {curricula.length === 0 ? <Empty>Inzira z'imyigire zizagaragara internet nigaruka.</Empty> : (
+        {curricula.length === 0 ? <Empty>Ingingo z'imyigire zizagaragara internet nigaruka.</Empty> : (
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th>Inzira</th><th>Indwara</th><th>Aho ugeze</th><th className="right">Igikorwa</th></tr>
+                <tr><th>Ingingo</th><th>Indwara</th><th>Aho ugeze</th><th className="right">Igikorwa</th></tr>
               </thead>
               <tbody>
                 {curricula.map((curriculum) => {

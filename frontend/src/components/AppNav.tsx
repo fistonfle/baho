@@ -25,7 +25,7 @@ const learnerItems: NavItem[] = [
   { screen: 'library', label: 'Amasomo', icon: 'book' },
   { screen: 'ncd', label: 'Indwara', icon: 'heart' },
   { screen: 'exercise', label: 'Imyitozo', icon: 'run' },
-  { screen: 'reminders', label: 'Ibyibutsa', icon: 'bell' }
+  { screen: 'reminders', label: 'Ibyo tukwibutsa', icon: 'bell' }
 ];
 
 const roleNames: Record<string, string> = {
@@ -72,7 +72,7 @@ export function SiteHeader({
     <>
       <div className="utility-bar">
         <div className="container">
-          <span className="hide-sm">Inyigisho ku buzima mu Kinyarwanda · Ntisimbura muganga</span>
+          <span className="hide-sm">Izi nyigisho ku buzima mu Kinyarwanda · Ntizisimbura muganga</span>
           <span className={isOnline ? 'status-online' : 'status-offline'}>{isOnline ? 'Kuri internet' : 'Nta internet'}</span>
         </div>
       </div>
@@ -159,7 +159,7 @@ export function SiteFooter({ onNavigate }: { onNavigate?: (screen: Screen) => vo
           <h4>Ubufasha</h4>
           <ul>
             <li><button onClick={() => onNavigate?.('faq')}>Ibibazo bikunze kubazwa</button></li>
-            <li><button onClick={() => onNavigate?.('faq')}>Tanga raporo</button></li>
+            <li><button onClick={() => onNavigate?.('faq')}>Tanga ikibazo</button></li>
           </ul>
         </div>
       </div>
