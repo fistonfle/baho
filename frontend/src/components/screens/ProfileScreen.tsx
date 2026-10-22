@@ -36,7 +36,7 @@ export function ProfileScreen({
   onHome
 }: {
   userName: string;
-  account: { name: string; email: string; role: string } | null;
+  account: { name: string; email: string | null; phone?: string | null; role: string } | null;
   completedCount: number;
   totalLessons: number;
   streak: number;
@@ -105,7 +105,7 @@ export function ProfileScreen({
                   <>{displayName} {!account && <button className="btn-link small" onClick={() => setEditingName(true)}>Hindura</button>}</>
                 )}
               </dd>
-              <dt>Imeyili</dt><dd>{account?.email ?? '–'}</dd>
+              {account?.phone ? <><dt>Telefoni</dt><dd>{account.phone.replace(/^\+250(\d{3})(\d{3})(\d{3})$/, '0$1 $2 $3')}</dd></> : <><dt>Imeyili</dt><dd>{account?.email ?? '–'}</dd></>}
               <dt>Uruhare</dt><dd><StatusBadge label={account ? roleLabels[account.role] ?? account.role : 'Umushyitsi'} tone={account ? 'success' : 'warning'} /></dd>
             </dl>
             {!account && <p className="alert alert-info small" style={{ marginTop: 16 }}>Ukoresha Baho nk'umushyitsi: amakuru yawe abitswe kuri iyi telefoni gusa. Fungura konti kugira ngo aho ugeze n'amanota bibikwe, kandi ubashe kubaza inzobere.</p>}

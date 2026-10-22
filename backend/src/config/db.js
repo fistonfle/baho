@@ -129,6 +129,10 @@ const createSchemaSql = `
   ALTER TABLE content ADD COLUMN IF NOT EXISTS review_note TEXT;
   ALTER TABLE content ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
 
+  -- Learners sign in with a phone number; staff keep email.
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(16) UNIQUE;
+  ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
+
   CREATE TABLE IF NOT EXISTS curriculum_lessons (
     curriculum_id INTEGER REFERENCES curricula(id) ON DELETE CASCADE,
     content_id INTEGER REFERENCES content(id) ON DELETE CASCADE,

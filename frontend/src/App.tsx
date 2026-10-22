@@ -70,8 +70,10 @@ const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'n
 
 const translateAuthError = (message: string) => {
   const normalized = message.toLowerCase();
-  if (normalized.includes('invalid email or password')) return 'Imeyili cyangwa ijambo ry\'ibanga si byo.';
-  if (normalized.includes('already exists') || normalized.includes('already belongs')) return 'Iyi konti isanzwe ihari. Injira cyangwa ukoreshe indi imeyili.';
+  if (normalized.includes('invalid phone number, email or pin')) return 'Nimero, imeyili cyangwa PIN si byo.';
+  if (normalized.includes('too many wrong attempts')) return 'Wibeshye inshuro nyinshi. Ongera ugerageze nyuma y\'iminota 15.';
+  if (normalized.includes('rwandan phone number')) return 'Andika amazina, nimero ya telefoni yo mu Rwanda na PIN y\'imibare 4 kugeza kuri 6.';
+  if (normalized.includes('already exists') || normalized.includes('already belongs')) return 'Iyi nimero isanzwe ifite konti. Injira cyangwa ukoreshe indi nimero.';
   if (normalized.includes('at least 8 characters')) return 'Ijambo ry\'ibanga rigomba kuba nibura inyuguti 8.';
   if (normalized.includes('fetch') || normalized.includes('failed') || normalized.includes('could not')) return 'Ntibyashobotse. Reba internet wongere ugerageze.';
   return 'Habaye ikibazo. Ongera ugerageze.';
@@ -112,16 +114,18 @@ function App() {
   const [healthProfile, setHealthProfile] = useState<HealthProfile>(emptyHealthProfile);
   const [activePathSlug, setActivePathSlug] = useState<string | null>(() => localStorage.getItem(PATH_KEY));
   const [riskFromOnboarding, setRiskFromOnboarding] = useState(false);
+  const [staffSignIn, setStaffSignIn] = useState(false);
   const [streak, setStreak] = useState(getStreak);
   const [knowledgeResults, setKnowledgeResults] = useState(loadKnowledgeResults);
   const [pendingIssues, setPendingIssues] = useState(() => getOutbox().length);
   const [notificationsAllowed, setNotificationsAllowed] = useState(() => 'Notification' in window && Notification.permission === 'granted');
   const notifiedReminders = useRef(new Set<string>());
 
-  const navigate = (screen: Screen) => {
-    dispatch(setCurrentScreen(screen));
+  const navigate = (screen: Screen) => dispatch(setCurrentScreen(screen));
+  // Every screen opens at the top, including changes made by the store (sign-in, sign-out).
+  useEffect(() => {
     window.scrollTo({ top: 0 });
-  };
+  }, [currentScreen]);
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
 
   // Restore the session, learner profile and private risk answers on start-up.
@@ -423,14 +427,17 @@ function App() {
     notify(permission === 'granted' ? 'Ubutumwa bwo kwibutsa bwemewe.' : 'Ntiwemeye ubutumwa bwo kwibutsa.');
   };
 
-  const openAuth = (mode: 'login' | 'register' = 'login') => {
+  const openAuth = (mode: 'login' | 'register' = 'login', staff = false) => {
     dispatch(setAuthMode(mode));
+    setStaffSignIn(staff);
     navigate('auth');
   };
 
   const submitAuth = async () => {
     try {
-      const response = authMode === 'register' ? await api.register(authForm) : await api.login(authForm);
+      const response = authMode === 'register'
+        ? await api.register({ name: authForm.name.trim(), phone: authForm.identifier, pin: authForm.password })
+        : await api.login({ identifier: authForm.identifier.trim(), password: authForm.password });
       setAuthToken(response.token);
       localStorage.setItem('baho-token', response.token);
       localStorage.setItem('baho-user', JSON.stringify(response.user));
@@ -487,7 +494,7 @@ function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'landing':
-        return <LandingScreen onStart={() => navigate(userName ? 'dashboard' : 'onboarding')} onAdmin={() => openAuth()} returning={Boolean(userName)} />;
+        return <LandingScreen onStart={() => navigate(userName ? 'dashboard' : 'onboarding')} onAdmin={() => openAuth('login', true)} returning={Boolean(userName)} />;
       case 'auth':
         return (
           <AuthScreen
@@ -497,6 +504,8 @@ function App() {
             onModeChange={(mode) => dispatch(setAuthMode(mode))}
             onSubmit={() => void submitAuth()}
             onBack={() => navigate(userName ? 'dashboard' : 'landing')}
+            onError={notify}
+            staffSignIn={staffSignIn}
           />
         );
       case 'onboarding':

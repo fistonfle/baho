@@ -118,12 +118,12 @@ export const api = {
   deleteContent: (id: number) => request<{ message: string }>(`/admin/content/${id}`, { method: 'DELETE' }),
   updateIssueStatus: (id: number, status: string) =>
     request<{ message: string; issue: any }>(`/admin/issues/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  login: (payload: { email: string; password: string }) =>
+  login: (payload: { identifier: string; password: string }) =>
     request<{ token: string; user: any }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  register: (payload: { name: string; email: string; password: string }) =>
+  register: (payload: { name: string; phone: string; pin: string }) =>
     request<{ message: string; token: string; user: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload)
