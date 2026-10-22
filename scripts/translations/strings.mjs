@@ -10,7 +10,7 @@ const ts = createRequire(join(root, 'frontend', 'package.json'))('typescript');
 
 // Lesson and disease text; everything else under frontend/src is interface text.
 const contentFiles = ['frontend/src/data/healthContent.ts', 'backend/src/config/seedData.js'];
-const textAttributes = new Set(['placeholder', 'aria-label', 'title', 'alt', 'label']);
+const textAttributes = new Set(['placeholder', 'aria-label', 'title', 'alt', 'label', 'description', 'lead', 'caption']);
 const skippedCalls = new Set(['includes', 'startsWith', 'getItem', 'setItem', 'removeItem', 'addEventListener', 'removeEventListener', 'toLocaleDateString', 'navigate', 'setTab', 'Error']);
 
 const walk = (dir) => readdirSync(dir).flatMap((name) => {
@@ -19,8 +19,13 @@ const walk = (dir) => readdirSync(dir).flatMap((name) => {
   return /\.tsx?$/.test(name) && !name.endsWith('.d.ts') ? [path] : [];
 });
 
+// The staff portal is in English, so only learner-facing text needs translating.
+const staffFiles = ['frontend/src/components/screens/AdminScreen.tsx', 'frontend/src/components/DiseaseManager.tsx', 'frontend/src/services/api.ts'];
+// English staff labels that live in shared files (roles, lesson statuses, staff sign-in).
+const looksEnglish = (text) => /\b(the|and|with|from|your|their|sign|staff|admin|writer|specialist|approved|published|draft|review|requested|email|password|home)\b/i.test(text);
+
 export const sourceFiles = () => [
-  ...walk(join(root, 'frontend', 'src')).map((path) => relative(root, path)).filter((path) => !contentFiles.includes(path) && path !== 'frontend/src/services/api.ts'),
+  ...walk(join(root, 'frontend', 'src')).map((path) => relative(root, path)).filter((path) => !contentFiles.includes(path) && !staffFiles.includes(path)),
   ...contentFiles
 ];
 
@@ -94,7 +99,7 @@ export const extract = (file) => {
     ts.forEachChild(node, visit);
   };
   visit(source);
-  return found;
+  return found.filter((item) => !looksEnglish(item.text));
 };
 
 export const sectionOf = (file) => (contentFiles.includes(file) ? 'Lesson and disease content' : 'App interface');

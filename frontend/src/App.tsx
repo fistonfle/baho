@@ -217,7 +217,7 @@ function App() {
   useEffect(() => {
     if (currentScreen !== 'admin' || !isStaff) return;
     if (authUser?.role !== 'specialist') {
-      api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Ntibyashobotse kuzana amasomo.'));
+      api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Could not load the lessons.'));
     }
     api.getQuestions().then((response) => dispatch(setQuestions(response.questions.map(toQuestionItem)))).catch(() => undefined);
     if (authUser?.role === 'admin') {
@@ -442,7 +442,7 @@ function App() {
       localStorage.setItem('baho-token', response.token);
       localStorage.setItem('baho-user', JSON.stringify(response.user));
       dispatch(setAuthenticatedUser({ token: response.token, user: response.user }));
-      notify(authMode === 'login' ? 'Murakaza neza!' : 'Konti yawe yafunguwe neza.');
+      notify(authMode === 'register' ? 'Konti yawe yafunguwe neza.' : ['admin', 'creator', 'specialist'].includes(response.user.role) ? `Welcome, ${response.user.name}.` : 'Murakaza neza!');
     } catch (error) {
       notify(translateAuthError(error instanceof Error ? error.message : ''));
     }
@@ -494,7 +494,19 @@ function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'landing':
-        return <LandingScreen onStart={() => navigate(userName ? 'dashboard' : 'onboarding')} onAdmin={() => openAuth('login', true)} returning={Boolean(userName)} />;
+        return (
+          <LandingScreen
+            returning={Boolean(userName)}
+            diseases={diseases}
+            lessons={lessons}
+            onStart={() => navigate(userName ? 'dashboard' : 'onboarding')}
+            onRegister={() => openAuth('register')}
+            onSignIn={() => openAuth('login')}
+            onStaffSignIn={() => openAuth('login', true)}
+            onOpenDisease={(index) => { dispatch(setSelectedNcdTopic(index)); navigate('ncd'); }}
+            onOpenLesson={openLesson}
+          />
+        );
       case 'auth':
         return (
           <AuthScreen

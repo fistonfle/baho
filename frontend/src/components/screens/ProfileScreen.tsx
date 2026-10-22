@@ -5,9 +5,9 @@ import type { Curriculum } from '../../types';
 import { PageHeader, Panel, StatusBadge } from '../ui';
 
 const roleLabels: Record<string, string> = {
-  admin: 'Umuyobozi',
-  creator: 'Umwanditsi',
-  specialist: 'Inzobere',
+  admin: 'Admin',
+  creator: 'Writer',
+  specialist: 'Specialist',
   learner: 'Umunyeshuri'
 };
 
@@ -78,7 +78,7 @@ export function ProfileScreen({
         title="Umwirondoro wanjye"
         actions={account ? (
           <>
-            {isStaff && <button className="btn btn-primary" onClick={onOpenStaffArea}>Ubuyobozi</button>}
+            {isStaff && <button className="btn btn-primary" onClick={onOpenStaffArea}>Staff portal</button>}
             <button className="btn btn-secondary" onClick={onSignOut}>Sohoka</button>
           </>
         ) : (
