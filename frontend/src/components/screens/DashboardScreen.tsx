@@ -66,7 +66,7 @@ export function DashboardScreen({
       <PageHeader
         crumbs={[{ label: 'Ahabanza' }]}
         title={`Muraho, ${userName || 'nshuti'}`}
-        lead="Aha ni ho ubona ingingo yawe y'imyigire, aho ugeze n'amasomo akubereye."
+        lead="Aha ni ho ubona gahunda yawe y'imyigire, aho ugeze n'amasomo akubereye."
       />
 
       <div className="grid-4" style={{ marginBottom: 20 }}>
@@ -97,8 +97,8 @@ export function DashboardScreen({
           {activePath && progressInPath ? (
             <Panel
               title={activePath.title}
-              description={progressInPath.done === progressInPath.total ? 'Warangije iyi ngingo yose.' : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}
-              actions={<button className="btn btn-secondary btn-sm" onClick={onViewPaths}>Hindura ingingo</button>}
+              description={progressInPath.done === progressInPath.total ? 'Warangije iyi gahunda yose.' : `Isomo rya ${progressInPath.done + 1} kuri ${progressInPath.total}`}
+              actions={<button className="btn btn-secondary btn-sm" onClick={onViewPaths}>Hindura gahunda</button>}
               flush
               footer={nextLesson && (
                 <div className="row-between">
@@ -164,7 +164,7 @@ export function DashboardScreen({
           <Panel title="Umwirondoro w'ubuzima">
             <p className="small">{hasRiskCheck
               ? (riskTags.length ? `Twibanda kuri: ${riskTags.join(', ')}.` : 'Nta byago bikomeye byagaragaye.')
-              : 'Uzuza umwirondoro kugira ngo tuguhitiremo ingingo ikubereye.'}</p>
+              : 'Uzuza umwirondoro kugira ngo tuguhitiremo gahunda ikubereye.'}</p>
             <p className="small muted">Ingingo wahisemo: {selectedInterests.join(', ') || 'nta n\'imwe'}.</p>
             <div className="row">
               <button className="btn btn-secondary btn-sm" onClick={onViewRiskCheck}>{hasRiskCheck ? 'Hindura umwirondoro' : 'Uzuza umwirondoro'}</button>

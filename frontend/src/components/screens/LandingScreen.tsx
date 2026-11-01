@@ -101,8 +101,8 @@ export function LandingScreen({
             <div className="panel-body">
               <ol className="steps">
                 <li>Hitamo ingingo zigushishikaje, wandike izina ryawe.</li>
-                <li>Ushobora no kuzuza umwirondoro w'ubuzima. Ayo makuru aguma kugikoresho cyawe kikoronabuhanga.</li>
-                <li>Kurikira ingingo yawe: umva isomo, ukore isuzuma rito, urebe aho ugeze wiga.</li>
+                <li>Ushobora no kuzuza umwirondoro w'ubuzima. Ayo makuru aguma ku gikoresho cyawe cy'ikoranabuhanga.</li>
+                <li>Kurikira gahunda yawe: umva isomo, ukore isuzuma rito, urebe aho ugeze wiga.</li>
               </ol>
             </div>
           </div>

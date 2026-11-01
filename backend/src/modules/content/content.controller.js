@@ -2,10 +2,10 @@ import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { attachLearningData, saveCurriculumLinks, saveQuiz, validateQuiz } from '../learning/learning.service.js';
+import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
 import { topicHasSpecialist } from '../review/review.service.js';
 
 // draft -> review -> approved (by a specialist) -> published; rejected = changes requested.
-const statusValues = new Set(['draft', 'review', 'approved', 'published', 'rejected']);
 const isConnectionFailure = isDatabaseUnavailable;
 const mapContent = (row) => ({
   id: row.id,
@@ -28,10 +28,8 @@ const userName = (id) => inMemoryStore.users.find((user) => user.id === id)?.ful
 
 // In a topic that has a specialist, a lesson can only be published after the
 // specialist approved it; a request to publish earlier is sent to review instead.
-const allowedStatus = async (categoryId, requested, current) => {
-  if (requested !== 'published' || ['approved', 'published'].includes(current)) return requested;
-  return (await topicHasSpecialist(categoryId)) ? 'review' : requested;
-};
+const allowedStatus = async (categoryId, requested, current) =>
+  new LessonWorkflow({ hasSpecialist: await topicHasSpecialist(categoryId) }).resolve(requested, current);
 
 // Saves the optional quiz and learning-path links sent with a lesson.
 const saveLearningInput = async (contentId, body) => {
@@ -183,7 +181,7 @@ export const createContent = async (req, res) => {
   if (!Number.isInteger(Number(categoryId)) || !title?.trim() || !body?.trim()) {
     return res.status(400).json({ message: 'Category, title and body are required' });
   }
-  if (!statusValues.has(status)) return res.status(400).json({ message: 'Status must be draft, review, published or rejected' });
+  if (!LessonWorkflow.isValid(status)) return res.status(400).json({ message: 'Status must be draft, review, published or rejected' });
 
   const entry = {
     id: null,
@@ -225,7 +223,7 @@ export const updateContent = async (req, res) => {
   }
   const inputError = learningInputError(req.body);
   if (inputError) return res.status(400).json({ message: inputError });
-  if (status && !statusValues.has(status)) return res.status(400).json({ message: 'Invalid content status' });
+  if (status && !LessonWorkflow.isValid(status)) return res.status(400).json({ message: 'Invalid content status' });
   if (req.user?.role === 'creator' && status && !['draft', 'review'].includes(status)) {
     return res.status(403).json({ message: 'Creators may only save drafts or submit content for review' });
   }
@@ -259,7 +257,7 @@ export const updateContent = async (req, res) => {
       return res.status(403).json({ message: 'Published content cannot be edited by creators' });
     }
     const existing = inMemoryStore.content[index];
-    const allowed = req.user?.role === 'creator' ? ['draft', 'review'] : [...statusValues];
+    const allowed = LessonWorkflow.allowedFor(req.user?.role);
     const nextStatus = status && allowed.includes(status) ? await allowedStatus(Number(categoryId), status, existing.status) : existing.status;
     inMemoryStore.content[index] = {
       ...existing,
@@ -301,7 +299,7 @@ export const deleteContent = async (req, res) => {
 export const updateContentStatus = async (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body || {};
-  if (!Number.isInteger(id) || id <= 0 || !statusValues.has(status)) {
+  if (!Number.isInteger(id) || id <= 0 || !LessonWorkflow.isValid(status)) {
     return res.status(400).json({ message: 'A valid content id and status are required' });
   }
   const needsApproval = { message: 'A specialist must approve this lesson before it is published' };

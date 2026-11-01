@@ -112,7 +112,7 @@ export function LibraryScreen({
             )}
             {isComplete && nextInPath && (
               <div className="alert alert-info row-between" style={{ marginTop: 16 }}>
-                <span>Isomo rikurikira mu ngingo yawe: <strong>{nextInPath.title}</strong></span>
+                <span>Isomo rikurikira muri gahunda yawe: <strong>{nextInPath.title}</strong></span>
                 <button className="btn btn-primary btn-sm" onClick={() => { setSelectedLesson(nextInPath); window.scrollTo({ top: 0, behavior: 'smooth' }); scrollToPlayer(); }}>Komeza</button>
               </div>
             )}

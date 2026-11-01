@@ -1,7 +1,7 @@
 import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
-import { clearFailures, isLocked, isPin, normalizePhone, recordFailure } from './phone.js';
+import { loginGuard, PhoneNumber } from './phone.js';
 import { createToken, hashPassword, verifyPassword } from './security.js';
 import { setSpecialistTopics, topicsByUser } from '../review/review.service.js';
 
@@ -135,9 +135,9 @@ export const login = async (req, res) => {
   }
 
   const byEmail = String(identifier).includes('@');
-  const key = byEmail ? normalizedEmail(identifier) : normalizePhone(identifier);
+  const key = byEmail ? normalizedEmail(identifier) : PhoneNumber.normalize(identifier);
   if (!key) return res.status(400).json({ message: 'Enter a valid Rwandan phone number' });
-  if (isLocked(key)) {
+  if (loginGuard.isLocked(key)) {
     return res.status(429).json({ message: 'Too many wrong attempts. Try again in 15 minutes' });
   }
 
@@ -158,19 +158,19 @@ export const login = async (req, res) => {
   }
 
   if (user && verifyPassword(password, user.passwordHash)) {
-    clearFailures(key);
+    loginGuard.clear(key);
     const identity = publicUser(user, role);
     return res.json({ token: createToken(identity), user: identity });
   }
-  recordFailure(key);
+  loginGuard.recordFailure(key);
   return res.status(401).json({ message: 'Invalid phone number, email or PIN' });
 };
 
 // Learners register with a name, a Rwandan phone number and a 4-6 digit PIN.
 export const register = async (req, res) => {
   const { name, phone, pin = req.body?.password } = req.body || {};
-  const cleanPhone = normalizePhone(phone);
-  if (!name?.trim() || !cleanPhone || !isPin(pin)) {
+  const cleanPhone = PhoneNumber.normalize(phone);
+  if (!name?.trim() || !cleanPhone || !PhoneNumber.isPin(pin)) {
     return res.status(400).json({ message: 'A name, a valid Rwandan phone number and a PIN of 4 to 6 digits are required' });
   }
   try {

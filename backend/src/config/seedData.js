@@ -190,7 +190,7 @@ export const seedLessons = [
 export const seedCurricula = [
   {
     slug: 'prevention',
-    title: 'Ingingo yo kwirinda',
+    title: 'Gahunda yo kwirinda',
     condition: null,
     description: 'Amasomo y\'ibanze yo kwirinda indwara zitandura.',
     imageUrl: '/images/walking.svg',
@@ -198,7 +198,7 @@ export const seedCurricula = [
   },
   {
     slug: 'hypertension',
-    title: 'Ingingo y\'umuvuduko w\'amaraso',
+    title: 'Gahunda y\'umuvuduko w\'amaraso',
     condition: 'Umuvuduko w\'amaraso ukabije',
     description: 'Wige kubana neza n\'umuvuduko w\'amaraso ukabije.',
     imageUrl: '/images/bp-check.svg',
@@ -212,7 +212,7 @@ export const seedCurricula = [
   },
   {
     slug: 'diabetes',
-    title: 'Ingingo ya diyabete',
+    title: 'Gahunda ya diyabete',
     condition: 'Diyabete',
     description: 'Wige gucunga isukari n\'imibereho ya buri munsi.',
     imageUrl: '/images/glucose.svg',
@@ -226,7 +226,7 @@ export const seedCurricula = [
   },
   {
     slug: 'heart',
-    title: 'Ingingo y\'umutima muzima',
+    title: 'Gahunda y\'umutima muzima',
     condition: 'Indwara z\'umutima',
     description: 'Wige kurinda umutima no kumenya ibimenyetso by\'ingenzi.',
     imageUrl: '/images/heart.svg',
@@ -240,7 +240,7 @@ export const seedCurricula = [
   },
   {
     slug: 'cancer',
-    title: 'Ingingo yo kwirinda kanseri',
+    title: 'Gahunda yo kwirinda kanseri',
     condition: 'Kanseri',
     description: 'Kwipimisha kare n\'imibereho igabanya ibyago bya kanseri.',
     imageUrl: '/images/screening.svg',
