@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Baho — Technical Report</title>
+<style>
+  @page { size: A4; margin: 14mm 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #1d2a33; font: 9.6pt/1.42 "Helvetica Neue", Arial, sans-serif; }
+  h1 { margin: 0 0 2px; color: #0b5845; font-size: 19pt; }
+  h2 { margin: 12px 0 5px; padding-bottom: 2px; border-bottom: 1.5px solid #0b5845; color: #14304d; font-size: 12.5pt; }
+  h3 { margin: 8px 0 3px; color: #14304d; font-size: 10.3pt; }
+  p { margin: 0 0 5px; }
+  ul { margin: 0 0 5px; padding-left: 15px; }
+  li { margin-bottom: 1.5px; }
+  .meta { margin-bottom: 8px; color: #52616b; font-size: 9pt; }
+  .meta a { color: #0b5845; }
+  table { width: 100%; margin: 4px 0 7px; border-collapse: collapse; font-size: 8.3pt; line-height: 1.3; }
+  th { padding: 3px 5px; border: 1px solid #c9d2d8; background: #eef3f1; color: #14304d; text-align: left; }
+  td { padding: 2.5px 5px; border: 1px solid #d5dce1; vertical-align: top; }
+  .done { color: #0b5845; font-weight: 700; }
+  .partial { color: #9a6200; font-weight: 700; }
+  .no { color: #a33a2f; font-weight: 700; }
+  code { padding: 0 2px; background: #f1f4f6; font: 8pt Menlo, monospace; }
+  figure { margin: 4px 0 8px; }
+  figcaption { color: #52616b; font-size: 8pt; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .shots img { width: 100%; border: 1px solid #d5dce1; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .arch img { width: 100%; }
+  .page-break { break-before: page; }
+  .small { font-size: 8.3pt; }
+</style>
+</head>
+<body>
+
+<h1>Baho — Technical Report</h1>
+<div class="meta">
+  Kinyarwanda-first, audio-first education on non-communicable diseases for rural Rwanda ·
+  Fiston Nshimiyandinze · BSc Software Engineering (FullStack), African Leadership University · Supervisor: Junior Turatsinze · November 2026<br>
+  Live app: <a href="https://baho.filito.rw">baho.filito.rw</a> · Repository: <a href="https://github.com/fistonfle/baho">github.com/fistonfle/baho</a>
+</div>
+
+<h2>1. Overview</h2>
+<p>Baho is a progressive web app that teaches people with little health information in their own language how to prevent and live with hypertension, diabetes, heart disease and cancer. Learners pick topics, may fill a private health profile, and then follow a <em>study programme</em> of short lessons, each with an illustration, plain-Kinyarwanda text, audio and a quiz. Health workers write lessons, a specialist for each disease approves them, and an administrator publishes them. The app works offline after the first visit and runs on low-cost phones.</p>
+<p><strong>Architecture.</strong> React 18 + TypeScript (Vite) PWA with Redux Toolkit → REST API on Node 20 + Express (<code>/api/v1</code>) → PostgreSQL 16 (14 tables). In production the three parts run as a Docker stack behind Caddy (HTTPS); GitHub Actions tests, builds and deploys every push to <code>main</code>. The health profile is encrypted on the device and never sent to the server.</p>
+<figure class="arch"><img src="../../designs/architecture.svg" alt="Baho architecture"><figcaption>Figure 1. Architecture: web app, API and database in a Docker stack behind Caddy (source: <code>designs/architecture.mmd</code>)</figcaption></figure>
+
+<h2>2. Scope alignment and feature validation</h2>
+<p>Requirements are those of the approved proposal (Tables 6 and 7). Evidence refers to the repository: screenshots in <code>designs/screenshots</code>, tests in <code>backend/tests</code> and <code>frontend/src/**/*.test.ts</code>, measurements in <code>docs/evidence</code>.</p>
+<table>
+  <tr><th style="width:21%">Planned feature</th><th style="width:30%">Intended purpose</th><th style="width:10%">Status</th><th>Evidence / justification of changes</th></tr>
+  <tr><td>FR01 Kinyarwanda content</td><td>Reach people who do not read English or French</td><td class="done">Completed</td><td>All learner text in Kinyarwanda, reviewed through <code>docs/translations</code>; staff portal in English by request (easier to maintain and translate)</td></tr>
+  <tr><td>FR02 Audio playback</td><td>Learners with low literacy can listen</td><td class="done">Completed</td><td><code>AudioPlayer.tsx</code>: play, pause, replay, seek, speed; plays recorded MP3s, otherwise the device voice reads the lesson (screenshot 05)</td></tr>
+  <tr><td>FR03 NCD module</td><td>Awareness of hypertension, diabetes, heart disease</td><td class="done">Completed</td><td><code>NcdScreen.tsx</code>; cancer added; admins add new diseases (screenshots 08, 19)</td></tr>
+  <tr><td>FR04 Reminders</td><td>Habits: water, walking, medicine, check-ups</td><td class="partial">Partial</td><td>Reminders saved per account with browser notifications while the app is open; server Web Push not built (needs a push service and keys)</td></tr>
+  <tr><td>FR05 Illustrated exercises</td><td>Safe physical activity at home</td><td class="done">Completed</td><td><code>ExerciseScreen.tsx</code>: three levels, steps, illustration, audio, safety note (screenshot 10)</td></tr>
+  <tr><td>FR06 Offline-first</td><td>Weak rural connectivity</td><td class="done">Completed</td><td><code>sw.js</code> caches app and audio; lessons kept on device; tested offline with browser cache cleared (§4)</td></tr>
+  <tr><td>FR07 Onboarding: language, topics</td><td>Personalise from the first visit</td><td class="partial">Partial</td><td>Topics and name chosen; Kinyarwanda only, so no language choice yet (FR14)</td></tr>
+  <tr><td>FR08 Private risk self-assessment</td><td>Target content without collecting data</td><td class="done">Completed</td><td>Conditions + six questions; AES-GCM in IndexedDB (screenshot 03)</td></tr>
+  <tr><td>FR09 Ranked content</td><td>Show the most relevant lessons first</td><td class="done">Completed</td><td><code>rankLessons</code> with the reason shown; unit-tested</td></tr>
+  <tr><td>FR10 Phone + PIN accounts, JWT</td><td>Most users have a phone, not an email</td><td class="done">Completed (changed)</td><td>Phone + 4–6 digit PIN, lockout after 5 failures; one HMAC-signed 12-hour token instead of access + refresh pair (simpler, no extra dependency)</td></tr>
+  <tr><td>FR11 Sync with the server</td><td>Keep progress across devices</td><td class="partial">Partial</td><td>Progress, quiz scores, reminders, questions stored on the server for signed-in learners; anonymised usage analytics not built (privacy-first scope)</td></tr>
+  <tr><td>FR12 Admin content control</td><td>Publish, retire, edit; answer reports</td><td class="done">Completed</td><td>Publish, unpublish, edit, delete; report status; FAQ management (screenshot 16)</td></tr>
+  <tr><td>FR13 Progress and streaks</td><td>Motivation to keep learning</td><td class="done">Completed</td><td>Lessons done, streak, 7-day calendar, quiz average, knowledge-check gain</td></tr>
+  <tr><td>FR14 Future languages</td><td>Extend beyond Kinyarwanda</td><td class="partial">Partial</td><td>Every learner string is extractable and replaceable by script (<code>scripts/translations</code>); no runtime language switch</td></tr>
+  <tr><td>FR15 Responsive layout</td><td>Phones, tablets, laptops from one codebase</td><td class="done">Completed</td><td>320–1920 px with no horizontal scroll; tab bar on phones (§4, screenshots 13–15)</td></tr>
+  <tr><td>FR16 Staff roles</td><td>Only trusted professionals write content</td><td class="done">Completed (changed)</td><td>Admin creates writer, specialist (= reviewer) and admin accounts; specialists assigned to diseases; accounts created directly rather than by email invitation</td></tr>
+  <tr><td>FR17 Review before publishing</td><td>Medical accuracy</td><td class="done">Completed</td><td><code>LessonWorkflow</code>: specialist approval required (409 otherwise); no one reviews their own lesson (screenshot 20)</td></tr>
+  <tr><td>FR18 Offline FAQ with audio</td><td>Self-help without a connection</td><td class="done">Completed</td><td>Searchable FAQ, audio answers, cached (screenshot 12)</td></tr>
+  <tr><td>FR19 Issue reports, queued offline</td><td>Feedback from the field</td><td class="done">Completed</td><td>Outbox sends queued reports when online; admin updates status</td></tr>
+  <tr><td>NFR01, NFR03 Speed, size</td><td>≤ 3 s on mid-range Android; shell ≤ 5 MB</td><td class="done">Met</td><td>1.35 s largest paint (mid-range), 2.71 s (low-end); 116 KB first visit</td></tr>
+  <tr><td>NFR04, NFR05 Security</td><td>HTTPS, hashed PINs, encrypted local data</td><td class="partial">Mostly met</td><td>HTTPS; scrypt (salted) instead of bcrypt; AES-GCM health profile; token in localStorage rather than an HttpOnly cookie</td></tr>
+  <tr><td>NFR06 Answers stay on device</td><td>Privacy</td><td class="done">Met</td><td>No API accepts health-profile data</td></tr>
+  <tr><td>NFR08, NFR10 Compatibility</td><td>Current Chrome/Edge/Safari; 360–1920 px</td><td class="done">Met</td><td>Chrome 156, Safari iOS 26.5; 6 widths without overflow</td></tr>
+  <tr><td>NFR09 Scalability</td><td>10,000+ users without re-engineering</td><td class="done">Met (local test)</td><td>Stateless API, 5,400–21,000 req/s at 50 concurrent users, p99 ≤ 11 ms</td></tr>
+  <tr><td>NFR11 Access control, audit</td><td>Accountability for staff actions</td><td class="partial">Partial</td><td>Role checks on every staff route; reviewer and review time stored on each lesson; no separate audit-log table</td></tr>
+  <tr><td>NFR07 Usable without instruction</td><td>First-time smartphone users</td><td class="no">Not yet evaluated</td><td>Needs the 30-participant study (SO3) planned after the prototype</td></tr>
+</table>
+<p class="small"><strong>Additions beyond the proposal</strong> (from supervisor feedback): a formal portal redesign replacing the first, generic-looking interface; phone sign-in prioritised because most users have no email; specialist approval per disease; English staff portal; a translation review pipeline.</p>
+
+<h2>3. Technical functionality</h2>
+<div class="shots">
+  <figure><img src="../../designs/screenshots/04-dashboard-learning-path.png" alt=""><figcaption>Dashboard: programme, progress, ranked lessons</figcaption></figure>
+  <figure><img src="../../designs/screenshots/06-lesson-quiz-feedback.png" alt=""><figcaption>Lesson quiz graded by the server</figcaption></figure>
+  <figure><img src="../../designs/screenshots/20-specialist-review.png" alt=""><figcaption>Specialist reviewing a lesson</figcaption></figure>
+</div>
+<h3>Frontend–backend interaction and data handling</h3>
+<ul>
+  <li><strong>Loading and caching.</strong> On start the app requests categories, lessons, programmes and FAQs from the API, shows the copy kept in <code>localStorage</code> immediately, and replaces it when the response arrives; with no connection the cached or built-in content is used.</li>
+  <li><strong>Accounts.</strong> <code>POST /auth/login</code> takes a phone number or an email in one field. The server normalises the phone number, checks the lockout, verifies the scrypt hash and returns an HMAC-signed token with the user's role. Every protected route runs <code>authenticate</code> and <code>requireRole</code>.</li>
+  <li><strong>Lessons and review.</strong> A writer's lesson is saved as <code>review</code>. If its disease has a specialist, the lesson appears in that specialist's queue with the full text and quiz answers; approving sets <code>approved</code>, <code>reviewed_by</code> and <code>reviewed_at</code>. Only then can an admin publish it; earlier attempts return 409.</li>
+  <li><strong>Quizzes and progress.</strong> Answers are sent to <code>POST /quiz-attempts</code> and graded on the server, so a learner cannot alter their score; the best score per lesson is kept and the programme moves to the next lesson.</li>
+  <li><strong>Privacy.</strong> The health profile is encrypted with a non-extractable AES-GCM key stored in IndexedDB; only derived topic tags are used, on the device, for ranking.</li>
+</ul>
+
+<h2>4. Testing approaches and results</h2>
+<p>Six approaches were used (details: <code>docs/testing.md</code>). Each found something that was then improved.</p>
+<table>
+  <tr><th style="width:17%">Approach</th><th style="width:30%">Why and how</th><th style="width:26%">Results</th><th>Improvements made</th></tr>
+  <tr><td>Unit</td><td>Rules must hold in every case; Node test runner and Vitest</td><td>40 tests pass (workflow, phone/PIN, lockout, ranking, risk tags, streaks, store)</td><td>Streak split into a pure function; lockout made a class with an injectable clock</td></tr>
+  <tr><td>Integration (API)</td><td>Real Express app called over HTTP</td><td>17 tests pass: roles, phone sign-up, review/publish, quizzes, progress</td><td>Covers the whole specialist workflow end to end, so later changes cannot break it unnoticed</td></tr>
+  <tr><td>Different inputs</td><td>Valid, invalid and edge values (phone formats, PIN length, 5 wrong PINs, early publish)</td><td>Correct 400 / 403 / 409 / 429 responses with readable messages</td><td>Client-side checks mirror the server so mistakes show before sending</td></tr>
+  <tr><td>Performance</td><td>Lighthouse on the live site: mid-range phone, low-end phone (6× CPU, 3G), desktop</td><td>Performance 100 / 92 / 100; accessibility, best practices, SEO 100</td><td>Fixed layout shift (0.109 → 0), heading order, missing robots.txt</td></tr>
+  <tr><td>Compatibility and offline</td><td>Chrome 156 at 6 widths, Safari iOS 26.5 on two iPhones, offline with cache cleared</td><td>No overflow 320–1920 px; renders in Safari; first text in 2.9 s at 400 kbit/s</td><td>Found the app blank offline after a first visit; the service worker now caches the built files at install</td></tr>
+  <tr><td>Load</td><td>autocannon, 50 concurrent users, 15 s (local, not the shared server)</td><td>5,379–20,967 req/s; p99 ≤ 11 ms; 0 errors</td><td>Confirms the stateless API design for NFR09</td></tr>
+</table>
+<table>
+  <tr><th>Lighthouse (live)</th><th>Performance</th><th>Accessibility</th><th>Best practices</th><th>SEO</th><th>Largest paint</th><th>Layout shift</th><th>Blocking time</th></tr>
+  <tr><td>Mid-range phone</td><td>97 → 100</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>1.35 s</td><td>0.000</td><td>9 ms</td></tr>
+  <tr><td>Low-end phone</td><td>90 → 92</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>2.71 s</td><td>0.084 → 0.000</td><td>0 ms</td></tr>
+  <tr><td>Desktop</td><td>97 → 100</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>0.33 s</td><td>0.109 → 0.000</td><td>0 ms</td></tr>
+</table>
+
+<h2>5. Code quality, OOP and algorithms</h2>
+<div class="two">
+<div>
+<h3>Structure and principles</h3>
+<ul>
+  <li><strong>Separation of concerns:</strong> backend modules follow routes → controller (HTTP only) → service (data); the frontend separates screens, reusable components (<code>ui.tsx</code>, <code>components/admin</code>), the store, the API client and pure logic (<code>lib/</code>).</li>
+  <li><strong>Encapsulation:</strong> <code>LessonWorkflow</code> owns all lesson-status rules, used by the content and review modules; <code>LoginGuard</code> keeps its failure map private (<code>#failures</code>).</li>
+  <li><strong>Abstraction and polymorphism:</strong> every service has a PostgreSQL and an in-memory implementation behind one contract (<code>withFallback</code>), so callers do not know which store answers and tests need no database.</li>
+  <li><strong>Dependency injection:</strong> <code>LoginGuard</code> takes its clock as a parameter, making time-based rules testable.</li>
+  <li><strong>Single responsibility:</strong> the 834-line staff screen was split into six components; two unused backend files were removed.</li>
+  <li><strong>Quality gates:</strong> strict TypeScript with unused-code errors, consistent naming (camelCase code, kebab-case CSS, snake_case SQL), comments that explain why, CI that runs all tests before any deploy.</li>
+</ul>
+</div>
+<div>
+<h3>Algorithms and problem-solving</h3>
+<ul>
+  <li><strong>Lesson ranking</strong> (<code>rankLessons</code>): score = 3·risk match + 2·topic match − 4·finished, sorted with newest first on ties; O(n log n). Transparent, so each card can say why it was suggested.</li>
+  <li><strong>Risk tags:</strong> each answer maps to topics, with "no" counting as the risk for healthy-habit questions; set union removes duplicates.</li>
+  <li><strong>Streaks:</strong> walk back day by day from today (or yesterday) over a set of active days; O(streak length) with O(1) lookups.</li>
+  <li><strong>Review state machine:</strong> <code>resolve(requested, current)</code> holds a publish request in review until approval.</li>
+  <li><strong>Phone normalisation:</strong> one regular expression accepts any written form and yields <code>+2507XXXXXXXX</code>.</li>
+  <li><strong>PIN lockout:</strong> counter per number with a time window, reset on success.</li>
+  <li><strong>Offline caching:</strong> network-first for pages, cache-first for built files and audio, install-time precaching read from <code>index.html</code>; an outbox replays reports when online.</li>
+  <li><strong>Translation tooling:</strong> TypeScript AST parsing extracts every learner string with its position, de-duplicates it, and writes corrections back safely.</li>
+</ul>
+</div>
+</div>
+
+<h2>6. Limitations and next steps</h2>
+<ul>
+  <li>Usability evaluation with 30 participants (SUS ≥ 70, task completion ≥ 80%) is the next phase (SO3).</li>
+  <li>Server Web Push for reminders, refresh tokens in an HttpOnly cookie, an audit-log table and SMS verification of phone numbers.</li>
+  <li>Recorded Kinyarwanda audio for each lesson (the device voice is used until then) and a clinical review of all lesson content.</li>
+</ul>
+
+</body>
+</html>
