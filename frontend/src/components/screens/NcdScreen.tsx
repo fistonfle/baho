@@ -68,7 +68,7 @@ export function NcdScreen({
 
         <article className="panel">
           <div className="panel-body">
-            {disease.imageUrl && <figure className="article-figure"><img src={disease.imageUrl} alt="" /></figure>}
+            {disease.imageUrl && <figure className="article-figure"><img src={disease.imageUrl} alt="" width="320" height="200" /></figure>}
             <h2 style={{ fontSize: '1.4rem' }}>{disease.condition}</h2>
             <div className="article-body" style={{ marginTop: 8 }}><p>{disease.about}</p></div>
             <AudioPlayer text={narration} />
