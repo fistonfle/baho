@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor W as Writer
+    actor S as Specialist
+    actor A as Admin
+    participant API as Baho API
+    participant WF as LessonWorkflow
+    participant DB as PostgreSQL
+    actor L as Learner
+    W->>API: POST /admin/content (lesson, quiz, photo, recording URL)
+    API->>DB: save lesson, status "review"
+    A->>API: PATCH /admin/content/:id/status (published)
+    API->>WF: resolve("published", "review") on a topic with a specialist
+    WF-->>API: "review" (held)
+    API-->>A: 409 A specialist must approve this lesson first
+    S->>API: GET /review/queue
+    API-->>S: lessons in the specialist's diseases, with quiz answers
+    S->>API: POST /review/lessons/:id (approve, note)
+    API->>DB: status "approved", reviewed_by, reviewed_at
+    A->>API: PATCH /admin/content/:id/status (published)
+    API->>WF: resolve("published", "approved")
+    WF-->>API: "published"
+    API->>DB: status "published"
+    L->>API: GET /content
+    API-->>L: published lessons only
