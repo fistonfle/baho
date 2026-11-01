@@ -1,0 +1,44 @@
+
+ RUN  v2.1.9 /Users/fle/Documents/Studies/capstone/baho/frontend
+
+ ✓ src/lib/activity.test.ts > countStreak > counts consecutive days ending today
+ ✓ src/lib/activity.test.ts > countStreak > still counts a streak that ended yesterday
+ ✓ src/lib/activity.test.ts > countStreak > stops at the first missing day
+ ✓ src/lib/activity.test.ts > countStreak > is zero with no recent activity
+ ✓ src/lib/activity.test.ts > countStreak > crosses month and year boundaries
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 078 123 4567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts +250 78 123 4567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 250781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0721234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0791234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 0712345678
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 078123456
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 07812345678
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects +254781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects abcdefghij
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 
+ ✓ src/lib/phone.test.ts > isPin > accepts 4 to 6 digits only
+ ✓ src/lib/personalization.test.ts > rankLessons > puts risk matches above interest matches, and both above unrelated lessons
+ ✓ src/lib/personalization.test.ts > rankLessons > adds both scores when a lesson matches an interest and a risk
+ ✓ src/lib/personalization.test.ts > rankLessons > pushes completed lessons down and breaks ties with the newest lesson first
+ ✓ src/lib/personalization.test.ts > rankLessons > returns an empty list for no lessons
+ ✓ src/lib/personalization.test.ts > riskTagsFromAnswers > turns "yes" answers into topic tags
+ ✓ src/lib/personalization.test.ts > riskTagsFromAnswers > treats "no" as the risk for questions about healthy habits
+ ✓ src/lib/personalization.test.ts > riskTagsFromAnswers > ignores unanswered questions and removes duplicate tags
+ ✓ src/lib/personalization.test.ts > recommendedPaths and profileTags > recommends the paths of the diagnosed conditions
+ ✓ src/lib/personalization.test.ts > recommendedPaths and profileTags > falls back to the prevention path when no condition matches
+ ✓ src/lib/personalization.test.ts > recommendedPaths and profileTags > maps a diagnosed condition to its lesson topic and merges risk tags
+ ✓ src/lib/personalization.test.ts > pathProgress > counts completed lessons and finds the next one in order
+ ✓ src/lib/personalization.test.ts > pathProgress > has no next lesson when the path is finished
+ ✓ src/store/appSlice.test.ts > appSlice > sends learners to the dashboard and staff to the staff portal after sign-in
+ ✓ src/store/appSlice.test.ts > appSlice > keeps the learner name on the device when a staff member signs in
+ ✓ src/store/appSlice.test.ts > appSlice > clears the account on sign-out
+ ✓ src/store/appSlice.test.ts > appSlice > records a completed lesson only once
+ ✓ src/store/appSlice.test.ts > appSlice > keeps the best quiz score for each lesson
+
+ Test Files  4 passed (4)
+      Tests  35 passed (35)
+   Start at  13:11:03
+   Duration  201ms (transform 99ms, setup 0ms, collect 134ms, tests 8ms, environment 0ms, prepare 222ms)
+

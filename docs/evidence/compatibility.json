@@ -1,0 +1,79 @@
+{
+  "url": "https://baho.filito.rw/",
+  "date": "2026-11-01T11:09:23.382Z",
+  "viewports": [
+    {
+      "name": "Small phone (iPhone SE)",
+      "width": 320,
+      "height": 568,
+      "mobile": true,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    },
+    {
+      "name": "Phone (Android, 360 px)",
+      "width": 360,
+      "height": 780,
+      "mobile": true,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    },
+    {
+      "name": "Phone (iPhone 15)",
+      "width": 393,
+      "height": 852,
+      "mobile": true,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    },
+    {
+      "name": "Tablet (iPad)",
+      "width": 768,
+      "height": 1024,
+      "mobile": true,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    },
+    {
+      "name": "Laptop",
+      "width": 1366,
+      "height": 768,
+      "mobile": false,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    },
+    {
+      "name": "Desktop monitor",
+      "width": 1920,
+      "height": 1080,
+      "mobile": false,
+      "overflow": false,
+      "smallestButtonPx": 30,
+      "pass": true
+    }
+  ],
+  "offline": {
+    "serviceWorker": true,
+    "pageLoaded": true,
+    "offlineNotice": true,
+    "diseasesShown": 4,
+    "lessonsShown": 3
+  },
+  "resources": {
+    "requests": 17,
+    "transferredKB": 116,
+    "jsHeapUsedMB": 2,
+    "domNodes": 443,
+    "domContentLoaded": 794,
+    "load": 795
+  },
+  "slowNetwork": {
+    "profile": "400 kbit/s, 400 ms latency",
+    "firstContentMs": 2886
+  }
+}
