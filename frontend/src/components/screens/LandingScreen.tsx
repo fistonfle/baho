@@ -44,7 +44,7 @@ export function LandingScreen({
             </p>
           </div>
           <figure>
-            <img src="/images/bp-check.svg" alt="Umuntu apimwa umuvuduko w'amaraso" />
+            <img src="/images/bp-check.svg" alt="Umuntu apimwa umuvuduko w'amaraso" width="320" height="200" />
             <figcaption>Isomo: Gupima umuvuduko w'amaraso</figcaption>
           </figure>
         </div>
@@ -80,7 +80,7 @@ export function LandingScreen({
             <div className="grid-3">
               {newestLessons.map((lesson) => (
                 <article key={lesson.id} className="panel lesson-teaser">
-                  {lesson.imageUrl && <img src={lesson.imageUrl} alt="" />}
+                  {lesson.imageUrl && <img src={lesson.imageUrl} alt="" width="320" height="200" />}
                   <div className="panel-body">
                     <span className="badge">{lesson.category}</span>
                     <h3>{lesson.title}</h3>

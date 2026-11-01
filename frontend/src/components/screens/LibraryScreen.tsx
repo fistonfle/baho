@@ -82,7 +82,7 @@ export function LibraryScreen({
         <article className="panel audio-panel">
           <div className="panel-body">
             {selectedLesson.imageUrl && (
-              <figure className="article-figure"><img src={selectedLesson.imageUrl} alt="" /></figure>
+              <figure className="article-figure"><img src={selectedLesson.imageUrl} alt="" width="320" height="200" /></figure>
             )}
             <h2 style={{ fontSize: '1.4rem' }}>{selectedLesson.title}</h2>
             <div className="article-meta">
