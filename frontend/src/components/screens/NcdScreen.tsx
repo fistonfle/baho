@@ -1,5 +1,5 @@
 import type { Curriculum, Lesson } from '../../types';
-import { Disclaimer, PageHeader } from '../ui';
+import { Disclaimer, PageHeader, Photo } from '../ui';
 
 // NCD module. Diseases come from the API, so a disease added by staff appears
 // here with its information and the lessons written for it.
@@ -60,7 +60,7 @@ export function NcdScreen({
 
         <article className="panel">
           <div className="panel-body">
-            {disease.imageUrl && <figure className="article-figure"><img src={disease.imageUrl} alt="" width="320" height="200" /></figure>}
+            {disease.imageUrl && <figure className="article-figure"><Photo src={disease.imageUrl} /></figure>}
             <h2 style={{ fontSize: '1.4rem' }}>{disease.condition}</h2>
             <div className="article-body" style={{ marginTop: 8 }}><p>{disease.about}</p></div>
 

@@ -3,11 +3,12 @@ import { AudioPlayer } from '../AudioPlayer';
 import {
   type AdminContentItem
 } from '../../store/appSlice';
+import { Photo } from '../ui';
 
 export function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' | 'summary' | 'body' | 'quiz' | 'audioUrl'> }) {
   return (
     <div className="preview-box stack-sm">
-      {lesson.imageUrl && <img src={lesson.imageUrl} alt="" />}
+      {lesson.imageUrl && <Photo src={lesson.imageUrl} lazy />}
       {lesson.summary && <p><strong>{lesson.summary}</strong></p>}
       <AudioPlayer audioUrl={lesson.audioUrl} />
       <p style={{ whiteSpace: 'pre-line' }}>{lesson.body}</p>

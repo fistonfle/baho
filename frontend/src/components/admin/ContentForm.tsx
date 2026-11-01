@@ -6,7 +6,7 @@ import {
   updateContentForm
 } from '../../store/appSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { StatusBadge } from '../ui';
+import { StatusBadge, smallPhoto } from '../ui';
 import { imageChoices } from './shared';
 import { AudioUpload } from './AudioUpload';
 import { QuizEditor } from './QuizEditor';
@@ -72,7 +72,7 @@ export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator:
                   className={contentForm.imageUrl === url ? 'active' : ''}
                   onClick={() => dispatch(updateContentForm({ imageUrl: contentForm.imageUrl === url ? '' : url }))}
                 >
-                  <img src={url} alt="" />
+                  <img src={smallPhoto(url)} alt="" loading="lazy" />
                 </button>
               ))}
             </div>

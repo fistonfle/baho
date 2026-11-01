@@ -94,3 +94,15 @@ export function Disclaimer() {
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
+
+// Lesson photos come in two sizes (name.jpg 1000 px, name-sm.jpg 480 px); the
+// browser picks the smaller one on phones. Photos below the first screen load
+// only when scrolled to.
+const photoSizes = (path: string) => (/^\/images\/[a-z-]+\.jpg$/.test(path) ? `${path.replace(/\.jpg$/, '-sm.jpg')} 480w, ${path} 1000w` : undefined);
+
+export const smallPhoto = (path: string) => (/^\/images\/[a-z-]+\.jpg$/.test(path) ? path.replace(/\.jpg$/, '-sm.jpg') : path);
+
+export function Photo({ src, alt = '', sizes = '(max-width: 760px) 100vw, 60vw', lazy = false }: { src: string; alt?: string; sizes?: string; lazy?: boolean }) {
+  const srcSet = photoSizes(src);
+  return <img src={src} srcSet={srcSet} sizes={srcSet ? sizes : undefined} alt={alt} width="320" height="200" loading={lazy ? 'lazy' : 'eager'} decoding="async" />;
+}

@@ -8,6 +8,8 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- The landing photo is the largest element on the first screen: start loading it before the app renders. -->
+    <link rel="preload" as="image" href="/images/bp-check.jpg" imagesrcset="/images/bp-check-sm.jpg 480w, /images/bp-check.jpg 1000w" imagesizes="(max-width: 760px) 100vw, 45vw" fetchpriority="high" />
     <title>Baho</title>
   </head>
   <body>
