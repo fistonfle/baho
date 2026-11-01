@@ -137,8 +137,8 @@ export function FaqScreen({
             </div>
           </form>
 
-          <section className="panel" id="photo-credits">
-            <div className="panel-head"><h2>Inkomoko y'amafoto</h2></div>
+          <details className="panel credits" id="photo-credits">
+            <summary className="panel-head"><h2>Inkomoko y'amafoto</h2></summary>
             <ul className="list credits-list">
               {photoCredits.map((credit) => (
                 <li key={credit.file}>
@@ -150,7 +150,7 @@ export function FaqScreen({
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         </div>
       </div>
     </div>

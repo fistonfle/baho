@@ -95,7 +95,7 @@
 </ul>
 
 <h2>4. Testing approaches and results</h2>
-<p>Six approaches were used (details: <code>docs/testing.md</code>). Each found something that was then improved.</p>
+<p>Seven approaches were used (details: <code>docs/testing.md</code>). Each found something that was then improved.</p>
 <table>
   <tr><th style="width:17%">Approach</th><th style="width:30%">Why and how</th><th style="width:26%">Results</th><th>Improvements made</th></tr>
   <tr><td>Unit</td><td>Rules must hold in every case; Node test runner and Vitest</td><td>45 tests pass (workflow, phone/PIN, lockout, audio format, ranking, learner choices, risk tags, streaks, store)</td><td>Streak split into a pure function; lockout made a class with an injectable clock</td></tr>
@@ -103,6 +103,7 @@
   <tr><td>Different inputs</td><td>Valid, invalid and edge values (phone formats, PIN length, 5 wrong PINs, early publish)</td><td>Correct 400 / 403 / 409 / 429 responses with readable messages</td><td>Client-side checks mirror the server so mistakes show before sending</td></tr>
   <tr><td>Performance</td><td>Lighthouse on the live site: mid-range phone, low-end phone (6× CPU, 3G), desktop</td><td>Performance 95 / 75 / 100 with photos (100 / 92 / 100 before); accessibility, best practices, SEO 100</td><td>Fixed layout shift (0.109 → 0), heading order, robots.txt; photos: 480 px copies, lazy loading, preload (1.3 MB → 226 KB)</td></tr>
   <tr><td>Compatibility and offline</td><td>Chrome 156 at 6 widths, Safari iOS 26.5 on two iPhones, offline with cache cleared</td><td>No overflow 320–1920 px; renders in Safari; first text in 2.9 s at 400 kbit/s</td><td>Found the app blank offline after a first visit; the service worker now caches the built files at install</td></tr>
+  <tr><td>Usability (phone)</td><td>Audit script over 12 learner screens at 390 px: tap sizes, jargon, reachability</td><td>Help unreachable on phones; 22–38 px controls; empty stats first; 3 preselected topics; jargon</td><td>Help tab; 40–44 px controls; programme first; no preselection; plain Kinyarwanda</td></tr>
   <tr><td>Load</td><td>autocannon, 50 concurrent users, 15 s (local, not the shared server)</td><td>5,379–20,967 req/s; p99 ≤ 11 ms; 0 errors</td><td>Confirms the stateless API design for NFR09</td></tr>
 </table>
 <table>

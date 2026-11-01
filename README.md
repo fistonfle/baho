@@ -180,6 +180,7 @@ npm run build                  # type check (strict, no unused code) and product
 | **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 95 / 75 / 100 performance with photographs (100 / 92 / 100 before); 100 accessibility, best practices and SEO |
 | **Compatibility** | Screen widths 320–1920 px, Chrome 156, Safari on iOS 26.5, offline after first visit | No overflow; works offline |
 | **Load** (local) | 50 concurrent users for 15 s per endpoint | 5,400–21,000 requests/s, p99 ≤ 11 ms, no errors |
+| **Usability / accessibility** (phone audit) | 12 learner screens at 390 px: tap sizes, jargon, reachability | 6 problems fixed (Help tab on phones, 44 px controls, no preselected topics, …) |
 
 Testing found and fixed three problems: a layout shift from an unsized image, missing `robots.txt` and heading order, and the app not opening offline after the first visit once the browser cache was cleared. Full details, method and before/after numbers: [docs/testing.md](docs/testing.md). Raw results are in [docs/evidence](docs/evidence).
 

@@ -51,7 +51,7 @@ export function HealthProfileScreen({
         </ol>
       )}
       <p className="alert alert-info" style={{ marginBottom: 16 }}>
-        <strong>Ibanga ryawe:</strong> ibisubizo bibikwa kuri iyi telefoni gusa, bihishwe (AES-GCM). Ntabwo byoherezwa kuri seriveri ya Baho.
+        <strong>Ibanga ryawe:</strong> ibisubizo bibikwa kuri iyi telefoni gusa, bihishwe. Ntabwo byoherezwa kuri seriveri ya Baho.
       </p>
 
       <div className="stack">
