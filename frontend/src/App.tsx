@@ -95,7 +95,7 @@ const toLesson = (item: any, categories: Category[]): Lesson => ({
   summary: item.summary || '',
   body: item.body,
   // Rough listening time at about 130 words a minute.
-  duration: `${Math.max(1, Math.round(String(item.body).split(/\s+/).length / 130))} min`,
+  duration: `Iminota ${Math.max(1, Math.round(String(item.body).split(/\s+/).length / 130))}`,
   audioUrl: item.audioUrl || '',
   imageUrl: item.imageUrl || '',
   quiz: item.quiz || []

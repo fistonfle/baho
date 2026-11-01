@@ -1,0 +1,268 @@
+{
+  "01-landing": {
+    "small": [],
+    "english": [
+      "PIN",
+      "Writers",
+      "Staff accounts are created by an admin",
+      "Staff sign"
+    ],
+    "height": 4412
+  },
+  "02-onboarding": {
+    "small": [
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      }
+    ],
+    "english": [],
+    "height": 1482
+  },
+  "03-health-profile": {
+    "small": [
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "checkbox",
+        "h": 13,
+        "w": 13
+      }
+    ],
+    "english": [],
+    "height": 1789
+  },
+  "04-dashboard": {
+    "small": [],
+    "english": [],
+    "height": 2895
+  },
+  "05-library": {
+    "small": [],
+    "english": [],
+    "height": 2963
+  },
+  "06-ncd": {
+    "small": [],
+    "english": [],
+    "height": 3452
+  },
+  "07-exercise": {
+    "small": [
+      {
+        "text": "radio",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "radio",
+        "h": 13,
+        "w": 13
+      },
+      {
+        "text": "radio",
+        "h": 13,
+        "w": 13
+      }
+    ],
+    "english": [],
+    "height": 2143
+  },
+  "08-reminders": {
+    "small": [],
+    "english": [],
+    "height": 1856
+  },
+  "09-help": {
+    "small": [
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC0",
+        "h": 16,
+        "w": 27
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 2.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY 2.0",
+        "h": 16,
+        "w": 62
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 37,
+        "w": 303
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 37,
+        "w": 270
+      },
+      {
+        "text": "CC BY-SA 2.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY 2.0",
+        "h": 16,
+        "w": 62
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 4.0",
+        "h": 16,
+        "w": 84
+      },
+      {
+        "text": "Wikimedia Commons",
+        "h": 16,
+        "w": 128
+      },
+      {
+        "text": "CC BY-SA 2.0",
+        "h": 16,
+        "w": 84
+      }
+    ],
+    "english": [],
+    "height": 2331
+  },
+  "10-checkup": {
+    "small": [],
+    "english": [],
+    "height": 1446
+  },
+  "11-profile": {
+    "small": [],
+    "english": [],
+    "height": 2257
+  },
+  "12-sign-up": {
+    "small": [],
+    "english": [
+      "PIN"
+    ],
+    "height": 1388
+  }
+}

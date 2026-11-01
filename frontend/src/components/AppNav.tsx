@@ -9,7 +9,8 @@ const icons: Record<string, string> = {
   book: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15ZM4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5',
   heart: 'M12 20s-8-4.9-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.1 12 20 12 20Z',
   run: 'M13 4.5a1.5 1.5 0 1 0 0 .01M9 21l2.5-6 3 2.5V21M7 12l3-4h4l2.5 3.5H19M11.5 15 10 8',
-  bell: 'M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16ZM10 20.5h4'
+  bell: 'M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16ZM10 20.5h4',
+  help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01'
 };
 
 export function NavIcon({ name }: { name: string }) {
@@ -25,7 +26,9 @@ const learnerItems: NavItem[] = [
   { screen: 'library', label: 'Amasomo', icon: 'book' },
   { screen: 'ncd', label: 'Indwara', icon: 'heart' },
   { screen: 'exercise', label: 'Imyitozo', icon: 'run' },
-  { screen: 'reminders', label: 'Ibyo tukwibutsa', icon: 'bell' }
+  { screen: 'reminders', label: 'Ibyo tukwibutsa', icon: 'bell' },
+  // Help must be one tap away on phones too: FAQ, questions to health workers, reports.
+  { screen: 'faq', label: 'Ubufasha', icon: 'help' }
 ];
 
 const roleNames: Record<string, string> = {
@@ -65,7 +68,7 @@ export function SiteHeader({
 }) {
   // The knowledge check belongs to the NCD section, the health profile and paths to home.
   const activeScreen = currentScreen === 'checkup' ? 'ncd' : ['risk', 'paths'].includes(currentScreen) ? 'dashboard' : currentScreen;
-  const items = [...learnerItems, { screen: 'faq' as Screen, label: 'Ubufasha', icon: '' }];
+  const items = learnerItems;
 
   return (
     <>

@@ -60,6 +60,8 @@ export function DashboardScreen({
   const week = getWeek();
 
   const activeDays = week.filter((day) => day.active).length;
+  // A new learner has nothing to count yet: show the programme first, the numbers later.
+  const hasProgress = completedCount > 0 || streak > 0 || quizAverage !== null || Boolean(knowledgeScore);
 
   return (
     <div className="container">
@@ -69,7 +71,7 @@ export function DashboardScreen({
         lead="Aha ni ho ubona gahunda yawe y'imyigire, aho ugeze n'amasomo akubereye."
       />
 
-      <div className="grid-4" style={{ marginBottom: 20 }}>
+      {hasProgress && <div className="grid-4" style={{ marginBottom: 20 }}>
         <div className="stat">
           <div className="stat-label">Amasomo warangije</div>
           <div className="stat-value">{completedCount} <small>kuri {totalLessons}</small></div>
@@ -90,7 +92,7 @@ export function DashboardScreen({
           <div className="stat-value">{knowledgeScore ? <>{knowledgeScore.latest}<small> / {knowledgeScore.total}</small></> : '–'}</div>
           <div className="small muted">{knowledgeScore ? `Ubwa mbere: ${knowledgeScore.first}/${knowledgeScore.total}` : 'Ntiwararikora'}</div>
         </div>
-      </div>
+      </div>}
 
       <div className="layout-main-aside">
         <div className="stack">

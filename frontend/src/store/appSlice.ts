@@ -9,7 +9,7 @@ export const defaultLessons: Lesson[] = offlineLessons;
 
 export const defaultReminders: Reminder[] = [
   { id: 1, time: '08:00', label: 'Kunywa amazi' },
-  { id: 2, time: '17:00', label: 'Imyitozo ya 15 min' },
+  { id: 2, time: '17:00', label: 'Imyitozo y\'iminota 15' },
   { id: 3, time: '20:00', label: 'Soma isomo ryo mu mutima' }
 ];
 
@@ -127,7 +127,7 @@ interface AppState {
 const initialState: AppState = {
   currentScreen: 'landing',
   userName: '',
-  selectedInterests: ['Umuvuduko w\'amaraso', 'Imirire', 'Imyitozo ngororamubiri'],
+  selectedInterests: [],
   lessons: defaultLessons,
   selectedLesson: defaultLessons[0],
   reminders: readGuestData('baho-reminders', defaultReminders),

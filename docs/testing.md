@@ -1,6 +1,6 @@
 # Testing and validation
 
-Six testing approaches were used. Each section says why it was chosen, how it was run, what it found and what changed as a result. Raw results are in [`evidence/`](evidence). All measurements were taken on 1 November 2026.
+Seven testing approaches were used. Each section says why it was chosen, how it was run, what it found and what changed as a result. Raw results are in [`evidence/`](evidence). All measurements were taken on 1 November 2026.
 
 | Approach | Tool | Result |
 |---|---|---|
@@ -10,6 +10,7 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 | Performance testing | Lighthouse 12.6 on the live site | 95 (mid-range phone), 75 (low-end phone), 100 (desktop) with photographs |
 | Compatibility and offline testing | Chrome 156, Safari on iOS 26.5, 6 screen widths | no horizontal scrolling; works offline after the first visit |
 | Load testing | autocannon, 50 concurrent users | 5,400–21,000 requests/s, no errors |
+| Usability and accessibility review | phone-size audit script, 12 learner screens | 6 access problems found and fixed |
 
 ## 1. Unit testing
 
@@ -118,6 +119,23 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 | `GET /api/v1/health` | 20,967 | 2 ms | 4 ms | 0 |
 
 The API is stateless (signed tokens, no server sessions), so more instances can run behind Caddy if needed.
+
+## 7. Usability and accessibility review (phone)
+
+**Why.** Learners use low-cost phones, often for the first time; anything hard to reach or to tap keeps them out (NFR07).
+
+**How.** `scripts/evidence/ux-audit.mjs` walks a new learner through 12 screens at 390 px (landing, onboarding, health profile, dashboard, lessons, diseases, exercises, reminders, help, knowledge check, profile, sign-up), saves full-page screenshots, and lists every control shorter than 40 px and every English or technical word. Results: [`evidence/usability/`](evidence/usability).
+
+| Found | Fix |
+|---|---|
+| Help (FAQ, questions to health workers, reports) was not in the phone tab bar; only a footer link at the bottom of each page reached it | Help is the sixth tab |
+| Buttons 30–38 px, text links 22 px, Yes/No answers 35 px | On phones: buttons 44 px, small buttons 40 px, links and footer items padded, Yes/No 44 px |
+| A new learner's dashboard opened with four empty statistics (0, 0, –, –) before the study programme and its button | Statistics appear after the first lesson; the programme comes first |
+| Onboarding pre-selected three topics the learner never chose, so "your topics" were not really theirs | Nothing is pre-selected; at least one topic must be chosen |
+| Technical and English words: "(AES-GCM)" in the privacy note, "1 min" on every lesson | Removed; "Iminota 1" |
+| The help page ended with a 13-entry photo-credits list | Credits fold into one closed section |
+
+After the fixes the audit finds no controls under 40 px (checkboxes and radios sit inside full-width tappable rows) and no English on learner screens apart from "PIN", which learners know from mobile money.
 
 ## Not yet done
 
