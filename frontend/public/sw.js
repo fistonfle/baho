@@ -4,14 +4,27 @@
 // those in localStorage (see src/lib/offline.ts), so the worker leaves API
 // requests alone and they always reach the server.
 // Bump the version when the caching rules change so old caches are removed.
-const VERSION = 'baho-v3';
+const VERSION = 'baho-v4';
 const SHELL_CACHE = `${VERSION}-shell`;
 const AUDIO_CACHE = `${VERSION}-audio`;
 
 const SHELL_FILES = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
+// The built JS and CSS have hashed names that change with every build, so they are
+// read from index.html at install time. Caching them here means the app opens
+// offline even right after the first visit, not only once the browser cache has them.
+const builtAssets = async () => {
+  const html = await (await fetch('/index.html', { cache: 'no-store' })).text();
+  return [...new Set(html.match(/\/assets\/[^"'\s>]+/g) ?? [])];
+};
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    builtAssets()
+      .catch(() => [])
+      .then((assets) => caches.open(SHELL_CACHE).then((cache) => cache.addAll([...SHELL_FILES, ...assets])))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
