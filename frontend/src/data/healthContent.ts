@@ -19,7 +19,6 @@ export type NcdTopic = {
   id: string;
   title: string;
   category: Interest;
-  icon: string;
   description: string;
   riskFactors: string[];
   warningSigns: string[];
@@ -31,7 +30,6 @@ export const ncdTopics: NcdTopic[] = [
     id: 'blood-pressure',
     title: 'Umuvuduko w\'amaraso ukabije',
     category: 'Umuvuduko w\'amaraso',
-    icon: '❤',
     description: 'Umuvuduko w\'amaraso ukabije ni igihe amaraso asunika imitsi ku ngufu nyinshi kurusha uko bikwiye. Akenshi nta bimenyetso ugaragaza, ni yo mpamvu kwipimisha buri gihe ari ingenzi.',
     riskFactors: ['Kurya umunyu mwinshi', 'Kunywa itabi n\'inzoga nyinshi', 'Kudakora imyitozo ngororamubiri', 'Umubyibuho ukabije', 'Kugira abo mu muryango bayirwaye'],
     warningSigns: ['Kuribwa umutwe cyane', 'Kuzungera', 'Kubona ibikezikezi', 'Umutima utera vuba bidasanzwe'],
@@ -41,7 +39,6 @@ export const ncdTopics: NcdTopic[] = [
     id: 'diabetes',
     title: 'Diyabete',
     category: 'Diyabete',
-    icon: '◉',
     description: 'Diyabete ni indwara ituma isukari mu maraso izamuka cyane kuko umubiri udakoresha neza insuline. Iyo idakurikiranwe, ishobora kwangiza amaso, impyiko, imitsi n\'umutima.',
     riskFactors: ['Umubyibuho ukabije', 'Kudakora imyitozo', 'Kunywa ibinyobwa birimo isukari nyinshi', 'Kugira abo mu muryango bayirwaye', 'Kurenza imyaka 40'],
     warningSigns: ['Inyota nyinshi', 'Kunyara kenshi', 'Gucika intege', 'Kunanuka nta mpamvu', 'Ibisebe bitinda gukira'],
@@ -51,7 +48,6 @@ export const ncdTopics: NcdTopic[] = [
     id: 'heart-health',
     title: 'Indwara z\'umutima',
     category: 'Ubuzima bw\'umutima',
-    icon: '♥',
     description: 'Indwara z\'umutima n\'imitsi zirimo umutima udakora neza no guturika cyangwa gufungana kw\'imitsi yo mu bwonko (stroke). Akenshi ziterwa n\'umuvuduko w\'amaraso ukabije, diyabete, itabi n\'imirire mibi.',
     riskFactors: ['Itabi', 'Umuvuduko w\'amaraso ukabije', 'Ibinure byinshi mu maraso', 'Kudakora imyitozo', 'Umunaniro n\'impungenge bihoraho'],
     warningSigns: ['Kubabara mu gituza', 'Guhumeka nabi', 'Kunanirwa vuba', 'Kubyimba amaguru', 'Igice kimwe cy\'umubiri kinanirwa gitunguranye'],
@@ -61,7 +57,6 @@ export const ncdTopics: NcdTopic[] = [
     id: 'cancer',
     title: 'Kanseri',
     category: 'Kanseri',
-    icon: '✚',
     description: 'Kanseri ni indwara ituma uturemangingo tw\'umubiri dukura mu buryo budasanzwe. Iyo imenyekanye kare, akenshi iravurwa igakira.',
     riskFactors: ['Itabi', 'Inzoga nyinshi', 'Imirire mibi', 'Virusi zimwe nka HPV na hepatite B', 'Kudakora imyitozo'],
     warningSigns: ['Ikibyimba kidasanzwe', 'Kunanuka nta mpamvu', 'Kuva amaraso bidasanzwe', 'Inkorora idashira', 'Igisebe kidakira'],
@@ -79,7 +74,7 @@ export const offlineDiseases: Curriculum[] = ncdTopics.map((topic, index) => ({
   imageUrl: '',
   lessonIds: [],
   categoryId: defaultCategories.find((category) => category.name === topic.category)?.id ?? null,
-  icon: topic.icon,
+  icon: '',
   about: topic.description,
   riskFactors: topic.riskFactors,
   warningSigns: topic.warningSigns,
@@ -93,7 +88,6 @@ export type Exercise = {
   level: ExerciseLevel;
   title: string;
   minutes: number;
-  icon: string;
   steps: string[];
 };
 
@@ -109,7 +103,6 @@ export const exercises: Exercise[] = [
     level: 'Iya abatangira',
     title: 'Kugenda buhoro',
     minutes: 10,
-    icon: '🚶',
     steps: ['Ambara inkweto zikworoheye.', 'Genda buhoro iminota 10 hafi y\'urugo.', 'Humeka neza, ushobora kuvuga utaruhutse.', 'Hagarara niba wumva uzungera cyangwa ubabara mu gituza.']
   },
   {
@@ -117,7 +110,6 @@ export const exercises: Exercise[] = [
     level: 'Iya abatangira',
     title: 'Kurambura imitsi',
     minutes: 5,
-    icon: '🙆',
     steps: ['Hagarara wemye, uzamure amaboko buhoro.', 'Hindukiza ijosi ibumoso n\'iburyo inshuro 5.', 'Kora ku birenge byawe niba bishoboka, utababara.', 'Subiramo inshuro 3.']
   },
   {
@@ -125,7 +117,6 @@ export const exercises: Exercise[] = [
     level: 'Iyabageze Hagati',
     title: 'Kugenda iminota 30',
     minutes: 30,
-    icon: '🚶',
     steps: ['Tangira ugenda buhoro iminota 5.', 'Ongera umuvuduko iminota 20, ugenda nk\'ugiye ku isoko.', 'Garuka ku muvuduko muto iminota 5.', 'Nywa amazi nyuma y\'imyitozo.']
   },
   {
@@ -133,7 +124,6 @@ export const exercises: Exercise[] = [
     level: 'Iyabageze Hagati',
     title: 'Imirimo yo mu murima',
     minutes: 30,
-    icon: '🌱',
     steps: ['Guhinga, kuvomera no gutunda nabyo ni imyitozo.', 'Fata akaruhuko buri minota 10.', 'Unama ukoresheje amavi, si umugongo.', 'Nywa amazi kenshi.']
   },
   {
@@ -141,7 +131,6 @@ export const exercises: Exercise[] = [
     level: 'Iyabisumbuye',
     title: 'Kugenda vuba no kuzamuka umusozi',
     minutes: 40,
-    icon: '⛰',
     steps: ['Shyushya umubiri ugenda buhoro iminota 5.', 'Zamuka agasozi cyangwa amadarajya iminota 25.', 'Kora squats 10 inshuro 3.', 'Rangiza urambura imitsi iminota 5.']
   },
   {
@@ -149,7 +138,6 @@ export const exercises: Exercise[] = [
     level: 'Iyabisumbuye',
     title: 'Kubyina',
     minutes: 20,
-    icon: '💃',
     steps: ['Shyiraho indirimbo ukunda.', 'Byina iminota 20 udahagaze.', 'Kubyina hamwe n\'umuryango bitera imbaraga.', 'Hagarara niba uhumeka nabi cyane.']
   }
 ];
@@ -242,7 +230,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Umuvuduko w\'amaraso ni ingufu amaraso akoresha asunika imitsi. Iyo uri hejuru igihe kirekire, umutima ukora cyane kandi bishobora gutera stroke. Akenshi nta bimenyetso bigaragara, ni yo mpamvu ugomba kwipimisha. Gabanya umunyu, kora imyitozo kandi wirinde itabi.',
     duration: '02:30',
     audioUrl: '/audio/blood-pressure.mp3',
-    imageUrl: '/images/bp-heart.svg',
+    imageUrl: '/images/bp-heart.jpg',
     quiz: []
   },
   {
@@ -254,7 +242,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Diyabete ituma isukari mu maraso izamuka. Ibimenyetso birimo inyota nyinshi, kunyara kenshi no gucika intege. Kurya ibiryo bifite isukari nkeya, gukora imyitozo no kwipimisha bifasha kuyirinda.',
     duration: '02:10',
     audioUrl: '/audio/diabetes.mp3',
-    imageUrl: '/images/glucose.svg',
+    imageUrl: '/images/glucose.jpg',
     quiz: []
   },
   {
@@ -266,7 +254,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Isahani nziza igira imboga nyinshi, ibinyampeke byuzuye n\'ibiryo byubaka umubiri nk\'ibishyimbo. Gabanya umunyu, isukari n\'amavuta menshi. Rya imbuto aho kurya ibiryo biryohereye.',
     duration: '02:00',
     audioUrl: '/audio/nutrition.mp3',
-    imageUrl: '/images/plate.svg',
+    imageUrl: '/images/plate.jpg',
     quiz: []
   }
 ];

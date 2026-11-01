@@ -6,7 +6,7 @@ export const issueStatus: Record<string, string> = { Open: 'New', 'In review': '
 
 // Illustrations shipped in frontend/public/images that staff can pick from.
 export const imageChoices = ['bp-heart', 'bp-check', 'plate', 'salt', 'water', 'glucose', 'heart', 'stroke', 'screening', 'walking', 'medicine', 'foot-care', 'no-smoking']
-  .map((name) => `/images/${name}.svg`);
+  .map((name) => `/images/${name}.jpg`);
 
 export const emptyQuestion: QuizQuestion = { question: '', options: ['', ''], answerIndex: 0, explanation: '' };
 

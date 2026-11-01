@@ -70,8 +70,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .masthead { background: var(--surface); border-bottom: 1px solid var(--line); }
 .masthead .container { display: flex; align-items: center; justify-content: space-between; min-height: 72px; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; color: var(--ink); text-align: left; text-decoration: none; }
-.brand-emblem { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: var(--brand); color: #fff; }
-.brand-emblem svg { width: 24px; height: 24px; }
+.brand-emblem { display: grid; width: 42px; height: 42px; place-items: center; border-radius: var(--radius); background: var(--brand); color: #fff; font-size: 1.5rem; font-weight: 700; line-height: 1; }
 .brand-name { display: block; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.01em; }
 .brand-tagline { display: block; color: var(--muted); font-size: 0.8rem; }
 .masthead-actions { display: flex; align-items: center; gap: 12px; }
@@ -222,7 +221,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 
 /* ---------- Article (lesson) ---------- */
 .article-figure { margin: 0 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
-.article-figure img { display: block; width: 100%; height: auto; max-height: 260px; object-fit: contain; }
+.article-figure img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: cover; }
 .article-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 16px; color: var(--muted); font-size: 0.85rem; }
 .article-body p { color: var(--text); font-size: 1rem; line-height: 1.75; }
 .section-title { margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 1rem; }
@@ -276,7 +275,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .disease-link span { display: -webkit-box; min-height: 4.5em; overflow: hidden; color: var(--muted); font-size: 0.88rem; line-height: 1.5; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .disease-link small { color: var(--brand); font-weight: 600; }
 .lesson-teaser { overflow: hidden; }
-.lesson-teaser img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; border-bottom: 1px solid var(--line); background: var(--surface-alt); }
+.lesson-teaser img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-bottom: 1px solid var(--line); background: var(--surface-alt); }
 .lesson-teaser h3 { display: -webkit-box; min-height: 2.6em; margin: 8px 0 4px; overflow: hidden; line-height: 1.3; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lesson-teaser p { display: -webkit-box; min-height: 3em; overflow: hidden; line-height: 1.5; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lesson-teaser .btn { margin-top: 12px; }
@@ -315,7 +314,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .image-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
 .image-picker button { padding: 2px; border: 2px solid transparent; border-radius: var(--radius); background: var(--surface); }
 .image-picker button.active { border-color: var(--brand); }
-.image-picker img { display: block; width: 100%; }
+.image-picker img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
 .quiz-editor { padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface-alt); }
 .preview-box { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .preview-box img { width: 180px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
@@ -369,3 +368,8 @@ textarea.input { min-height: 110px; resize: vertical; }
   .disease-link { padding: 12px 14px; }
   .lesson-teaser img { aspect-ratio: auto; height: 140px; }
 }
+
+/* Photo credits (help screen) */
+.credits-list li { display: grid; gap: 2px; padding: 8px 20px; border-bottom: 1px solid var(--line); font-size: 0.82rem; }
+.credits-list li:last-child { border-bottom: 0; }
+.credits-list span { color: var(--muted); }

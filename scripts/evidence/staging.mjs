@@ -48,7 +48,7 @@ if (action === 'setup') {
   const created = [];
   for (const [index, lesson] of lessons.entries()) {
     const result = await call('/admin/content', {
-      ...lesson, categoryId: index === 0 ? 3 : 2, status: 'review', imageUrl: index === 0 ? '/images/plate.svg' : '/images/bp-check.svg',
+      ...lesson, categoryId: index === 0 ? 3 : 2, status: 'review', imageUrl: index === 0 ? '/images/plate.jpg' : '/images/bp-check.jpg',
       quiz: [{ question: 'Ni iki cyiza ku murwayi wa diyabete?', options: ['Imboga n\'imbuto', 'Soda nyinshi'], answerIndex: 0, explanation: 'Imboga n\'imbuto bifasha.' }],
       curriculumIds: []
     }, writerSession.token);

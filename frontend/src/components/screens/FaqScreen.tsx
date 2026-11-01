@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { photoCredits } from '../../data/photoCredits';
 import type { QuestionItem } from '../../types';
 import { Empty, PageHeader, StatusBadge } from '../ui';
 
@@ -144,6 +145,21 @@ export function FaqScreen({
               )}
             </div>
           </form>
+
+          <section className="panel" id="photo-credits">
+            <div className="panel-head"><h2>Inkomoko y'amafoto</h2></div>
+            <ul className="list credits-list">
+              {photoCredits.map((credit) => (
+                <li key={credit.file}>
+                  <strong>{credit.subject}</strong>
+                  <span>
+                    {credit.author}, <a href={credit.source} target="_blank" rel="noreferrer">Wikimedia Commons</a>,{' '}
+                    {credit.licenseUrl ? <a href={credit.licenseUrl} target="_blank" rel="noreferrer">{credit.license}</a> : credit.license}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </div>

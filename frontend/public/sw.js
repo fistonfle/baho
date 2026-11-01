@@ -4,7 +4,7 @@
 // those in localStorage (see src/lib/offline.ts), so the worker leaves API
 // requests alone and they always reach the server.
 // Bump the version when the caching rules change so old caches are removed.
-const VERSION = 'baho-v4';
+const VERSION = 'baho-v5';
 const SHELL_CACHE = `${VERSION}-shell`;
 const AUDIO_CACHE = `${VERSION}-audio`;
 
