@@ -144,11 +144,11 @@ export function SiteFooter({ onNavigate }: { onNavigate?: (screen: Screen) => vo
     <footer className="site-footer">
       <div className="container">
         <div>
-          <h4>Baho</h4>
+          <h2>Baho</h2>
           <p>Urubuga rw'inyigisho ku ndwara zitandura (umuvuduko w'amaraso, diyabete, indwara z'umutima na kanseri) mu Kinyarwanda. Amasomo yandikwa n'abakozi b'ubuzima kandi agasuzumwa n'inzobere mbere yo gusohoka.</p>
         </div>
         <div>
-          <h4>Serivisi</h4>
+          <h2>Serivisi</h2>
           <ul>
             <li><button onClick={() => onNavigate?.('library')}>Amasomo</button></li>
             <li><button onClick={() => onNavigate?.('ncd')}>Indwara zitandura</button></li>
@@ -156,7 +156,7 @@ export function SiteFooter({ onNavigate }: { onNavigate?: (screen: Screen) => vo
           </ul>
         </div>
         <div>
-          <h4>Ubufasha</h4>
+          <h2>Ubufasha</h2>
           <ul>
             <li><button onClick={() => onNavigate?.('faq')}>Ibibazo bikunze kubazwa</button></li>
             <li><button onClick={() => onNavigate?.('faq')}>Tanga ikibazo</button></li>
