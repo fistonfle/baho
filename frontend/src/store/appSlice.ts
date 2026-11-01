@@ -154,7 +154,7 @@ const initialState: AppState = {
   editingContentId: null,
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
   riskTags: [],
-  activeCategory: 'All',
+  activeCategory: 'Mine',
   selectedNcdTopic: 0,
   completedLessons: readGuestData('baho-progress', [])
 };

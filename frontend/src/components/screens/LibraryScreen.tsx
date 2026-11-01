@@ -1,3 +1,6 @@
+import { useEffect } from 'react';
+
+import { ALL, filterLessons, MINE, type RankedLesson } from '../../lib/personalization';
 import type { Lesson, QuizScore } from '../../types';
 import { AudioPlayer } from '../AudioPlayer';
 import { LessonQuiz } from '../LessonQuiz';
@@ -11,6 +14,8 @@ export const scrollToPlayer = () => {
 
 export function LibraryScreen({
   lessons,
+  rankedLessons,
+  myTopics,
   topics,
   selectedLesson,
   activeCategory,
@@ -24,6 +29,8 @@ export function LibraryScreen({
   onHome
 }: {
   lessons: Lesson[];
+  rankedLessons: RankedLesson[];
+  myTopics: string[];
   topics: string[];
   selectedLesson: Lesson;
   activeCategory: string;
@@ -36,9 +43,19 @@ export function LibraryScreen({
   submitQuiz: (lessonId: number, answers: number[]) => Promise<{ score: number; total: number; correct: boolean[] }>;
   onHome: () => void;
 }) {
-  // Only show filters for categories that actually have lessons.
-  const categories = ['All', ...topics.filter((interest) => lessons.some((lesson) => lesson.category === interest))];
-  const filteredLessons = activeCategory === 'All' ? lessons : lessons.filter((lesson) => lesson.category === activeCategory);
+  // "Ibyo wahisemo" (the learner's topics) when they chose any, then every topic, then
+  // single topics that actually have lessons.
+  const hasChoices = myTopics.length > 0;
+  const filter = activeCategory === MINE && !hasChoices ? ALL : activeCategory;
+  const categories = [...(hasChoices ? [MINE] : []), ALL, ...topics.filter((topic) => lessons.some((lesson) => lesson.category === topic))];
+  const filterLabel = (value: string) => (value === MINE ? 'Ibyo wahisemo' : value === ALL ? 'Ibyiciro byose' : value);
+  const filteredLessons = filterLessons(rankedLessons, lessons, filter, myTopics);
+  // The open lesson always belongs to the list beside it.
+  const firstShown = filteredLessons[0];
+  const selectedIsListed = filteredLessons.some((lesson) => lesson.id === selectedLesson.id);
+  useEffect(() => {
+    if (!selectedIsListed && firstShown) setSelectedLesson(firstShown);
+  }, [selectedIsListed, firstShown, setSelectedLesson]);
   const isComplete = completedLessons.includes(selectedLesson.id);
   const bestScore = quizScores.find((item) => item.contentId === selectedLesson.id);
   const hasQuiz = selectedLesson.quiz?.length > 0;
@@ -55,8 +72,8 @@ export function LibraryScreen({
           <div className="panel-head"><h2>Urutonde rw'amasomo</h2></div>
           <div className="filter-bar">
             <label className="visually-hidden" htmlFor="lesson-filter">Icyiciro</label>
-            <select id="lesson-filter" className="input" value={activeCategory} onChange={(event) => setActiveCategory(event.target.value)}>
-              {categories.map((category) => <option key={category} value={category}>{category === 'All' ? 'Ibyiciro byose' : category}</option>)}
+            <select id="lesson-filter" className="input" value={filter} onChange={(event) => setActiveCategory(event.target.value)}>
+              {categories.map((category) => <option key={category} value={category}>{filterLabel(category)}</option>)}
             </select>
           </div>
           <ul className="list lesson-list">

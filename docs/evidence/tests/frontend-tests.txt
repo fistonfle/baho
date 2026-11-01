@@ -1,19 +1,6 @@
 
  RUN  v2.1.9 /Users/fle/Documents/Studies/capstone/baho/frontend
 
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0781234567
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 078 123 4567
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts +250 78 123 4567
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 250781234567
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0721234567
- ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0791234567
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 0712345678
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 078123456
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 07812345678
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects +254781234567
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects abcdefghij
- ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 
- ✓ src/lib/phone.test.ts > isPin > accepts 4 to 6 digits only
  ✓ src/lib/activity.test.ts > countStreak > counts consecutive days ending today
  ✓ src/lib/activity.test.ts > countStreak > still counts a streak that ended yesterday
  ✓ src/lib/activity.test.ts > countStreak > stops at the first missing day
@@ -31,6 +18,23 @@
  ✓ src/lib/personalization.test.ts > recommendedPaths and profileTags > maps a diagnosed condition to its lesson topic and merges risk tags
  ✓ src/lib/personalization.test.ts > pathProgress > counts completed lessons and finds the next one in order
  ✓ src/lib/personalization.test.ts > pathProgress > has no next lesson when the path is finished
+ ✓ src/lib/personalization.test.ts > learner choices > merges sign-up topics and health-profile topics without duplicates
+ ✓ src/lib/personalization.test.ts > learner choices > puts the diseases the learner chose first and keeps the rest
+ ✓ src/lib/personalization.test.ts > learner choices > keeps the original order when nothing was chosen
+ ✓ src/lib/personalization.test.ts > learner choices > shows only the learner's topics under "Ibyo wahisemo", most relevant first
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 078 123 4567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts +250 78 123 4567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 250781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0721234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0791234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 0712345678
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 078123456
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 07812345678
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects +254781234567
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects abcdefghij
+ ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 
+ ✓ src/lib/phone.test.ts > isPin > accepts 4 to 6 digits only
  ✓ src/store/appSlice.test.ts > appSlice > sends learners to the dashboard and staff to the staff portal after sign-in
  ✓ src/store/appSlice.test.ts > appSlice > keeps the learner name on the device when a staff member signs in
  ✓ src/store/appSlice.test.ts > appSlice > clears the account on sign-out
@@ -38,7 +42,7 @@
  ✓ src/store/appSlice.test.ts > appSlice > keeps the best quiz score for each lesson
 
  Test Files  4 passed (4)
-      Tests  35 passed (35)
-   Start at  13:47:45
-   Duration  206ms (transform 82ms, setup 0ms, collect 117ms, tests 8ms, environment 0ms, prepare 239ms)
+      Tests  39 passed (39)
+   Start at  13:59:24
+   Duration  199ms (transform 66ms, setup 0ms, collect 102ms, tests 9ms, environment 0ms, prepare 199ms)
 

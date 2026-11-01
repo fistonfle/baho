@@ -5,6 +5,7 @@ import { Disclaimer, PageHeader, Photo } from '../ui';
 // here with its information and the lessons written for it.
 export function NcdScreen({
   diseases,
+  chosenIds,
   lessons,
   completedLessons,
   selectedTopic,
@@ -14,6 +15,7 @@ export function NcdScreen({
   onHome
 }: {
   diseases: Curriculum[];
+  chosenIds: number[];
   lessons: Lesson[];
   completedLessons: number[];
   selectedTopic: number;
@@ -44,6 +46,7 @@ export function NcdScreen({
                 <li key={item.id}>
                   <button className={`list-button ${disease.id === item.id ? 'current' : ''}`} aria-pressed={disease.id === item.id} onClick={() => onSelectTopic(index)}>
                     <span className="grow"><strong>{item.condition}</strong><small>Amasomo {item.lessonIds.length}</small></span>
+                    {chosenIds.includes(item.id) && <span className="badge badge-info">Wahisemo</span>}
                   </button>
                 </li>
               ))}

@@ -18,7 +18,7 @@ import { ProfileScreen } from './components/screens/ProfileScreen';
 import { defaultCategories, offlineDiseases, offlineLessons, tipOfTheDay } from './data/healthContent';
 import { getStreak, recordActivity } from './lib/activity';
 import { flushOutbox, getOutbox, loadCache, queueIssue, saveCache } from './lib/offline';
-import { emptyHealthProfile, pathProgress, profileTags, rankLessons, recommendedPaths, type HealthProfile, type RiskAnswers } from './lib/personalization';
+import { ALL, emptyHealthProfile, learnerTopics, MINE, orderDiseases, pathProgress, profileTags, rankLessons, recommendedPaths, type HealthProfile, type RiskAnswers } from './lib/personalization';
 import { loadSecure, removeSecure, saveSecure } from './lib/secureStore';
 import { api, setAuthToken } from './services/api';
 import {
@@ -296,7 +296,13 @@ function App() {
   const topicNames = categories.map((category) => category.name);
   // Diseases are the learning paths that have a condition; built-in ones are used offline.
   const apiDiseases = curricula.filter((curriculum) => curriculum.condition);
-  const diseases = apiDiseases.length ? apiDiseases : offlineDiseases;
+  const allDiseases = apiDiseases.length ? apiDiseases : offlineDiseases;
+  // What the learner chose (sign-up topics and health profile) decides what comes first.
+  const myTopics = useMemo(() => learnerTopics(selectedInterests, riskTags), [selectedInterests, riskTags]);
+  const { ordered: diseases, chosenIds: chosenDiseaseIds } = useMemo(
+    () => orderDiseases(allDiseases, healthProfile.conditions, myTopics, categories),
+    [allDiseases, healthProfile.conditions, myTopics, categories]
+  );
   const suggestedPaths = useMemo(() => recommendedPaths(curricula, healthProfile.conditions), [curricula, healthProfile.conditions]);
   const activePath = curricula.find((curriculum) => curriculum.slug === activePathSlug) ?? suggestedPaths[0] ?? null;
   const quizAverage = quizScores.length
@@ -320,7 +326,7 @@ function App() {
 
   const openLesson = (lesson: Lesson) => {
     dispatch(setSelectedLesson(lesson));
-    dispatch(setActiveCategory('All'));
+    dispatch(setActiveCategory(myTopics.includes(lesson.category) ? MINE : ALL));
     navigate('library');
     scrollToPlayer();
   };
@@ -613,6 +619,8 @@ function App() {
         return (
           <LibraryScreen
             lessons={lessons}
+            rankedLessons={rankedLessons}
+            myTopics={myTopics}
             topics={topicNames}
             selectedLesson={selectedLesson}
             activeCategory={activeCategory}
@@ -630,6 +638,7 @@ function App() {
         return (
           <NcdScreen
             diseases={diseases}
+            chosenIds={chosenDiseaseIds}
             lessons={lessons}
             completedLessons={completedLessons}
             selectedTopic={selectedNcdTopic}
