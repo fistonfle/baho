@@ -1,5 +1,4 @@
 import type { Curriculum, Lesson } from '../../types';
-import { AudioPlayer } from '../AudioPlayer';
 import { Disclaimer, PageHeader } from '../ui';
 
 // NCD module. Diseases come from the API, so a disease added by staff appears
@@ -28,13 +27,6 @@ export function NcdScreen({
   const diseaseLessons = disease.lessonIds
     .map((id) => lessons.find((lesson) => lesson.id === id))
     .filter((lesson): lesson is Lesson => Boolean(lesson));
-  const narration = [
-    disease.condition,
-    disease.about,
-    `Ibyongera ibyago: ${disease.riskFactors.join(', ')}.`,
-    `Ibimenyetso: ${disease.warningSigns.join(', ')}.`,
-    `Uko wayirinda: ${disease.prevention.join(', ')}.`
-  ].join(' ');
 
   return (
     <div className="container">
@@ -71,7 +63,6 @@ export function NcdScreen({
             {disease.imageUrl && <figure className="article-figure"><img src={disease.imageUrl} alt="" width="320" height="200" /></figure>}
             <h2 style={{ fontSize: '1.4rem' }}>{disease.condition}</h2>
             <div className="article-body" style={{ marginTop: 8 }}><p>{disease.about}</p></div>
-            <AudioPlayer text={narration} />
 
             <h3 className="section-title">Ibyongera ibyago</h3>
             <ul className="fact-list">{disease.riskFactors.map((item) => <li key={item}>{item}</li>)}</ul>

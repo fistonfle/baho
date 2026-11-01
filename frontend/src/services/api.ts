@@ -26,13 +26,19 @@ export type ContentPayload = {
   curriculumIds?: number[];
 };
 
+// Recordings are stored by the API as /api/v1/media/<file>. In development the API
+// runs on another port, so the path is resolved against the API's address.
+export const mediaUrl = (path: string) =>
+  path.startsWith('/api/v1/') ? `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${path}` : path;
+
 export const setAuthToken = (token: string | null) => {
   authToken = token;
 };
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set('Content-Type', 'application/json');
+  // Files (recordings) are sent as they are; everything else is JSON.
+  if (!(options.body instanceof Blob)) headers.set('Content-Type', 'application/json');
   if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -105,6 +111,8 @@ export const api = {
     }),
   updateSpecialistTopics: (id: number, categoryIds: number[]) =>
     request<{ message: string; categoryIds: number[] }>(`/admin/staff/${id}/topics`, { method: 'PUT', body: JSON.stringify({ categoryIds }) }),
+  uploadAudio: (file: File) =>
+    request<{ url: string }>('/admin/media/audio', { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } }),
   getReviewQueue: () => request<{ lessons: any[] }>('/review/queue'),
   reviewLesson: (id: number, decision: 'approve' | 'changes', note: string) =>
     request<{ message: string; lesson: any }>(`/review/lessons/${id}`, { method: 'POST', body: JSON.stringify({ decision, note }) }),

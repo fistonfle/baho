@@ -73,7 +73,7 @@ export function SiteHeader({
       <div className="utility-bar">
         <div className="container">
           <span className="hide-sm">Izi nyigisho ku buzima mu Kinyarwanda · Ntizisimbura muganga</span>
-          <span className={isOnline ? 'status-online' : 'status-offline'}>{isOnline ? 'Kuri internet' : 'Nta internet'}</span>
+          <span className={isOnline ? 'status-online' : 'status-offline'}>{isOnline ? 'Online' : 'Offline'}</span>
         </div>
       </div>
       <header className="masthead">

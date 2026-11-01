@@ -1,11 +1,6 @@
 
  RUN  v2.1.9 /Users/fle/Documents/Studies/capstone/baho/frontend
 
- ✓ src/lib/activity.test.ts > countStreak > counts consecutive days ending today
- ✓ src/lib/activity.test.ts > countStreak > still counts a streak that ended yesterday
- ✓ src/lib/activity.test.ts > countStreak > stops at the first missing day
- ✓ src/lib/activity.test.ts > countStreak > is zero with no recent activity
- ✓ src/lib/activity.test.ts > countStreak > crosses month and year boundaries
  ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 0781234567
  ✓ src/lib/phone.test.ts > isRwandanPhone > accepts 078 123 4567
  ✓ src/lib/phone.test.ts > isRwandanPhone > accepts +250 78 123 4567
@@ -19,6 +14,11 @@
  ✓ src/lib/phone.test.ts > isRwandanPhone > rejects abcdefghij
  ✓ src/lib/phone.test.ts > isRwandanPhone > rejects 
  ✓ src/lib/phone.test.ts > isPin > accepts 4 to 6 digits only
+ ✓ src/lib/activity.test.ts > countStreak > counts consecutive days ending today
+ ✓ src/lib/activity.test.ts > countStreak > still counts a streak that ended yesterday
+ ✓ src/lib/activity.test.ts > countStreak > stops at the first missing day
+ ✓ src/lib/activity.test.ts > countStreak > is zero with no recent activity
+ ✓ src/lib/activity.test.ts > countStreak > crosses month and year boundaries
  ✓ src/lib/personalization.test.ts > rankLessons > puts risk matches above interest matches, and both above unrelated lessons
  ✓ src/lib/personalization.test.ts > rankLessons > adds both scores when a lesson matches an interest and a risk
  ✓ src/lib/personalization.test.ts > rankLessons > pushes completed lessons down and breaks ties with the newest lesson first
@@ -39,6 +39,6 @@
 
  Test Files  4 passed (4)
       Tests  35 passed (35)
-   Start at  13:11:03
-   Duration  201ms (transform 99ms, setup 0ms, collect 134ms, tests 8ms, environment 0ms, prepare 222ms)
+   Start at  13:47:45
+   Duration  206ms (transform 82ms, setup 0ms, collect 117ms, tests 8ms, environment 0ms, prepare 239ms)
 

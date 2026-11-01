@@ -19,14 +19,6 @@ const saveKnowledgeResult = (result: KnowledgeResult) => {
   localStorage.setItem(RESULTS_KEY, JSON.stringify([...loadKnowledgeResults(), result]));
 };
 
-const speak = (text: string) => {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'rw-RW';
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
-};
 
 // Five-item NCD knowledge check (same items as Appendix A). Taking it before
 // and after the NCD module shows the learner, and the researcher, the change.
@@ -110,7 +102,6 @@ export function CheckupScreen({ onFinished, onOpenNcd, onHome }: { onFinished: (
       <section className="panel">
         <div className="panel-head">
           <div><h2>Ikibazo cya {index + 1} kuri {knowledgeCheck.length}</h2></div>
-          <button className="btn btn-secondary btn-sm" onClick={() => speak(`${question.question} ${question.options.join('. ')}`)}>Umva ikibazo</button>
         </div>
         <div className="panel-body">
           <div className="progress" style={{ marginBottom: 16 }}><span style={{ width: `${(index / knowledgeCheck.length) * 100}%` }} /></div>

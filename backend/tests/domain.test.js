@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { LessonWorkflow } from '../src/domain/LessonWorkflow.js';
 import { LoginGuard, PhoneNumber } from '../src/modules/auth/phone.js';
+import { MediaStore } from '../src/modules/media/MediaStore.js';
 
 test('LessonWorkflow holds a publish request in review until a specialist approves', () => {
   const withSpecialist = new LessonWorkflow({ hasSpecialist: true });
@@ -60,4 +61,16 @@ test('LoginGuard locks after repeated failures and unlocks when the time is up',
   guard.recordFailure('+250791112233');
   guard.recordFailure('+250791112233');
   assert.equal(guard.isLocked('+250791112233'), false, 'a successful sign-in resets the count');
+});
+
+test('MediaStore recognises recordings by their first bytes', () => {
+  const pad = (head) => Buffer.concat([head, Buffer.alloc(32)]);
+  assert.equal(MediaStore.detect(pad(Buffer.from('ID3')))?.extension, 'mp3');
+  assert.equal(MediaStore.detect(pad(Buffer.from([0xff, 0xfb, 0x90, 0x64])))?.extension, 'mp3', 'MP3 without a tag');
+  assert.equal(MediaStore.detect(pad(Buffer.from('\0\0\0\x20ftypM4A ', 'latin1')))?.extension, 'm4a');
+  assert.equal(MediaStore.detect(pad(Buffer.from('OggS')))?.extension, 'ogg');
+  assert.equal(MediaStore.detect(pad(Buffer.from('RIFF\0\0\0\0WAVE', 'latin1')))?.extension, 'wav');
+  assert.equal(MediaStore.detect(pad(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])))?.extension, 'webm');
+  assert.equal(MediaStore.detect(pad(Buffer.from('<html>'))), null, 'a web page is not audio');
+  assert.equal(MediaStore.detect(Buffer.from('ID3')), null, 'too short');
 });

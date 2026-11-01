@@ -4,8 +4,8 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 
 | Approach | Tool | Result |
 |---|---|---|
-| Unit testing | Node test runner, Vitest | 40 tests pass |
-| Integration (API) testing | Node test runner over HTTP | 17 tests pass |
+| Unit testing | Node test runner, Vitest | 41 tests pass |
+| Integration (API) testing | Node test runner over HTTP | 18 tests pass |
 | Input and error-handling testing | inside the tests above | invalid input is rejected with clear errors |
 | Performance testing | Lighthouse 12.6 on the live site | 100 (mid-range phone), 92 (low-end phone), 100 (desktop) |
 | Compatibility and offline testing | Chrome 156, Safari on iOS 26.5, 6 screen widths | no horizontal scrolling; works offline after the first visit |
@@ -21,13 +21,14 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 |---|---|
 | `LessonWorkflow` (backend) | publishing is held in review on a topic with a specialist, allowed after approval, allowed directly without a specialist; valid statuses; what each role may set |
 | `PhoneNumber` | five ways of writing the same number all normalise to `+250781234567`; wrong prefix, too short, too long, foreign code, letters and empty values are rejected; PINs of 4–6 digits only |
+| `MediaStore` | MP3 (with and without a tag), M4A, OGG, WAV and WebM recognised from their first bytes; a web page or a too-short file is refused |
 | `LoginGuard` | locks after the maximum failures, other numbers unaffected, unlocks after 15 minutes (with an injected clock), a successful sign-in resets the count |
 | `rankLessons` | risk match (+3) above topic match (+2) above unrelated; both scores add; finished lessons drop (−4); ties go to the newest lesson; empty input |
 | `riskTagsFromAnswers`, `profileTags`, `recommendedPaths`, `pathProgress` | "no" counts as the risk for healthy-habit questions; unanswered questions ignored; duplicates removed; fallback to the prevention programme; next lesson in order |
 | `countStreak` | streak ending today or yesterday, gap stops the count, no activity, across month and year boundaries |
 | store reducers | learners go to the dashboard and staff to the staff portal after sign-in; a staff sign-in keeps the learner's name on the device; sign-out clears the account; best quiz score kept |
 
-**Results and changes.** All 40 pass. Writing them led to two refactors: the streak logic was split into a pure `countStreak(days, today)` so it could be tested without the browser, and the lockout became a `LoginGuard` class with an injectable clock instead of module-level functions.
+**Results and changes.** All 41 pass. Writing them led to two refactors: the streak logic was split into a pure `countStreak(days, today)` so it could be tested without the browser, and the lockout became a `LoginGuard` class with an injectable clock instead of module-level functions.
 
 ## 2. Integration testing (API)
 
@@ -35,7 +36,7 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 
 **How.** `backend/tests/api.test.js`, run in demo mode (in-memory data) so no database is needed; the same flows were also run against PostgreSQL during development.
 
-**Results.** 17 tests pass, covering: health check; public catalogue; first-admin seeding; anonymous and learner access to staff routes is refused (401/403); phone sign-up and sign-in; duplicate accounts (409); writers cannot publish or edit others' lessons; drafts stay private until published; learners only see their own questions; FAQ and issue management; reminders and progress validation; quizzes graded on the server; a disease added by an admin gets its own topic and programme; **a lesson on a disease with a specialist cannot be published until that specialist approves it (409), and specialists only see their own diseases**.
+**Results.** 18 tests pass, covering: audio upload (anonymous and learner uploads refused, a text file renamed as audio refused with 415, a real recording served back with its type and with byte ranges for seeking); health check; public catalogue; first-admin seeding; anonymous and learner access to staff routes is refused (401/403); phone sign-up and sign-in; duplicate accounts (409); writers cannot publish or edit others' lessons; drafts stay private until published; learners only see their own questions; FAQ and issue management; reminders and progress validation; quizzes graded on the server; a disease added by an admin gets its own topic and programme; **a lesson on a disease with a specialist cannot be published until that specialist approves it (409), and specialists only see their own diseases**.
 
 ## 3. Testing with different inputs and error handling
 
@@ -51,6 +52,9 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 | Quiz with one option, or the answer index out of range | refused | 400 with the reason |
 | Learner opens a staff route | refused | 401 without a token, 403 with a learner token |
 | No network | app opens from the service worker; issue reports are queued | sent automatically when the connection returns |
+| Upload of a text file renamed `.mp3` | refused | 415 "Upload an MP3, M4A, OGG, WAV or WebM recording" |
+| Upload over 20 MB | refused before sending, and by the API | 413 |
+| Lesson without a recording | no audio player shown | player hidden; lessons with a recording show it |
 
 ## 4. Performance testing
 

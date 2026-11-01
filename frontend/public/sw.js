@@ -4,7 +4,7 @@
 // those in localStorage (see src/lib/offline.ts), so the worker leaves API
 // requests alone and they always reach the server.
 // Bump the version when the caching rules change so old caches are removed.
-const VERSION = 'baho-v5';
+const VERSION = 'baho-v6';
 const SHELL_CACHE = `${VERSION}-shell`;
 const AUDIO_CACHE = `${VERSION}-audio`;
 
@@ -43,21 +43,49 @@ const cacheFirst = async (request, cacheName) => {
   return response;
 };
 
+// Audio players ask for byte ranges. The whole recording is fetched and cached
+// once, and each range request is answered with the matching slice, so seeking
+// works online and offline.
+const cachedRecording = async (request) => {
+  const cache = await caches.open(AUDIO_CACHE);
+  let response = await cache.match(request.url);
+  if (!response) {
+    response = await fetch(request.url);
+    if (response.status !== 200) return response;
+    await cache.put(request.url, response.clone());
+  }
+  const range = /bytes=(\d*)-(\d*)/.exec(request.headers.get('range') || '');
+  if (!range) return response;
+  const blob = await response.blob();
+  const start = Number(range[1] || 0);
+  const end = range[2] ? Math.min(Number(range[2]), blob.size - 1) : blob.size - 1;
+  return new Response(blob.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': response.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${blob.size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes'
+    }
+  });
+};
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  if (url.origin !== self.location.origin) return;
+
+  // Lesson recordings: kept after the first play so they work offline.
+  if (url.pathname.startsWith('/api/v1/media/')) {
+    event.respondWith(cachedRecording(request));
+    return;
+  }
+  if (url.pathname.startsWith('/api/')) return;
 
   // Page navigations: try the network, fall back to the cached app shell.
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(() => caches.match('/index.html')));
-    return;
-  }
-
-  // Audio lessons are large and rarely change, so serve them from the cache.
-  if (url.pathname.startsWith('/audio/')) {
-    event.respondWith(cacheFirst(request, AUDIO_CACHE));
     return;
   }
 

@@ -10,6 +10,10 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 
+# Uploaded lesson recordings; a named volume is mounted here in production.
+ENV MEDIA_DIR=/app/uploads
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+
 USER node
 EXPOSE 4000
 CMD ["node", "src/server.js"]
