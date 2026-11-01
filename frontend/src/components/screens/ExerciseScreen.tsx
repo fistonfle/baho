@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { exerciseLevels, exercises, type ExerciseLevel } from '../../data/healthContent';
-import { PageHeader } from '../ui';
+import { PageHeader, Photo } from '../ui';
 
 export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (title: string) => void; onHome: () => void }) {
   const [level, setLevel] = useState<ExerciseLevel>('Iya abatangira');
@@ -58,7 +58,7 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
             <div><h2>{selected.title}</h2><p>Urwego: {selected.level} · Iminota {selected.minutes}</p></div>
           </div>
           <div className="panel-body">
-            <figure className="article-figure"><img src="/images/walking.jpg" alt="Umuntu akora imyitozo yo kugenda" width="320" height="200" /></figure>
+            <figure className="article-figure"><Photo src="/images/walking.jpg" alt="Abantu bagenda n'amaguru ku muhanda" /></figure>
             <h3 className="section-title" style={{ marginTop: 0 }}>Intambwe</h3>
             <ol className="fact-list">
               {selected.steps.map((step) => <li key={step}>{step}</li>)}

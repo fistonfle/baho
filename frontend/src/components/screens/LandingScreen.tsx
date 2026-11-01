@@ -1,4 +1,5 @@
 import type { Curriculum, Lesson } from '../../types';
+import { Photo } from '../ui';
 
 // Public home page. The diseases and newest lessons come from the API (or the
 // copy kept on the phone), so the page shows what is actually published.
@@ -44,7 +45,7 @@ export function LandingScreen({
             </p>
           </div>
           <figure>
-            <img src="/images/bp-check.jpg" alt="Umukozi w'ubuzima apima umuvuduko w'amaraso w'umusore" width="320" height="200" />
+            <Photo src="/images/bp-check.jpg" alt="Umukozi w'ubuzima apima umuvuduko w'amaraso w'umusore" sizes="(max-width: 760px) 100vw, 45vw" />
             <figcaption>Urubyiruko rwipimisha umuvuduko w'amaraso mu Rwanda. Ifoto: Davyimage, CC BY-SA 4.0</figcaption>
           </figure>
         </div>
@@ -80,7 +81,7 @@ export function LandingScreen({
             <div className="grid-3">
               {newestLessons.map((lesson) => (
                 <article key={lesson.id} className="panel lesson-teaser">
-                  {lesson.imageUrl && <img src={lesson.imageUrl} alt="" width="320" height="200" />}
+                  {lesson.imageUrl && <Photo src={lesson.imageUrl} sizes="(max-width: 760px) 100vw, 33vw" lazy />}
                   <div className="panel-body">
                     <span className="badge">{lesson.category}</span>
                     <h3>{lesson.title}</h3>

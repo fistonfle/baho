@@ -1,7 +1,7 @@
 import type { Lesson, QuizScore } from '../../types';
 import { AudioPlayer } from '../AudioPlayer';
 import { LessonQuiz } from '../LessonQuiz';
-import { Disclaimer, PageHeader } from '../ui';
+import { Disclaimer, PageHeader, Photo } from '../ui';
 
 // On phones the player sits below the list, so bring it into view.
 export const scrollToPlayer = () => {
@@ -82,7 +82,7 @@ export function LibraryScreen({
         <article className="panel audio-panel">
           <div className="panel-body">
             {selectedLesson.imageUrl && (
-              <figure className="article-figure"><img src={selectedLesson.imageUrl} alt="" width="320" height="200" /></figure>
+              <figure className="article-figure"><Photo src={selectedLesson.imageUrl} /></figure>
             )}
             <h2 style={{ fontSize: '1.4rem' }}>{selectedLesson.title}</h2>
             <div className="article-meta">
