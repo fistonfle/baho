@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 
 // Small shared building blocks used by every screen.
 
-export function BrandMark({ tagline = true }: { tagline?: boolean }) {
+export function BrandMark({ tagline = true, subtitle = "Urubuga rw'inyigisho ku ndwara zitandura" }: { tagline?: boolean; subtitle?: string }) {
   return (
     <span className="brand">
       <span className="brand-emblem" aria-hidden="true">B</span>
       <span>
         <span className="brand-name">Baho</span>
-        {tagline && <span className="brand-tagline">Urubuga rw'inyigisho ku ndwara zitandura</span>}
+        {tagline && <span className="brand-tagline">{subtitle}</span>}
       </span>
     </span>
   );

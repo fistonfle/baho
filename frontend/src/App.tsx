@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { SiteFooter, SiteHeader, TabBar } from './components/AppNav';
+import { SiteFooter, SiteHeader, StaffHeader, TabBar } from './components/AppNav';
 import { AdminScreen } from './components/screens/AdminScreen';
 import { AuthScreen } from './components/screens/AuthScreen';
 import { CheckupScreen, loadKnowledgeResults } from './components/screens/CheckupScreen';
@@ -66,7 +66,7 @@ import type { Category, Curriculum, Lesson, QuestionItem } from './types';
 
 const PROFILE_KEY = 'baho-profile';
 const PATH_KEY = 'baho-active-path';
-const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'admin', 'risk'];
+const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'risk'];
 
 const translateAuthError = (message: string) => {
   const normalized = message.toLowerCase();
@@ -685,7 +685,7 @@ function App() {
           />
         );
       case 'admin':
-        return isStaff ? <AdminScreen onHome={() => navigate('dashboard')} /> : null;
+        return isStaff ? <AdminScreen /> : null;
       default:
         return null;
     }
@@ -694,11 +694,22 @@ function App() {
   const showNav = learnerScreens.includes(currentScreen) && !(currentScreen === 'risk' && riskFromOnboarding);
 
   const showFrame = currentScreen !== 'risk' || !riskFromOnboarding;
+  // Staff work in a separate, English mode and switch to the learner view when they want to.
+  const staffMode = isStaff && currentScreen === 'admin';
 
   return (
     <div className={`app-shell ${showNav ? 'with-tab-bar' : ''}`}>
       <a className="skip-link" href="#main">Jya ku bikubiye</a>
-      {showFrame && (
+      {staffMode && (
+        <StaffHeader
+          userName={authUser?.name ?? ''}
+          role={authUser?.role ?? null}
+          isOnline={isOnline}
+          onSwitchToLearner={() => navigate('dashboard')}
+          onSignOut={signOut}
+        />
+      )}
+      {showFrame && !staffMode && (
         <SiteHeader
           currentScreen={currentScreen}
           userName={authUser?.name || userName}
@@ -715,11 +726,13 @@ function App() {
       )}
       {!isOnline && (
         <div className="offline-notice" role="status">
-          <div className="container">Nta internet ihari. Urakoresha amasomo wabitse kuri iyi telefoni; ibyo wohereje bizoherezwa internet nigaruka.</div>
+          <div className="container">{staffMode
+            ? 'You are offline. Changes cannot be saved until the connection returns.'
+            : 'Nta internet ihari. Urakoresha amasomo wabitse kuri iyi telefoni; ibyo wohereje bizoherezwa internet nigaruka.'}</div>
         </div>
       )}
       <main id="main" className="site-main">{renderScreen()}</main>
-      {showFrame && <SiteFooter onNavigate={navigate} />}
+      {showFrame && !staffMode && <SiteFooter onNavigate={navigate} />}
       {showNav && <TabBar currentScreen={currentScreen} onNavigate={navigate} />}
       {feedbackMessage && (
         <div className="toast" role="status" aria-live="polite">

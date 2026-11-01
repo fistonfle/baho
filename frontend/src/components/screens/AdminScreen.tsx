@@ -31,7 +31,7 @@ import { DiseaseManager } from '../admin/DiseaseManager';
 
 type Tab = 'review' | 'content' | 'diseases' | 'questions' | 'staff' | 'issues' | 'faq' | 'pending' | 'history';
 
-export function AdminScreen({ onHome }: { onHome: () => void }) {
+export function AdminScreen() {
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((state) => state.app.authUser);
   const adminContent = useAppSelector((state) => state.app.adminContent);
@@ -267,7 +267,7 @@ export function AdminScreen({ onHome }: { onHome: () => void }) {
 
   return (
     <div className="container admin-screen">
-      <PageHeader crumbs={[{ label: 'Home', onClick: onHome }, { label: title }]} title={title} lead={<>{lead} <span className="muted">Signed in as {authUser?.name} ({roleNames[role]}).</span></>} />
+      <PageHeader crumbs={title === 'Staff portal' ? [{ label: title }] : [{ label: 'Staff portal' }, { label: title }]} title={title} lead={<>{lead} <span className="muted">Signed in as {authUser?.name} ({roleNames[role]}).</span></>} />
 
       {isAdmin && (
         <div className="grid-4" style={{ marginBottom: 20 }}>
