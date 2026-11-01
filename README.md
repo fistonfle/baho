@@ -49,7 +49,7 @@
 | Exercise guidance by level, reminders with notifications, searchable FAQ, questions to health workers, issue reports | `ExerciseScreen.tsx`, `RemindersScreen.tsx`, `FaqScreen.tsx` | FR04, FR05, FR18, FR19 |
 | **Sign-in with a phone number and PIN** for learners (most have no email); lockout after 5 wrong PINs | `modules/auth/phone.js`, `screens/AuthScreen.tsx` | FR10 |
 | **Specialist approval**: lessons on a disease with a specialist must be approved before publishing | `domain/LessonWorkflow.js`, `modules/review/`, `components/admin/SpecialistWorkspace.tsx` | FR16, FR17 |
-| Staff portal: review and publish, lesson editor with quiz editor, diseases, learner questions, staff and specialist assignment, reports, FAQ | `screens/AdminScreen.tsx`, `components/admin/` | FR12, FR16, FR17 |
+| Staff portal, a separate English mode with a **View as learner** switch: review and publish, lesson editor with quiz and audio upload, diseases, learner questions, staff and specialist assignment, reports, FAQ | `screens/AdminScreen.tsx`, `components/admin/` | FR12, FR16, FR17 |
 | **Offline**: the service worker caches the app and audio; lessons are kept on the device; reports written offline wait in an outbox | `public/sw.js`, `lib/offline.ts` | FR06, FR19 |
 | Responsive portal layout: top navigation on laptops, bottom tab bar on phones; installable PWA | `components/AppNav.tsx`, `styles/portal.css`, `public/manifest.webmanifest` | FR15, NFR08, NFR10 |
 

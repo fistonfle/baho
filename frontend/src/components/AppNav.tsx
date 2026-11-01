@@ -66,7 +66,6 @@ export function SiteHeader({
   // The knowledge check belongs to the NCD section, the health profile and paths to home.
   const activeScreen = currentScreen === 'checkup' ? 'ncd' : ['risk', 'paths'].includes(currentScreen) ? 'dashboard' : currentScreen;
   const items = [...learnerItems, { screen: 'faq' as Screen, label: 'Ubufasha', icon: '' }];
-  if (isStaff) items.push({ screen: 'admin', label: 'Staff portal', icon: '' });
 
   return (
     <>
@@ -94,6 +93,7 @@ export function SiteHeader({
                 </span>
               </button>
             )}
+            {isStaff && <button className="btn btn-primary btn-sm" onClick={() => onNavigate('admin')} aria-label="Staff portal"><span className="label-long">Staff portal</span><span className="label-short">Staff</span></button>}
             {isSignedIn
               ? <button className="btn btn-secondary btn-sm" onClick={onSignOut}>Sohoka</button>
               : <button className="btn btn-secondary btn-sm" onClick={onSignIn}>Injira</button>}
@@ -116,6 +116,49 @@ export function SiteHeader({
           </div>
         </nav>
       )}
+    </>
+  );
+}
+
+// Header of the staff portal: a separate, English mode for writers, specialists
+// and admins, with a switch to see the site as learners do.
+export function StaffHeader({
+  userName,
+  role,
+  isOnline,
+  onSwitchToLearner,
+  onSignOut
+}: {
+  userName: string;
+  role: string | null;
+  isOnline: boolean;
+  onSwitchToLearner: () => void;
+  onSignOut: () => void;
+}) {
+  return (
+    <>
+      <div className="utility-bar">
+        <div className="container">
+          <span className="hide-sm">Baho staff portal · writers, specialists and administrators</span>
+          <span className={isOnline ? 'status-online' : 'status-offline'}>{isOnline ? 'Online' : 'Offline'}</span>
+        </div>
+      </div>
+      <header className="masthead staff-masthead">
+        <div className="container">
+          <span className="brand"><BrandMark subtitle="Staff portal" /></span>
+          <div className="masthead-actions">
+            <span className="account-link" aria-label={`Signed in as ${userName}`}>
+              <span className="account-initial" aria-hidden="true">{(userName || 'B').trim().charAt(0).toUpperCase()}</span>
+              <span className="account-text">
+                <span>{userName}</span>
+                <small>{role ? roleNames[role] ?? role : ''}</small>
+              </span>
+            </span>
+            <button className="btn btn-secondary btn-sm" onClick={onSwitchToLearner}>View as learner</button>
+            <button className="btn btn-secondary btn-sm" onClick={onSignOut}>Sign out</button>
+          </div>
+        </div>
+      </header>
     </>
   );
 }
