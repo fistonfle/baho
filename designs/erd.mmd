@@ -1,0 +1,120 @@
+erDiagram
+    users ||--o| staff : "has role"
+    users ||--o{ specialist_topics : "reviews"
+    categories ||--o{ specialist_topics : "reviewed by"
+    categories ||--o{ content : "groups"
+    users ||--o{ content : "writes (creator_id)"
+    users ||--o{ content : "approves (reviewed_by)"
+    content ||--o{ quiz_questions : "has"
+    categories ||--o| curricula : "disease topic"
+    curricula ||--o{ curriculum_lessons : "orders"
+    content ||--o{ curriculum_lessons : "appears in"
+    users ||--o{ progress : "completes"
+    content ||--o{ progress : "completed"
+    users ||--o{ quiz_attempts : "takes"
+    content ||--o{ quiz_attempts : "graded for"
+    users ||--o{ reminders : "sets"
+    users ||--o{ questions : "asks"
+    users ||--o{ issues : "reports"
+
+    users {
+        int id PK
+        varchar full_name
+        varchar email UK "staff sign-in"
+        varchar phone UK "learner sign-in, +2507XXXXXXXX"
+        varchar password_hash "scrypt, password or PIN"
+        varchar preferred_language
+        timestamp created_at
+    }
+    staff {
+        int id PK
+        int user_id FK, UK
+        varchar role "admin | creator | specialist"
+    }
+    specialist_topics {
+        int user_id PK, FK
+        int category_id PK, FK
+    }
+    categories {
+        int id PK
+        varchar name
+        varchar slug UK
+    }
+    content {
+        int id PK
+        int category_id FK
+        int creator_id FK
+        varchar title
+        text summary
+        text body
+        varchar audio_url
+        varchar image_url
+        varchar status "draft | review | approved | published | rejected"
+        int reviewed_by FK
+        text review_note
+        timestamp reviewed_at
+    }
+    quiz_questions {
+        int id PK
+        int content_id FK
+        text question
+        jsonb options
+        int answer_index
+        text explanation
+        int position
+    }
+    curricula {
+        int id PK
+        varchar slug UK
+        varchar title
+        varchar condition_name "set for diseases"
+        int category_id FK
+        text about
+        jsonb risk_factors
+        jsonb warning_signs
+        jsonb prevention
+    }
+    curriculum_lessons {
+        int curriculum_id PK, FK
+        int content_id PK, FK
+        int position
+    }
+    faqs {
+        int id PK
+        text question
+        text answer
+    }
+    progress {
+        int id PK
+        int user_id FK
+        int content_id FK
+        timestamp completed_at
+    }
+    quiz_attempts {
+        int id PK
+        int user_id FK
+        int content_id FK
+        int score
+        int total
+    }
+    reminders {
+        int id PK
+        int user_id FK
+        varchar title
+        time reminder_time
+    }
+    questions {
+        bigint id PK
+        int user_id FK
+        varchar topic
+        text question
+        varchar status
+        text answer
+    }
+    issues {
+        int id PK
+        int user_id FK
+        varchar title
+        text description
+        varchar status
+    }

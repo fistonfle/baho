@@ -1,0 +1,40 @@
+flowchart LR
+    subgraph users[People]
+        learner["Learner<br/>phone browser, Kinyarwanda<br/>phone number + PIN"]
+        staff["Writer · Specialist · Admin<br/>laptop browser, English<br/>email + password"]
+    end
+
+    subgraph client["Web app (PWA) — React 18 + TypeScript, Vite"]
+        screens["Screens and components<br/>learner screens · staff portal (components/admin)"]
+        store["Redux Toolkit store<br/>store/appSlice.ts"]
+        logic["Device-side logic (lib/)<br/>recommendation ranking · streaks · phone checks"]
+        offline["Offline layer<br/>service worker cache · localStorage cache · report outbox"]
+        secure["Encrypted health profile<br/>IndexedDB + Web Crypto AES-GCM<br/>never sent to the server"]
+        apiClient["API client (services/api.ts)<br/>bearer token"]
+    end
+
+    subgraph server["VM: Docker stack 'baho' behind Caddy (HTTPS)"]
+        caddy["Caddy<br/>baho.filito.rw<br/>/api/* → API, rest → web"]
+        nginx["baho-frontend<br/>nginx serving the build"]
+        subgraph api["baho-backend — Node 20 + Express (/api/v1)"]
+            mw["Middleware<br/>authenticate (HMAC token) · requireRole"]
+            modules["Modules: auth · content · review · learning<br/>progress · questions · issues · reminders · faq"]
+            domain["Domain classes<br/>LessonWorkflow · PhoneNumber · LoginGuard"]
+            data["Data access: pg pool<br/>(in-memory store when the DB is down)"]
+        end
+        db[("baho-postgres<br/>PostgreSQL 16, 14 tables")]
+    end
+
+    ci["GitHub Actions<br/>tests → images (GHCR) → SSH deploy"]
+
+    learner --> screens
+    staff --> screens
+    screens --> store --> apiClient
+    screens --> logic
+    store --> offline
+    screens --> secure
+    apiClient -- "HTTPS JSON" --> caddy
+    caddy --> nginx
+    caddy --> mw --> modules --> domain
+    modules --> data --> db
+    ci -. "deploys" .-> server
