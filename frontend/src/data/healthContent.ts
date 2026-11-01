@@ -229,7 +229,7 @@ export const offlineLessons: Lesson[] = [
     summary: 'Menya umuvuduko w\'amaraso ukabije n\'uburyo bwo kuwirinda.',
     body: 'Umuvuduko w\'amaraso ni ingufu amaraso akoresha asunika imitsi. Iyo uri hejuru igihe kirekire, umutima ukora cyane kandi bishobora gutera stroke. Akenshi nta bimenyetso bigaragara, ni yo mpamvu ugomba kwipimisha. Gabanya umunyu, kora imyitozo kandi wirinde itabi.',
     duration: '02:30',
-    audioUrl: '/audio/blood-pressure.mp3',
+    audioUrl: '',
     imageUrl: '/images/bp-heart.jpg',
     quiz: []
   },
@@ -241,7 +241,7 @@ export const offlineLessons: Lesson[] = [
     summary: 'Ibimenyetso bya diyabete n\'uko wayirinda.',
     body: 'Diyabete ituma isukari mu maraso izamuka. Ibimenyetso birimo inyota nyinshi, kunyara kenshi no gucika intege. Kurya ibiryo bifite isukari nkeya, gukora imyitozo no kwipimisha bifasha kuyirinda.',
     duration: '02:10',
-    audioUrl: '/audio/diabetes.mp3',
+    audioUrl: '',
     imageUrl: '/images/glucose.jpg',
     quiz: []
   },
@@ -253,7 +253,7 @@ export const offlineLessons: Lesson[] = [
     summary: 'Uko wategura isahani ifite ubuzima bwiza.',
     body: 'Isahani nziza igira imboga nyinshi, ibinyampeke byuzuye n\'ibiryo byubaka umubiri nk\'ibishyimbo. Gabanya umunyu, isukari n\'amavuta menshi. Rya imbuto aho kurya ibiryo biryohereye.',
     duration: '02:00',
-    audioUrl: '/audio/nutrition.mp3',
+    audioUrl: '',
     imageUrl: '/images/plate.jpg',
     quiz: []
   }

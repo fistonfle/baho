@@ -7,3 +7,6 @@ npm-debug.log*
 *.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+
+# Lesson recordings uploaded in development
+backend/uploads/

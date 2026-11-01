@@ -2,11 +2,13 @@
 import {
   emptyContentForm,
   setEditingContentId,
+  setFeedbackMessage,
   updateContentForm
 } from '../../store/appSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { StatusBadge } from '../ui';
 import { imageChoices } from './shared';
+import { AudioUpload } from './AudioUpload';
 import { QuizEditor } from './QuizEditor';
 
 export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator: boolean; needsSpecialist: (categoryId: number) => boolean; onSave: (status: string) => void }) {
@@ -53,11 +55,11 @@ export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator:
             <textarea id="lesson-body" className="input" value={contentForm.body} onChange={(event) => dispatch(updateContentForm({ body: event.target.value }))} required />
             <span className="form-hint">Write the lesson in Kinyarwanda, with short sentences and simple words.</span>
           </div>
-          <div className="form-group span-2">
-            <label htmlFor="lesson-audio">Audio (MP3, optional)</label>
-            <input id="lesson-audio" className="input" value={contentForm.audioUrl} onChange={(event) => dispatch(updateContentForm({ audioUrl: event.target.value }))} placeholder="/audio/lesson.mp3" />
-            <span className="form-hint">Without a recording, Baho reads the lesson aloud with the device's voice.</span>
-          </div>
+          <AudioUpload
+            value={contentForm.audioUrl}
+            onChange={(audioUrl) => dispatch(updateContentForm({ audioUrl }))}
+            onError={(message) => dispatch(setFeedbackMessage(message))}
+          />
           <div className="form-group span-2">
             <span className="form-label">Lesson image</span>
             <div className="image-picker" role="radiogroup" aria-label="Lesson image">

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-// One player for every lesson (FR02). It plays the recorded Kinyarwanda MP3
-// when there is one, and falls back to the browser's speech voice when the
-// file is missing, so every lesson can still be listened to.
+import { mediaUrl } from '../services/api';
 
-type Source = 'file' | 'voice';
+// Plays a lesson recorded by a person (FR02). Lessons without a recording, or
+// whose file cannot be loaded, show no player at all: Baho does not read text
+// aloud with a computer voice.
 
 const formatTime = (seconds: number) => {
   if (!Number.isFinite(seconds)) return '0:00';
@@ -12,106 +12,50 @@ const formatTime = (seconds: number) => {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 };
 
-// There is rarely a Kinyarwanda voice installed; Swahili sounds closest.
-const pickVoice = () => {
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find((voice) => voice.lang.toLowerCase().startsWith('rw'))
-    || voices.find((voice) => voice.lang.toLowerCase().startsWith('sw'))
-    || null;
-};
-
-export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audioUrl?: string; onFinished?: () => void }) {
+export function AudioPlayer({ audioUrl, onFinished }: { audioUrl?: string; onFinished?: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const voiceOffset = useRef(0);
-  // Cancelling speech can fire 'end' on the old utterance, so only react to the current one.
-  const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
-  const [source, setSource] = useState<Source>(audioUrl ? 'file' : 'voice');
+  const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
   const [saved, setSaved] = useState(false);
-  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   // Reset whenever a different lesson is opened.
   useEffect(() => {
-    setSource(audioUrl ? 'file' : 'voice');
+    setFailed(false);
     setPlaying(false);
     setProgress(0);
     setElapsed(0);
     setDuration(0);
     setSaved(false);
-    voiceOffset.current = 0;
-    return () => {
-      currentUtterance.current = null;
-      if (canSpeak) window.speechSynthesis.cancel();
-    };
-  }, [audioUrl, text, canSpeak]);
+  }, [audioUrl]);
 
-  const speakFrom = (startIndex: number) => {
-    if (!canSpeak) return;
-    currentUtterance.current = null;
-    window.speechSynthesis.cancel();
-    voiceOffset.current = startIndex;
-    const utterance = new SpeechSynthesisUtterance(text.slice(startIndex));
-    currentUtterance.current = utterance;
-    utterance.lang = 'rw-RW';
-    utterance.rate = rate * 0.9;
-    const voice = pickVoice();
-    if (voice) utterance.voice = voice;
-    utterance.onboundary = (event) => {
-      if (currentUtterance.current === utterance) setProgress(((voiceOffset.current + event.charIndex) / text.length) * 100);
-    };
-    utterance.onend = () => {
-      if (currentUtterance.current !== utterance) return;
-      currentUtterance.current = null;
-      setPlaying(false);
-      setProgress(100);
-      voiceOffset.current = 0;
-      onFinished?.();
-    };
-    window.speechSynthesis.speak(utterance);
-    setPlaying(true);
-  };
+  if (!audioUrl || failed) return null;
 
   const play = () => {
-    if (source === 'file' && audioRef.current) {
-      audioRef.current.playbackRate = rate;
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {
-        setSource('voice');
-        speakFrom(0);
-      });
-      return;
-    }
-    const resumeAt = progress >= 100 ? 0 : Math.floor((progress / 100) * text.length);
-    speakFrom(text.lastIndexOf(' ', resumeAt) + 1);
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = rate;
+    audio.play().then(() => setPlaying(true)).catch(() => setFailed(true));
   };
 
   const pause = () => {
     audioRef.current?.pause();
-    currentUtterance.current = null;
-    if (canSpeak) window.speechSynthesis.cancel();
     setPlaying(false);
   };
 
   const restart = () => {
-    if (source === 'file' && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      play();
-      return;
-    }
-    setProgress(0);
-    speakFrom(0);
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    play();
   };
 
   const seek = (value: number) => {
     setProgress(value);
-    if (source === 'file' && audioRef.current && Number.isFinite(audioRef.current.duration)) {
-      audioRef.current.currentTime = (value / 100) * audioRef.current.duration;
-      return;
-    }
-    if (playing) speakFrom(text.lastIndexOf(' ', Math.floor((value / 100) * text.length)) + 1);
+    const audio = audioRef.current;
+    if (audio && Number.isFinite(audio.duration)) audio.currentTime = (value / 100) * audio.duration;
   };
 
   const changeRate = () => {
@@ -120,34 +64,32 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
+  // The service worker keeps every recording it serves, so fetching the whole
+  // file once is enough to have it offline.
   const saveForOffline = async () => {
-    if (!audioUrl || !('caches' in window)) return;
     try {
-      const cache = await caches.open('baho-v2-audio');
-      await cache.add(audioUrl);
-      setSaved(true);
+      const response = await fetch(mediaUrl(audioUrl));
+      if (response.ok) setSaved(true);
     } catch {
-      setSource('voice');
+      setSaved(false);
     }
   };
 
   return (
     <div className="audio-player">
-      {audioUrl && (
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          preload="metadata"
-          onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-          onTimeUpdate={(event) => {
-            const audio = event.currentTarget;
-            setElapsed(audio.currentTime);
-            if (audio.duration > 0) setProgress((audio.currentTime / audio.duration) * 100);
-          }}
-          onEnded={() => { setPlaying(false); onFinished?.(); }}
-          onError={() => setSource('voice')}
-        />
-      )}
+      <audio
+        ref={audioRef}
+        src={mediaUrl(audioUrl)}
+        preload="metadata"
+        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+        onTimeUpdate={(event) => {
+          const audio = event.currentTarget;
+          setElapsed(audio.currentTime);
+          if (audio.duration > 0) setProgress((audio.currentTime / audio.duration) * 100);
+        }}
+        onEnded={() => { setPlaying(false); onFinished?.(); }}
+        onError={() => setFailed(true)}
+      />
       <button className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
         {playing
           ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor" /></svg>
@@ -156,7 +98,7 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
       <div className="audio-main">
         <div className="audio-meta">
           <strong>{playing ? 'Biri gusomwa' : progress >= 100 ? 'Warangije kumva' : 'Umva isomo mu ijwi'}</strong>
-          <span>{source === 'file' ? `${formatTime(elapsed)} / ${formatTime(duration)}` : 'Ijwi ryashyizweho'}</span>
+          <span>{formatTime(elapsed)} / {formatTime(duration)}</span>
         </div>
         <input
           className="audio-seek"
@@ -170,11 +112,8 @@ export function AudioPlayer({ text, audioUrl, onFinished }: { text: string; audi
         <div className="audio-actions">
           <button className="btn btn-secondary btn-sm" onClick={restart}>Subiramo</button>
           <button className="btn btn-secondary btn-sm" onClick={changeRate} aria-label="Umuvuduko w'ijwi">Umuvuduko: {rate}×</button>
-          {source === 'file' && 'caches' in window && (
-            <button className="btn btn-secondary btn-sm" onClick={() => void saveForOffline()} disabled={saved}>{saved ? 'Ryabitswe kuri telefoni' : 'Bika ku gikoresho'}</button>
-          )}
+          <button className="btn btn-secondary btn-sm" onClick={() => void saveForOffline()} disabled={saved}>{saved ? 'Ryabitswe kuri telefoni' : 'Bika ku gikoresho'}</button>
         </div>
-        {source === 'voice' && !canSpeak && <p className="small muted">Uru rubuga ntirushobora gusoma mu ijwi.</p>}
       </div>
     </div>
   );

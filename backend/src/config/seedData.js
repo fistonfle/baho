@@ -1,7 +1,6 @@
 // Demo content shared by the PostgreSQL seed and the in-memory demo store.
-// Audio files are optional: record them (e.g. with Audacity, MP3 64 kbps) and
-// place them in frontend/public/audio/ using the file names below. Until then
-// the app reads each lesson aloud with the browser's speech voice.
+// Lessons have no audio until a person records them: staff upload the recording
+// in the lesson editor, and lessons without one show no audio player.
 
 export const seedCategories = [
   { id: 1, name: 'Imirire', slug: 'nutrition' },
@@ -18,7 +17,7 @@ export const seedLessons = [
     title: 'Umuvuduko w\'amaraso ni iki?',
     summary: 'Menya umuvuduko w\'amaraso ukabije n\'uburyo bwo kuwirinda.',
     body: 'Umuvuduko w\'amaraso ni ingufu amaraso akoresha asunika imitsi. Iyo uri hejuru igihe kirekire, umutima ukora cyane kandi bishobora gutera stroke. Akenshi nta bimenyetso bigaragara, ni yo mpamvu ugomba kwipimisha. Gabanya umunyu, kora imyitozo kandi wirinde itabi.',
-    audioUrl: '/audio/blood-pressure.mp3',
+    audioUrl: '',
     imageUrl: '/images/bp-heart.jpg',
     quiz: [
       { question: 'Umuvuduko w\'amaraso ukabije akenshi ugaragaza ibimenyetso?', options: ['Buri gihe', 'Akenshi nta bimenyetso'], answerIndex: 1, explanation: 'Akenshi nta bimenyetso, ni yo mpamvu kwipimisha ari ngombwa.' },
@@ -30,7 +29,7 @@ export const seedLessons = [
     title: 'Diyabete n\'ubuzima',
     summary: 'Ibimenyetso bya diyabete n\'uko wayirinda.',
     body: 'Diyabete ituma isukari mu maraso izamuka. Ibimenyetso birimo inyota nyinshi, kunyara kenshi no gucika intege. Kurya ibiryo bifite isukari nkeya, gukora imyitozo no kwipimisha bifasha kuyirinda.',
-    audioUrl: '/audio/diabetes.mp3',
+    audioUrl: '',
     imageUrl: '/images/glucose.jpg',
     quiz: [
       { question: 'Ni ikihe kimenyetso cya diyabete?', options: ['Inyota nyinshi no kunyara kenshi', 'Kwitsamura', 'Kubabara amenyo'], answerIndex: 0, explanation: 'Inyota nyinshi no kunyara kenshi ni ibimenyetso bisanzwe.' },
@@ -42,7 +41,7 @@ export const seedLessons = [
     title: 'Imirire myiza',
     summary: 'Uko wategura isahani ifite ubuzima bwiza.',
     body: 'Isahani nziza igira imboga nyinshi, ibinyampeke byuzuye n\'ibiryo byubaka umubiri nk\'ibishyimbo. Gabanya umunyu, isukari n\'amavuta menshi. Rya imbuto aho kurya ibiryo biryohereye.',
-    audioUrl: '/audio/nutrition.mp3',
+    audioUrl: '',
     imageUrl: '/images/plate.jpg',
     quiz: [
       { question: 'Isahani nziza igomba kugira iki kinshi?', options: ['Imboga', 'Isukari', 'Amavuta'], answerIndex: 0, explanation: 'Imboga zigomba kuba nibura igice cy\'isahani.' },
@@ -54,7 +53,7 @@ export const seedLessons = [
     title: 'Umunyu muke, umutima muzima',
     summary: 'Impamvu umunyu mwinshi wangiza n\'uko wawugabanya.',
     body: 'Umunyu mwinshi wongera umuvuduko w\'amaraso. Umuntu mukuru ntagomba kurenza ikiyiko gito kimwe cy\'umunyu ku munsi. Teka ushyiramo umunyu muke, wirinde ibiryo bitunganyirijwe mu nganda, kandi ukoreshe ibirungo nk\'igitunguru na tungurusumu.',
-    audioUrl: '/audio/salt.mp3',
+    audioUrl: '',
     imageUrl: '/images/salt.jpg',
     quiz: [
       { question: 'Umuntu mukuru ntagomba kurenza umunyu ungana iki ku munsi?', options: ['Ikiyiko gito kimwe', 'Ibiyiko bitanu', 'Igikombe kimwe'], answerIndex: 0, explanation: 'Ikiyiko gito kimwe (garama 5) ku munsi ni cyo kigero.' },
@@ -66,7 +65,7 @@ export const seedLessons = [
     title: 'Ibinyobwa biryohereye',
     summary: 'Soda n\'imitobe irimo isukari byongera ibyago bya diyabete.',
     body: 'Soda n\'imitobe yongewemo isukari bifite isukari nyinshi. Kubinywa kenshi byongera ibiro n\'ibyago bya diyabete. Nywa amazi meza cyangwa amata adafite isukari. Kurya urubuto rwose biruta kunywa umutobe.',
-    audioUrl: '/audio/sugary-drinks.mp3',
+    audioUrl: '',
     imageUrl: '/images/water.jpg',
     quiz: [
       { question: 'Ni ikihe kinyobwa cyiza ku buzima?', options: ['Soda', 'Amazi meza', 'Umutobe wongewemo isukari'], answerIndex: 1, explanation: 'Amazi meza nta sukari agira.' },
@@ -78,7 +77,7 @@ export const seedLessons = [
     title: 'Kwipimisha isukari mu maraso',
     summary: 'Igihe n\'aho wakwipimishiriza diyabete.',
     body: 'Kwipimisha isukari ni bwo buryo bwonyine bwo kumenya niba ufite diyabete. Ku kigo nderabuzima bakoresha agatonyanga gato k\'amaraso, bigatwara iminota mike. Niba urengeje imyaka 40 cyangwa ufite abo mu muryango barwaye diyabete, ipimishe buri mwaka.',
-    audioUrl: '/audio/sugar-test.mp3',
+    audioUrl: '',
     imageUrl: '/images/glucose.jpg',
     quiz: [
       { question: 'Ni ubuhe buryo bwizewe bwo kumenya ko ufite diyabete?', options: ['Kwipimisha isukari mu maraso', 'Kureba ibiro', 'Kubaza umuturanyi'], answerIndex: 0, explanation: 'Ikizamini cy\'isukari ni cyo cyizewe.' },
@@ -90,7 +89,7 @@ export const seedLessons = [
     title: 'Rinda umutima wawe',
     summary: 'Intambwe eshanu zoroshye zirinda umutima.',
     body: 'Umutima ukora ubudahwema. Kugira ngo uwurinde: ntunywe itabi, kora imyitozo iminota 30 ku munsi, rya imboga n\'imbuto, gabanya amavuta n\'umunyu, kandi wipimishe umuvuduko w\'amaraso. Kubabara mu gituza cyangwa guhumeka nabi bitunguranye bisaba kujya kwa muganga ako kanya.',
-    audioUrl: '/audio/heart.mp3',
+    audioUrl: '',
     imageUrl: '/images/heart.jpg',
     quiz: [
       { question: 'Ni iki cyangiza umutima?', options: ['Itabi', 'Imboga', 'Gusinzira neza'], answerIndex: 0, explanation: 'Itabi ryangiza imitsi y\'amaraso n\'umutima.' },
@@ -102,7 +101,7 @@ export const seedLessons = [
     title: 'Ibimenyetso bya stroke',
     summary: 'Menya ibimenyetso kandi ukore vuba.',
     body: 'Stroke ibaho iyo amaraso atagera mu gice cy\'ubwonko. Ibimenyetso ni isura yihengamye, ukuboko kunanirwa no kuvuga nabi. Iyo ubibonye, jyana umurwayi kwa muganga vuba cyangwa uhamagare 912. Buri munota ni ingenzi.',
-    audioUrl: '/audio/stroke.mp3',
+    audioUrl: '',
     imageUrl: '/images/stroke.jpg',
     quiz: [
       { question: 'Ni ikihe kimenyetso cya stroke?', options: ['Isura yihengamye no kuvuga nabi', 'Inkorora', 'Kuribwa mu nda'], answerIndex: 0, explanation: 'Isura, ukuboko n\'imvugo ni byo bimenyetso by\'ingenzi.' },
@@ -114,7 +113,7 @@ export const seedLessons = [
     title: 'Kanseri: kuyimenya kare',
     summary: 'Kwipimisha no kwikingiza birokora ubuzima.',
     body: 'Kanseri nyinshi zishobora kuvurwa iyo zimenyekanye kare. Abagore bagirwa inama yo kwipimisha kanseri y\'inkondo y\'umura n\'iy\'ibere. Ikingize HPV na hepatite B, kandi wirinde itabi n\'inzoga. Niba ubona ikibyimba, kunanuka nta mpamvu cyangwa kuva amaraso bidasanzwe, jya kwa muganga.',
-    audioUrl: '/audio/cancer.mp3',
+    audioUrl: '',
     imageUrl: '/images/screening.jpg',
     quiz: [
       { question: 'Kanseri ivurwa neza iyo:', options: ['Imenyekanye kare', 'Imaze igihe kirekire'], answerIndex: 0, explanation: 'Kumenya kare bitanga amahirwe yo gukira.' },
@@ -126,7 +125,7 @@ export const seedLessons = [
     title: 'Imyitozo ya buri munsi',
     summary: 'Iminota 30 ku munsi irinda indwara nyinshi.',
     body: 'Imyitozo ngororamubiri igabanya ibyago bya diyabete, umuvuduko w\'amaraso n\'indwara z\'umutima. Gerageza iminota 30 ku munsi, iminsi 5 mu cyumweru. Kugenda n\'amaguru, guhinga, kubyina no kuzamuka amadarajya byose ni imyitozo.',
-    audioUrl: '/audio/exercise.mp3',
+    audioUrl: '',
     imageUrl: '/images/walking.jpg',
     quiz: [
       { question: 'Ni iminota ingahe y\'imyitozo igirwa inama ku munsi?', options: ['30', '5', '120'], answerIndex: 0, explanation: 'Iminota 30, iminsi 5 mu cyumweru.' },
@@ -138,7 +137,7 @@ export const seedLessons = [
     title: 'Gupima umuvuduko w\'amaraso',
     summary: 'Uko bapima n\'icyo imibare isobanura.',
     body: 'Umuvuduko w\'amaraso upimwa n\'akuma gashyirwa ku kuboko. Haboneka imibare ibiri, urugero 120/80. Umubare wa mbere ugaragaza ingufu iyo umutima utera, uwa kabiri iyo uruhuka. Iyo imibare ihora iri ku 140/90 cyangwa hejuru, ni ngombwa kubonana na muganga. Ipimishe ku kigo nderabuzima cyangwa ku mujyanama w\'ubuzima.',
-    audioUrl: '/audio/bp-check.mp3',
+    audioUrl: '',
     imageUrl: '/images/bp-check.jpg',
     quiz: [
       { question: 'Umuvuduko w\'amaraso ugaragazwa n\'imibare ingahe?', options: ['Umwe', 'Ibiri, urugero 120/80', 'Itatu'], answerIndex: 1, explanation: 'Imibare ibiri: iyo umutima utera n\'iyo uruhuka.' },
@@ -150,7 +149,7 @@ export const seedLessons = [
     title: 'Gufata imiti neza',
     summary: 'Impamvu imiti ifatwa buri munsi.',
     body: 'Niba muganga yaraguhaye imiti y\'umuvuduko w\'amaraso cyangwa diyabete, yifate buri munsi ku isaha imwe, kabone n\'iyo wumva umeze neza. Ntuhagarike imiti utabajije muganga. Shyiraho icyibutsa muri Baho kugira ngo utibagirwa. Jyana imiti yawe igihe ugiye kwa muganga.',
-    audioUrl: '/audio/medicine.mp3',
+    audioUrl: '',
     imageUrl: '/images/medicine.jpg',
     quiz: [
       { question: 'Ufata imiti ariko wumva umeze neza. Ukora iki?', options: ['Ukomeza kuyifata nk\'uko muganga yabivuze', 'Uyihagarika', 'Uyifata rimwe mu cyumweru'], answerIndex: 0, explanation: 'Imiti ikora neza iyo ifashwe buri munsi.' },
@@ -162,7 +161,7 @@ export const seedLessons = [
     title: 'Kwita ku birenge ku barwayi ba diyabete',
     summary: 'Igisebe gito gishobora kuba ikibazo gikomeye.',
     body: 'Diyabete ishobora kwangiza imitsi yo mu birenge, ugatinda kumva igisebe. Reba ibirenge byawe buri munsi, ubyoze kandi ubyumutse neza. Ambara inkweto zikwiriye, ntugende utambaye inkweto. Igisebe kidakira vuba kigomba kwerekwa muganga.',
-    audioUrl: '/audio/foot-care.mp3',
+    audioUrl: '',
     imageUrl: '/images/foot-care.jpg',
     quiz: [
       { question: 'Umurwayi wa diyabete akwiye kureba ibirenge bye ryari?', options: ['Buri munsi', 'Rimwe mu mwaka'], answerIndex: 0, explanation: 'Kureba buri munsi bifasha kubona igisebe kare.' },
@@ -174,7 +173,7 @@ export const seedLessons = [
     title: 'Itabi n\'inzoga',
     summary: 'Uko byongera ibyago bya kanseri n\'indwara z\'umutima.',
     body: 'Itabi ritera kanseri y\'ibihaha, iy\'umunwa n\'izindi, kandi ryangiza umutima. Inzoga nyinshi zongera ibyago bya kanseri y\'umwijima n\'iy\'ibere. Kureka itabi bigira akamaro ku myaka yose. Saba ubufasha ku kigo nderabuzima niba ushaka kurireka.',
-    audioUrl: '/audio/tobacco.mp3',
+    audioUrl: '',
     imageUrl: '/images/no-smoking.jpg',
     quiz: [
       { question: 'Itabi ritera:', options: ['Kanseri n\'indwara z\'umutima', 'Amagufa akomeye'], answerIndex: 0, explanation: 'Itabi ryangiza ibihaha, umutima n\'imitsi.' },

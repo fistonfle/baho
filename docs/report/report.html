@@ -51,7 +51,7 @@
 <table>
   <tr><th style="width:21%">Planned feature</th><th style="width:30%">Intended purpose</th><th style="width:10%">Status</th><th>Evidence / justification of changes</th></tr>
   <tr><td>FR01 Kinyarwanda content</td><td>Reach people who do not read English or French</td><td class="done">Completed</td><td>All learner text in Kinyarwanda, reviewed through <code>docs/translations</code>; staff portal in English by request (easier to maintain and translate)</td></tr>
-  <tr><td>FR02 Audio playback</td><td>Learners with low literacy can listen</td><td class="done">Completed</td><td><code>AudioPlayer.tsx</code>: play, pause, replay, seek, speed; plays recorded MP3s, otherwise the device voice reads the lesson (screenshot 05)</td></tr>
+  <tr><td>FR02 Audio playback</td><td>Learners with low literacy can listen</td><td class="partial">Partial</td><td>Staff upload a person's recording per lesson (<code>AudioUpload.tsx</code>, <code>MediaStore</code>); play, pause, replay, seek, speed, offline. No computer voice by design, so lessons without a recording show no player; recordings still to be made</td></tr>
   <tr><td>FR03 NCD module</td><td>Awareness of hypertension, diabetes, heart disease</td><td class="done">Completed</td><td><code>NcdScreen.tsx</code>; cancer added; admins add new diseases (screenshots 08, 19)</td></tr>
   <tr><td>FR04 Reminders</td><td>Habits: water, walking, medicine, check-ups</td><td class="partial">Partial</td><td>Reminders saved per account with browser notifications while the app is open; server Web Push not built (needs a push service and keys)</td></tr>
   <tr><td>FR05 Illustrated exercises</td><td>Safe physical activity at home</td><td class="done">Completed</td><td><code>ExerciseScreen.tsx</code>: three levels, steps, illustration, audio, safety note (screenshot 10)</td></tr>
@@ -67,7 +67,7 @@
   <tr><td>FR15 Responsive layout</td><td>Phones, tablets, laptops from one codebase</td><td class="done">Completed</td><td>320–1920 px with no horizontal scroll; tab bar on phones (§4, screenshots 13–15)</td></tr>
   <tr><td>FR16 Staff roles</td><td>Only trusted professionals write content</td><td class="done">Completed (changed)</td><td>Admin creates writer, specialist (= reviewer) and admin accounts; specialists assigned to diseases; accounts created directly rather than by email invitation</td></tr>
   <tr><td>FR17 Review before publishing</td><td>Medical accuracy</td><td class="done">Completed</td><td><code>LessonWorkflow</code>: specialist approval required (409 otherwise); no one reviews their own lesson (screenshot 20)</td></tr>
-  <tr><td>FR18 Offline FAQ with audio</td><td>Self-help without a connection</td><td class="done">Completed</td><td>Searchable FAQ, audio answers, cached (screenshot 12)</td></tr>
+  <tr><td>FR18 Offline FAQ with audio</td><td>Self-help without a connection</td><td class="partial">Partial</td><td>Searchable FAQ in Kinyarwanda, cached offline (screenshot 12); audio answers need human recordings</td></tr>
   <tr><td>FR19 Issue reports, queued offline</td><td>Feedback from the field</td><td class="done">Completed</td><td>Outbox sends queued reports when online; admin updates status</td></tr>
   <tr><td>NFR01, NFR03 Speed, size</td><td>≤ 3 s on mid-range Android; shell ≤ 5 MB</td><td class="done">Met</td><td>1.35 s largest paint (mid-range), 2.71 s (low-end); 116 KB first visit</td></tr>
   <tr><td>NFR04, NFR05 Security</td><td>HTTPS, hashed PINs, encrypted local data</td><td class="partial">Mostly met</td><td>HTTPS; scrypt (salted) instead of bcrypt; AES-GCM health profile; token in localStorage rather than an HttpOnly cookie</td></tr>
@@ -98,8 +98,8 @@
 <p>Six approaches were used (details: <code>docs/testing.md</code>). Each found something that was then improved.</p>
 <table>
   <tr><th style="width:17%">Approach</th><th style="width:30%">Why and how</th><th style="width:26%">Results</th><th>Improvements made</th></tr>
-  <tr><td>Unit</td><td>Rules must hold in every case; Node test runner and Vitest</td><td>40 tests pass (workflow, phone/PIN, lockout, ranking, risk tags, streaks, store)</td><td>Streak split into a pure function; lockout made a class with an injectable clock</td></tr>
-  <tr><td>Integration (API)</td><td>Real Express app called over HTTP</td><td>17 tests pass: roles, phone sign-up, review/publish, quizzes, progress</td><td>Covers the whole specialist workflow end to end, so later changes cannot break it unnoticed</td></tr>
+  <tr><td>Unit</td><td>Rules must hold in every case; Node test runner and Vitest</td><td>41 tests pass (workflow, phone/PIN, lockout, audio format, ranking, risk tags, streaks, store)</td><td>Streak split into a pure function; lockout made a class with an injectable clock</td></tr>
+  <tr><td>Integration (API)</td><td>Real Express app called over HTTP</td><td>18 tests pass: roles, phone sign-up, review/publish, audio upload, quizzes, progress</td><td>Covers the whole specialist workflow end to end, so later changes cannot break it unnoticed</td></tr>
   <tr><td>Different inputs</td><td>Valid, invalid and edge values (phone formats, PIN length, 5 wrong PINs, early publish)</td><td>Correct 400 / 403 / 409 / 429 responses with readable messages</td><td>Client-side checks mirror the server so mistakes show before sending</td></tr>
   <tr><td>Performance</td><td>Lighthouse on the live site: mid-range phone, low-end phone (6× CPU, 3G), desktop</td><td>Performance 100 / 92 / 100; accessibility, best practices, SEO 100</td><td>Fixed layout shift (0.109 → 0), heading order, missing robots.txt</td></tr>
   <tr><td>Compatibility and offline</td><td>Chrome 156 at 6 widths, Safari iOS 26.5 on two iPhones, offline with cache cleared</td><td>No overflow 320–1920 px; renders in Safari; first text in 2.9 s at 400 kbit/s</td><td>Found the app blank offline after a first visit; the service worker now caches the built files at install</td></tr>
@@ -134,7 +134,8 @@
   <li><strong>Review state machine:</strong> <code>resolve(requested, current)</code> holds a publish request in review until approval.</li>
   <li><strong>Phone normalisation:</strong> one regular expression accepts any written form and yields <code>+2507XXXXXXXX</code>.</li>
   <li><strong>PIN lockout:</strong> counter per number with a time window, reset on success.</li>
-  <li><strong>Offline caching:</strong> network-first for pages, cache-first for built files and audio, install-time precaching read from <code>index.html</code>; an outbox replays reports when online.</li>
+  <li><strong>Audio:</strong> uploads are recognised by file signature (not by name), stored under random names, and served with byte ranges; the service worker caches each recording whole and answers range requests with the matching slice, so seeking works offline.</li>
+  <li><strong>Offline caching:</strong> network-first for pages, cache-first for built files, install-time precaching read from <code>index.html</code>; an outbox replays reports when online.</li>
   <li><strong>Translation tooling:</strong> TypeScript AST parsing extracts every learner string with its position, de-duplicates it, and writes corrections back safely.</li>
 </ul>
 </div>
@@ -144,7 +145,7 @@
 <ul>
   <li>Usability evaluation with 30 participants (SUS ≥ 70, task completion ≥ 80%) is the next phase (SO3).</li>
   <li>Server Web Push for reminders, refresh tokens in an HttpOnly cookie, an audit-log table and SMS verification of phone numbers.</li>
-  <li>Recorded Kinyarwanda audio for each lesson (the device voice is used until then) and a clinical review of all lesson content.</li>
+  <li>Recording each lesson in Kinyarwanda (the upload is built; recordings still to be made) and a clinical review of all lesson content.</li>
 </ul>
 
 </body>

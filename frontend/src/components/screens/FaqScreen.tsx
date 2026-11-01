@@ -4,14 +4,6 @@ import { photoCredits } from '../../data/photoCredits';
 import type { QuestionItem } from '../../types';
 import { Empty, PageHeader, StatusBadge } from '../ui';
 
-const speak = (text: string) => {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'rw-RW';
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
-};
 
 const statusLabel = (status: string) => (status === 'Answered' ? 'Yasubijwe' : 'Itegereje');
 
@@ -82,7 +74,6 @@ export function FaqScreen({
                 {open && (
                   <div className="faq-answer">
                     <p>{item.answer}</p>
-                    <button className="btn btn-secondary btn-sm" onClick={() => speak(`${item.question} ${item.answer}`)}>Umva igisubizo</button>
                   </div>
                 )}
               </div>

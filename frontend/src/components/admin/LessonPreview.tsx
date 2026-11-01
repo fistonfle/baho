@@ -1,13 +1,15 @@
 // Full lesson as a reviewer sees it, including the quiz answers.
+import { AudioPlayer } from '../AudioPlayer';
 import {
   type AdminContentItem
 } from '../../store/appSlice';
 
-export function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' | 'summary' | 'body' | 'quiz'> }) {
+export function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' | 'summary' | 'body' | 'quiz' | 'audioUrl'> }) {
   return (
     <div className="preview-box stack-sm">
       {lesson.imageUrl && <img src={lesson.imageUrl} alt="" />}
       {lesson.summary && <p><strong>{lesson.summary}</strong></p>}
+      <AudioPlayer audioUrl={lesson.audioUrl} />
       <p style={{ whiteSpace: 'pre-line' }}>{lesson.body}</p>
       {lesson.quiz && lesson.quiz.length > 0 && (
         <div>

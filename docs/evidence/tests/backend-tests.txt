@@ -6,119 +6,129 @@ TAP version 13
 # Subtest: GET /api/v1/health responds successfully
 ok 1 - GET /api/v1/health responds successfully
   ---
-  duration_ms: 11.540041
+  duration_ms: 11.039541
   ...
 # Subtest: Public catalogue covers all six NCD education categories
 ok 2 - Public catalogue covers all six NCD education categories
   ---
-  duration_ms: 7.608375
+  duration_ms: 7.382291
   ...
 # Subtest: Configured admin seed creates the first protected administrator once
 ok 3 - Configured admin seed creates the first protected administrator once
   ---
-  duration_ms: 35.4285
+  duration_ms: 33.095584
   ...
 # Subtest: Admin routes reject anonymous users and learner role escalation
 ok 4 - Admin routes reject anonymous users and learner role escalation
   ---
-  duration_ms: 52.003875
+  duration_ms: 48.867334
   ...
 # Subtest: Registered users can log in and duplicate registrations are rejected
 ok 5 - Registered users can log in and duplicate registrations are rejected
   ---
-  duration_ms: 50.309125
+  duration_ms: 48.00275
   ...
 # Subtest: Phone sign-up checks the number and PIN, and wrong PINs lock the number
 ok 6 - Phone sign-up checks the number and PIN, and wrong PINs lock the number
   ---
-  duration_ms: 171.990125
+  duration_ms: 168.47975
   ...
 # Subtest: Admin can create a creator who can submit content for review
 ok 7 - Admin can create a creator who can submit content for review
   ---
-  duration_ms: 51.3905
+  duration_ms: 49.257583
   ...
 # Subtest: Admin can create another administrator, while creators can only view and edit their own unpublished work
 ok 8 - Admin can create another administrator, while creators can only view and edit their own unpublished work
   ---
-  duration_ms: 98.661416
+  duration_ms: 94.720542
   ...
 # Subtest: Draft/review content stays private until admin publishes it
 ok 9 - Draft/review content stays private until admin publishes it
   ---
-  duration_ms: 2.679625
+  duration_ms: 2.617083
   ...
 # Subtest: Learner questions are authenticated and private to their owner
 ok 10 - Learner questions are authenticated and private to their owner
   ---
-  duration_ms: 50.839792
+  duration_ms: 49.9605
   ...
 # Subtest: Admin can create, update and delete FAQs and review issues
 ok 11 - Admin can create, update and delete FAQs and review issues
   ---
-  duration_ms: 2.954
+  duration_ms: 2.73525
   ...
 # Subtest: Authenticated reminder and progress endpoints validate and persist records
 ok 12 - Authenticated reminder and progress endpoints validate and persist records
   ---
-  duration_ms: 1.838041
+  duration_ms: 1.741042
   ...
 # Subtest: Learning paths list ordered published lessons for each condition
 ok 13 - Learning paths list ordered published lessons for each condition
   ---
-  duration_ms: 1.563292
+  duration_ms: 1.29175
   ...
 # Subtest: Quiz attempts are graded on the server and summarised in progress
 ok 14 - Quiz attempts are graded on the server and summarised in progress
   ---
-  duration_ms: 3.066833
+  duration_ms: 3.058375
   ...
 # Subtest: Staff can attach a validated quiz, image and learning path to a lesson
 ok 15 - Staff can attach a validated quiz, image and learning path to a lesson
   ---
-  duration_ms: 3.225875
+  duration_ms: 2.361041
   ...
 # Subtest: Admin adds a new disease and a creator writes a lesson, quiz and image for it
 ok 16 - Admin adds a new disease and a creator writes a lesson, quiz and image for it
   ---
-  duration_ms: 5.176584
+  duration_ms: 4.803875
   ...
 # Subtest: A specialist must approve lessons in their topic before an admin can publish them
 ok 17 - A specialist must approve lessons in their topic before an admin can publish them
   ---
-  duration_ms: 103.11375
+  duration_ms: 99.576416
+  ...
+# Subtest: Staff upload a recorded lesson; only real audio is accepted and it is served back
+ok 18 - Staff upload a recorded lesson; only real audio is accepted and it is served back
+  ---
+  duration_ms: 5.3185
   ...
 # Subtest: LessonWorkflow holds a publish request in review until a specialist approves
-ok 18 - LessonWorkflow holds a publish request in review until a specialist approves
+ok 19 - LessonWorkflow holds a publish request in review until a specialist approves
   ---
-  duration_ms: 0.68275
+  duration_ms: 0.505542
   ...
 # Subtest: LessonWorkflow knows the valid statuses and what each role may set
-ok 19 - LessonWorkflow knows the valid statuses and what each role may set
+ok 20 - LessonWorkflow knows the valid statuses and what each role may set
   ---
-  duration_ms: 0.278666
+  duration_ms: 0.281833
   ...
 # Subtest: PhoneNumber accepts every common way of writing a Rwandan mobile number
-ok 20 - PhoneNumber accepts every common way of writing a Rwandan mobile number
+ok 21 - PhoneNumber accepts every common way of writing a Rwandan mobile number
   ---
-  duration_ms: 0.180667
+  duration_ms: 0.183042
   ...
 # Subtest: PhoneNumber accepts PINs of 4 to 6 digits only
-ok 21 - PhoneNumber accepts PINs of 4 to 6 digits only
+ok 22 - PhoneNumber accepts PINs of 4 to 6 digits only
   ---
-  duration_ms: 0.342875
+  duration_ms: 0.071709
   ...
 # Subtest: LoginGuard locks after repeated failures and unlocks when the time is up
-ok 22 - LoginGuard locks after repeated failures and unlocks when the time is up
+ok 23 - LoginGuard locks after repeated failures and unlocks when the time is up
   ---
-  duration_ms: 0.155041
+  duration_ms: 0.13775
   ...
-1..22
-# tests 22
+# Subtest: MediaStore recognises recordings by their first bytes
+ok 24 - MediaStore recognises recordings by their first bytes
+  ---
+  duration_ms: 0.345834
+  ...
+1..24
+# tests 24
 # suites 0
-# pass 22
+# pass 24
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 766.9355
+# duration_ms 745.6125

@@ -10,6 +10,7 @@ import { createReminder, deleteReminder, getReminders } from '../modules/reminde
 import { completeLesson, getProgress } from '../modules/progress/progress.controller.js';
 import { getCurricula, patchDisease, postDisease, submitQuizAttempt } from '../modules/learning/learning.controller.js';
 import { getReviewQueue, putSpecialistTopics, reviewLesson } from '../modules/review/review.controller.js';
+import { readAudioBody, serveMedia, uploadAudio } from '../modules/media/media.controller.js';
 
 const router = express.Router();
 
@@ -19,6 +20,8 @@ router.get('/content', getContent);
 router.get('/content/:id', getContentById);
 router.get('/faq', getFaqs);
 router.get('/curricula', getCurricula);
+router.use('/media', serveMedia);
+router.post('/admin/media/audio', authenticate, requireRole('admin', 'creator'), readAudioBody, uploadAudio);
 router.post('/quiz-attempts', authenticate, submitQuizAttempt);
 router.post('/admin/diseases', authenticate, requireRole('admin'), postDisease);
 router.patch('/admin/diseases/:id', authenticate, requireRole('admin'), patchDisease);

@@ -94,7 +94,6 @@ export function LibraryScreen({
               {selectedLesson.body.split('\n').filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             </div>
             <AudioPlayer
-              text={`${selectedLesson.title}. ${selectedLesson.body}`}
               audioUrl={selectedLesson.audioUrl}
               onFinished={hasQuiz ? undefined : () => markLessonComplete(selectedLesson.id)}
             />

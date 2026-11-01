@@ -3,7 +3,7 @@
 #
 #   project      baho
 #   containers   baho-postgres, baho-backend, baho-frontend
-#   pg volume    baho_baho_pg_data
+#   volumes      baho_baho_pg_data (database), baho_baho_media (recordings)
 #
 # Only the backend and frontend join the Caddy network; PostgreSQL stays private.
 name: baho
@@ -37,8 +37,11 @@ services:
       - "4000"
     env_file:
       - .env
+    volumes:
+      - baho_media:/app/uploads
     environment:
       PORT: 4000
+      MEDIA_DIR: /app/uploads
       DATABASE_URL: postgresql://${POSTGRES_USER:-baho}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-baho}
     depends_on:
       postgres:
@@ -59,6 +62,8 @@ services:
 
 volumes:
   baho_pg_data:
+  # Lesson recordings uploaded by staff.
+  baho_media:
 
 networks:
   caddy:

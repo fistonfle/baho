@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import { exerciseLevels, exercises, type ExerciseLevel } from '../../data/healthContent';
-import { AudioPlayer } from '../AudioPlayer';
 import { PageHeader } from '../ui';
 
 export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (title: string) => void; onHome: () => void }) {
@@ -64,7 +63,6 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
             <ol className="fact-list">
               {selected.steps.map((step) => <li key={step}>{step}</li>)}
             </ol>
-            <AudioPlayer text={`${selected.title}. ${selected.steps.join(' ')}`} />
             <button className="btn btn-primary" onClick={finish} disabled={doneIds.includes(selected.id)}>
               {doneIds.includes(selected.id) ? 'Wabikoze uyu munsi' : 'Narangije uyu mwitozo'}
             </button>

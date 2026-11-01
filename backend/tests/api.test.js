@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.BAHO_DEMO_MODE = 'true';
+// Uploaded recordings go to a throwaway folder during tests.
+const { mkdtempSync } = await import('node:fs');
+const { tmpdir } = await import('node:os');
+const { join } = await import('node:path');
+process.env.MEDIA_DIR = mkdtempSync(join(tmpdir(), 'baho-media-'));
 const { default: app } = await import('../src/app.js');
 const { seedInitialAdmin } = await import('../src/modules/auth/bootstrap.js');
 
@@ -613,6 +618,38 @@ test('A specialist must approve lessons in their topic before an admin can publi
       categoryId: 1, title: 'Amazi', body: 'Nywa amazi.', status: 'published'
     }, adminToken);
     assert.equal((await nutrition.json()).content.status, 'published');
+  } finally {
+    server.close();
+  }
+});
+
+test('Staff upload a recorded lesson; only real audio is accepted and it is served back', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    const upload = (body, token, type = 'audio/mpeg') => fetch(`${baseUrl}/api/v1/admin/media/audio`, {
+      method: 'POST', headers: { 'Content-Type': type, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body
+    });
+    // An MP3 starts with an ID3 tag; the rest of the bytes are padding for the test.
+    const mp3 = Buffer.concat([Buffer.from('ID3', 'latin1'), Buffer.from([4, 0, 0, 0, 0, 0, 0]), Buffer.alloc(2048, 1)]);
+
+    assert.equal((await upload(mp3)).status, 401, 'anonymous');
+    assert.equal((await upload(mp3, learnerToken)).status, 403, 'learner');
+    assert.equal((await upload(Buffer.from('this is not audio, only text pretending'), adminToken)).status, 415, 'text renamed as audio');
+
+    const saved = await upload(mp3, adminToken);
+    assert.equal(saved.status, 201);
+    const { url } = await saved.json();
+    assert.match(url, /^\/api\/v1\/media\/[0-9a-f]{24}\.mp3$/);
+
+    const served = await fetch(`${baseUrl}${url}`);
+    assert.equal(served.status, 200);
+    assert.equal(served.headers.get('content-type'), 'audio/mpeg');
+    assert.equal(Buffer.from(await served.arrayBuffer()).length, mp3.length);
+
+    const partial = await fetch(`${baseUrl}${url}`, { headers: { Range: 'bytes=0-99' } });
+    assert.equal(partial.status, 206, 'byte ranges let the player seek');
+
+    assert.equal((await fetch(`${baseUrl}/api/v1/media/missing.mp3`)).status, 404);
   } finally {
     server.close();
   }
