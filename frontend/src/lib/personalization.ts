@@ -84,3 +84,25 @@ export const rankLessons = (
     })
     .sort((a, b) => b.score - a.score || b.lesson.id - a.lesson.id);
 };
+
+// The learner's own topics: those chosen at sign-up plus those from the health profile.
+export const learnerTopics = (interests: Interest[], riskTags: Interest[]): Interest[] => [...new Set([...interests, ...riskTags])];
+
+// Diseases the learner chose (a diagnosed condition, or a disease whose topic they
+// follow) come first, in their original order; the rest follow.
+export const orderDiseases = (diseases: Curriculum[], conditions: string[], topics: Interest[], categories: Category[]) => {
+  const topicOf = (disease: Curriculum) => categories.find((category) => category.id === disease.categoryId)?.name;
+  const isChosen = (disease: Curriculum) => conditions.includes(disease.condition ?? '') || topics.includes(topicOf(disease) ?? '');
+  const chosen = diseases.filter(isChosen);
+  return { ordered: [...chosen, ...diseases.filter((disease) => !isChosen(disease))], chosenIds: chosen.map((disease) => disease.id) };
+};
+
+// MINE shows the learner's topics, most relevant first; ALL every lesson; any other
+// value one topic. Learners who chose nothing see every lesson under MINE too.
+export const MINE = 'Mine';
+export const ALL = 'All';
+export const filterLessons = (ranked: RankedLesson[], lessons: Lesson[], filter: string, topics: Interest[]) => {
+  if (filter === MINE && topics.length) return ranked.filter((item) => topics.includes(item.lesson.category)).map((item) => item.lesson);
+  if (filter === MINE || filter === ALL) return lessons;
+  return lessons.filter((lesson) => lesson.category === filter);
+};

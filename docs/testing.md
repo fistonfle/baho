@@ -4,10 +4,10 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 
 | Approach | Tool | Result |
 |---|---|---|
-| Unit testing | Node test runner, Vitest | 41 tests pass |
+| Unit testing | Node test runner, Vitest | 45 tests pass |
 | Integration (API) testing | Node test runner over HTTP | 18 tests pass |
 | Input and error-handling testing | inside the tests above | invalid input is rejected with clear errors |
-| Performance testing | Lighthouse 12.6 on the live site | 100 (mid-range phone), 92 (low-end phone), 100 (desktop) |
+| Performance testing | Lighthouse 12.6 on the live site | 95 (mid-range phone), 75 (low-end phone), 100 (desktop) with photographs |
 | Compatibility and offline testing | Chrome 156, Safari on iOS 26.5, 6 screen widths | no horizontal scrolling; works offline after the first visit |
 | Load testing | autocannon, 50 concurrent users | 5,400–21,000 requests/s, no errors |
 
@@ -23,12 +23,13 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 | `PhoneNumber` | five ways of writing the same number all normalise to `+250781234567`; wrong prefix, too short, too long, foreign code, letters and empty values are rejected; PINs of 4–6 digits only |
 | `MediaStore` | MP3 (with and without a tag), M4A, OGG, WAV and WebM recognised from their first bytes; a web page or a too-short file is refused |
 | `LoginGuard` | locks after the maximum failures, other numbers unaffected, unlocks after 15 minutes (with an injected clock), a successful sign-in resets the count |
+| `learnerTopics`, `orderDiseases`, `filterLessons` | sign-up and health-profile topics merged; chosen diseases listed first; "Ibyo wahisemo" shows only the learner's topics, most relevant first; learners who chose nothing see every lesson |
 | `rankLessons` | risk match (+3) above topic match (+2) above unrelated; both scores add; finished lessons drop (−4); ties go to the newest lesson; empty input |
 | `riskTagsFromAnswers`, `profileTags`, `recommendedPaths`, `pathProgress` | "no" counts as the risk for healthy-habit questions; unanswered questions ignored; duplicates removed; fallback to the prevention programme; next lesson in order |
 | `countStreak` | streak ending today or yesterday, gap stops the count, no activity, across month and year boundaries |
 | store reducers | learners go to the dashboard and staff to the staff portal after sign-in; a staff sign-in keeps the learner's name on the device; sign-out clears the account; best quiz score kept |
 
-**Results and changes.** All 41 pass. Writing them led to two refactors: the streak logic was split into a pure `countStreak(days, today)` so it could be tested without the browser, and the lockout became a `LoginGuard` class with an injectable clock instead of module-level functions.
+**Results and changes.** All 45 pass. Writing them led to two refactors: the streak logic was split into a pure `countStreak(days, today)` so it could be tested without the browser, and the lockout became a `LoginGuard` class with an injectable clock instead of module-level functions.
 
 ## 2. Integration testing (API)
 
@@ -65,11 +66,14 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 | Profile | Run | Performance | Accessibility | Best practices | SEO | First / largest paint | Layout shift |
 |---|---|---|---|---|---|---|---|
 | Mid-range phone | before | 97 | 98 | 100 | 92 | 1.41 s / 1.42 s | 0.000 |
-| | **after** | **100** | **100** | **100** | **100** | 1.35 s / 1.35 s | 0.000 |
+| | after fixes | **100** | **100** | **100** | **100** | 1.35 s / 1.35 s | 0.000 |
+| | **with photos** | **95** | **100** | **100** | **100** | 1.53 s / 2.37 s | 0.000 |
 | Low-end phone | before | 90 | 98 | 100 | 92 | 2.70 s / 2.70 s | 0.084 |
-| | **after** | **92** | **100** | **100** | **100** | 2.71 s / 2.71 s | **0.000** |
+| | after fixes | **92** | **100** | **100** | **100** | 2.71 s / 2.71 s | **0.000** |
+| | **with photos** | **75** | **100** | **100** | **100** | 2.73 s / 4.24 s | 0.000 |
 | Desktop | before | 97 | 98 | 100 | 92 | 0.33 s / 0.33 s | 0.109 |
-| | **after** | **100** | **100** | **100** | **100** | 0.33 s / 0.33 s | **0.000** |
+| | after fixes | **100** | **100** | **100** | **100** | 0.33 s / 0.33 s | **0.000** |
+| | **with photos** | **100** | **100** | **100** | **100** | 0.36 s / 0.44 s | 0.000 |
 
 **What the first run found and what changed.**
 
@@ -77,7 +81,9 @@ Six testing approaches were used. Each section says why it was chosen, how it wa
 2. *Heading order.* Footer headings were `<h4>` after page-level `<h2>`; they are now `<h2>` with the same look.
 3. *robots.txt.* The single-page-app fallback returned the HTML page for `/robots.txt`; a real file was added.
 
-**Resources** (first visit on a phone screen, clean storage): 17 requests, **116 KB** transferred, 2 MB of JavaScript memory, 443 DOM nodes. NFR03 asks for an app shell under 5 MB.
+**Photographs (third run).** Replacing the drawings with real photographs first raised the page weight to 1.3 MB, because every photo was 1000 px wide and the landing page fetched lesson photos twice (cached lessons, then the server's). Each photo now has a 480 px copy chosen by `srcset`, photos below the first screen load only when scrolled to, and the landing photo is preloaded: the low-end page weight fell to 226 KB. The remaining cost is the landing photo itself, which is now the largest element: on the low-end profile it appears at 4.2 s, on a mid-range phone at 2.4 s (within NFR01's 3 s). The trade-off was accepted because real local photographs were requested to make the app trustworthy; a smaller hero image for phones is the next step.
+
+**Resources** (first visit on a phone screen, clean storage, before the photographs): 17 requests, **116 KB** transferred, 2 MB of JavaScript memory, 443 DOM nodes. NFR03 asks for an app shell under 5 MB.
 
 ## 5. Compatibility and offline testing
 

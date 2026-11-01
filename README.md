@@ -71,7 +71,7 @@
 | Vitest | 2.1 | Frontend unit tests; backend tests use Node's built-in test runner |
 | Docker / Docker Compose | 24+ | Production images and the local stack (optional for development) |
 | Browsers | Chrome / Edge 100+ (Android and desktop), Safari on iOS 16+ | Tested on Chrome 156 (macOS) and Safari on iOS 26.5 (iPhone simulator); needs Service Worker, IndexedDB and Web Crypto |
-| Hardware | Any phone that runs a current Chrome or Safari | First visit downloads about 116 KB; the server stack is capped at 1.2 GB of memory |
+| Hardware | Any phone that runs a current Chrome or Safari | First visit downloads about 230 KB on a phone (photos included); the server stack is capped at 1.2 GB of memory |
 
 ---
 
@@ -169,15 +169,15 @@ baho/
 
 ```bash
 npm test                       # backend: 18 API integration tests + 6 unit tests (no database needed)
-npm --prefix frontend test     # frontend: 35 unit tests (Vitest)
+npm --prefix frontend test     # frontend: 39 unit tests (Vitest)
 npm run build                  # type check (strict, no unused code) and production build
 ```
 
 | Strategy | What it covers | Result |
 |---|---|---|
-| **Unit tests** | Lesson workflow rules, phone/PIN validation, sign-in lockout, audio format detection, recommendation ranking, risk tags, streaks, store reducers | 41 unit tests pass |
+| **Unit tests** | Lesson workflow rules, phone/PIN validation, sign-in lockout, audio format detection, recommendation ranking, learner choices (topics and diseases first), risk tags, streaks, store reducers | 45 unit tests pass |
 | **Integration tests** | Every API module through HTTP: roles and permissions, phone sign-up, lesson review and publishing, audio upload, quizzes, progress, reminders, FAQ | 18 tests pass |
-| **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 100 / 92 / 100 performance; 100 accessibility, best practices and SEO |
+| **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 95 / 75 / 100 performance with photographs (100 / 92 / 100 before); 100 accessibility, best practices and SEO |
 | **Compatibility** | Screen widths 320–1920 px, Chrome 156, Safari on iOS 26.5, offline after first visit | No overflow; works offline |
 | **Load** (local) | 50 concurrent users for 15 s per endpoint | 5,400–21,000 requests/s, p99 ≤ 11 ms, no errors |
 
