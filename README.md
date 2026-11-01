@@ -71,7 +71,7 @@
 | Vitest | 2.1 | Frontend unit tests; backend tests use Node's built-in test runner |
 | Docker / Docker Compose | 24+ | Production images and the local stack (optional for development) |
 | Browsers | Chrome / Edge 100+ (Android and desktop), Safari on iOS 16+ | Tested on Chrome 156 (macOS) and Safari on iOS 26.5 (iPhone simulator); needs Service Worker, IndexedDB and Web Crypto |
-| Hardware | Any phone that runs a current Chrome or Safari | First visit downloads about 230 KB on a phone (photos included); the server stack is capped at 1.2 GB of memory |
+| Hardware | Any phone that runs a current Chrome or Safari | First visit downloads about 240 KB on a phone (photos included); the server stack is capped at 1.2 GB of memory |
 
 ---
 
@@ -113,6 +113,10 @@ BAHO_ADMIN_PASSWORD=    # at least 12 characters
 The first admin is created only from the `BAHO_ADMIN_*` values; there is no public staff sign-up. Admins then create writers, specialists and other admins in **Staff portal → Staff**. The frontend calls `http://localhost:4000/api/v1` by default; set `VITE_API_BASE_URL` in `frontend/.env.local` to use another API.
 
 **With Docker instead:** `docker compose up --build` (API on :4000, PostgreSQL on :5433), then `npm run dev:frontend`.
+
+### Install on a phone (no APK needed)
+
+Baho is a progressive web app, so there is no APK or executable to download. On Android, open https://baho.filito.rw in Chrome and choose **Add to Home screen** (on iPhone: Safari → Share → **Add to Home Screen**). It then opens full-screen like an app and keeps working offline.
 
 **Production build and offline check:** `npm run preview` serves the production build on http://localhost:4173. Open it once, stop the servers or switch off the network, and reload: the app still opens with the downloaded lessons.
 
@@ -177,7 +181,7 @@ npm run build                  # type check (strict, no unused code) and product
 |---|---|---|
 | **Unit tests** | Lesson workflow rules, phone/PIN validation, sign-in lockout, audio format detection, recommendation ranking, learner choices (topics and diseases first), risk tags, streaks, store reducers | 45 unit tests pass |
 | **Integration tests** | Every API module through HTTP: roles and permissions, phone sign-up, lesson review and publishing, audio upload, quizzes, progress, reminders, FAQ | 18 tests pass |
-| **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 95 / 75 / 100 performance with photographs (100 / 92 / 100 before); 100 accessibility, best practices and SEO |
+| **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 99 / 82 / 100 performance (final version, with photographs); 100 accessibility, best practices and SEO |
 | **Compatibility** | Screen widths 320–1920 px, Chrome 156, Safari on iOS 26.5, offline after first visit | No overflow; works offline |
 | **Load** (local) | 50 concurrent users for 15 s per endpoint | 5,400–21,000 requests/s, p99 ≤ 11 ms, no errors |
 | **Usability / accessibility** (phone audit) | 12 learner screens at 390 px: tap sizes, jargon, reachability | 6 problems fixed (Help tab on phones, 44 px controls, no preselected topics, …) |
@@ -210,7 +214,11 @@ The interface follows a formal information-portal layout, revised after supervis
 | ![Review](designs/screenshots/16-admin-review-and-publish.png) Staff: review and publish | ![Editor](designs/screenshots/17-lesson-editor.png) Staff: lesson editor | ![Staff](designs/screenshots/18-admin-staff-specialists.png) Staff: accounts and specialists |
 | ![Diseases](designs/screenshots/19-admin-diseases.png) Staff: diseases | ![Specialist](designs/screenshots/20-specialist-review.png) Specialist: review a lesson | |
 
-Wireframes from the proposal: [`designs/wireframes/`](designs/wireframes). UML diagrams (use case, activity, class, sequence): [`designs/uml/`](designs/uml).
+Wireframes from the proposal: [`designs/wireframes/`](designs/wireframes). UML: the final class diagram and the lesson review sequence below (Mermaid sources in [`designs/uml/`](designs/uml)), plus the proposal's use case and activity diagrams.
+
+| Class diagram (backend domain and modules) | Sequence: write, review, publish |
+|---|---|
+| ![Class diagram](designs/uml/class-diagram-final.svg) | ![Lesson review sequence](designs/uml/sequence-lesson-review.svg) |
 
 ### Architecture
 

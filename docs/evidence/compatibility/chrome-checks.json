@@ -1,6 +1,6 @@
 {
   "url": "https://baho.filito.rw/",
-  "date": "2026-11-01T11:09:23.382Z",
+  "date": "2026-11-01T12:34:12.739Z",
   "viewports": [
     {
       "name": "Small phone (iPhone SE)",
@@ -8,7 +8,7 @@
       "height": 568,
       "mobile": true,
       "overflow": false,
-      "smallestButtonPx": 30,
+      "smallestButtonPx": 40,
       "pass": true
     },
     {
@@ -17,7 +17,7 @@
       "height": 780,
       "mobile": true,
       "overflow": false,
-      "smallestButtonPx": 30,
+      "smallestButtonPx": 40,
       "pass": true
     },
     {
@@ -26,7 +26,7 @@
       "height": 852,
       "mobile": true,
       "overflow": false,
-      "smallestButtonPx": 30,
+      "smallestButtonPx": 40,
       "pass": true
     },
     {
@@ -65,15 +65,15 @@
     "lessonsShown": 3
   },
   "resources": {
-    "requests": 17,
-    "transferredKB": 116,
+    "requests": 13,
+    "transferredKB": 240,
     "jsHeapUsedMB": 2,
-    "domNodes": 443,
-    "domContentLoaded": 794,
-    "load": 795
+    "domNodes": 325,
+    "domContentLoaded": 1103,
+    "load": 1103
   },
   "slowNetwork": {
     "profile": "400 kbit/s, 400 ms latency",
-    "firstContentMs": 2886
+    "firstContentMs": 2902
   }
 }

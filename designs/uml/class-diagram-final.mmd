@@ -1,0 +1,65 @@
+classDiagram
+    %% Members marked "static" in the code: LessonWorkflow.statuses/isValid/allowedFor/reviewOutcome, PhoneNumber.*, MediaStore.maxBytes/detect
+    direction LR
+    class LessonWorkflow {
+        +string[] statuses
+        +isValid(status) bool
+        +allowedFor(role) string[]
+        +reviewOutcome(decision) string
+        +bool hasSpecialist
+        +resolve(requested, current) string
+        +isHeldForReview(requested, current) bool
+    }
+    class PhoneNumber {
+        +normalize(input) string
+        +isPin(value) bool
+    }
+    class LoginGuard {
+        -Map failures
+        +int maxFailures
+        +int lockMs
+        +now() number
+        +isLocked(key) bool
+        +recordFailure(key)
+        +clear(key)
+    }
+    class MediaStore {
+        +int maxBytes
+        +string directory
+        +detect(buffer) Format
+        +saveAudio(buffer) string
+    }
+    class AuthController {
+        +register(req, res)
+        +login(req, res)
+        +createCreator(req, res)
+    }
+    class ContentController {
+        +createContent(req, res)
+        +updateContent(req, res)
+        +updateContentStatus(req, res)
+    }
+    class ReviewService {
+        +reviewQueue(userId)
+        +recordReview(lessonId, reviewerId, decision, note)
+        +topicHasSpecialist(categoryId)
+    }
+    class MediaController {
+        +uploadAudio(req, res)
+        +serveMedia
+    }
+    class DataStore {
+        <<interface>>
+        +pool PostgreSQL
+        +memory InMemoryStore
+        withFallback(db, memory)
+    }
+    AuthController ..> PhoneNumber : normalises numbers
+    AuthController ..> LoginGuard : locks repeated failures
+    ContentController ..> LessonWorkflow : resolves status
+    ContentController ..> ReviewService : asks for specialists
+    ReviewService ..> LessonWorkflow : review outcome
+    MediaController ..> MediaStore : saves recordings
+    AuthController ..> DataStore
+    ContentController ..> DataStore
+    ReviewService ..> DataStore

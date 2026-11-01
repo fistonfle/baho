@@ -7,7 +7,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 | Unit testing | Node test runner, Vitest | 45 tests pass |
 | Integration (API) testing | Node test runner over HTTP | 18 tests pass |
 | Input and error-handling testing | inside the tests above | invalid input is rejected with clear errors |
-| Performance testing | Lighthouse 12.6 on the live site | 95 (mid-range phone), 75 (low-end phone), 100 (desktop) with photographs |
+| Performance testing | Lighthouse 12.6 on the live site | 99 (mid-range phone), 82 (low-end phone), 100 (desktop), final version with photographs |
 | Compatibility and offline testing | Chrome 156, Safari on iOS 26.5, 6 screen widths | no horizontal scrolling; works offline after the first visit |
 | Load testing | autocannon, 50 concurrent users | 5,400–21,000 requests/s, no errors |
 | Usability and accessibility review | phone-size audit script, 12 learner screens | 6 access problems found and fixed |
@@ -68,13 +68,13 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 |---|---|---|---|---|---|---|---|
 | Mid-range phone | before | 97 | 98 | 100 | 92 | 1.41 s / 1.42 s | 0.000 |
 | | after fixes | **100** | **100** | **100** | **100** | 1.35 s / 1.35 s | 0.000 |
-| | **with photos** | **95** | **100** | **100** | **100** | 1.53 s / 2.37 s | 0.000 |
+| | **final, with photos** | **99** | **100** | **100** | **100** | 1.43 s / 2.03 s | 0.000 |
 | Low-end phone | before | 90 | 98 | 100 | 92 | 2.70 s / 2.70 s | 0.084 |
 | | after fixes | **92** | **100** | **100** | **100** | 2.71 s / 2.71 s | **0.000** |
-| | **with photos** | **75** | **100** | **100** | **100** | 2.73 s / 4.24 s | 0.000 |
+| | **final, with photos** | **82** | **100** | **100** | **100** | 2.71 s / 4.21 s | 0.000 |
 | Desktop | before | 97 | 98 | 100 | 92 | 0.33 s / 0.33 s | 0.109 |
 | | after fixes | **100** | **100** | **100** | **100** | 0.33 s / 0.33 s | **0.000** |
-| | **with photos** | **100** | **100** | **100** | **100** | 0.36 s / 0.44 s | 0.000 |
+| | **final, with photos** | **100** | **100** | **100** | **100** | 0.35 s / 0.43 s | 0.000 |
 
 **What the first run found and what changed.**
 
@@ -82,7 +82,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 2. *Heading order.* Footer headings were `<h4>` after page-level `<h2>`; they are now `<h2>` with the same look.
 3. *robots.txt.* The single-page-app fallback returned the HTML page for `/robots.txt`; a real file was added.
 
-**Photographs (third run).** Replacing the drawings with real photographs first raised the page weight to 1.3 MB, because every photo was 1000 px wide and the landing page fetched lesson photos twice (cached lessons, then the server's). Each photo now has a 480 px copy chosen by `srcset`, photos below the first screen load only when scrolled to, and the landing photo is preloaded: the low-end page weight fell to 226 KB. The remaining cost is the landing photo itself, which is now the largest element: on the low-end profile it appears at 4.2 s, on a mid-range phone at 2.4 s (within NFR01's 3 s). The trade-off was accepted because real local photographs were requested to make the app trustworthy; a smaller hero image for phones is the next step.
+**Photographs (third run).** Replacing the drawings with real photographs first raised the page weight to 1.3 MB, because every photo was 1000 px wide and the landing page fetched lesson photos twice (cached lessons, then the server's). Each photo now has a 480 px copy chosen by `srcset` and photos below the first screen load only when scrolled to. A preload of the landing photo was tried and removed: on a 400 kbit/s connection it delayed the app's code, so the first text appeared after 5.6 s instead of 2.9 s. In the final version a first visit on a phone transfers 240 KB in 13 requests; the landing photo, now the largest element, appears at 2.0 s on a mid-range phone (within NFR01's 3 s) and 4.2 s on the low-end profile. (Lighthouse's total page weight also counts the lesson photos it loads while scrolling the whole page.) The trade-off was accepted because real local photographs were requested to make the app trustworthy; a smaller landing image for phones is the next step.
 
 **Resources** (first visit on a phone screen, clean storage, before the photographs): 17 requests, **116 KB** transferred, 2 MB of JavaScript memory, 443 DOM nodes. NFR03 asks for an app shell under 5 MB.
 
@@ -102,7 +102,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 | Desktop monitor | 1920 px | none | 30 px |
 | Safari, iOS 26.5 (iPhone 17e, iPhone 17 Pro Max) | device | none | renders as in Chrome |
 
-**Weak network:** at about 400 kbit/s with 400 ms latency (a poor 3G signal) the first text appears after **2.9 s** on a first visit.
+**Weak network:** at about 400 kbit/s with 400 ms latency (a poor 3G signal) the first text appears after **2.9 s** on a first visit (final version).
 
 **Offline — a bug found and fixed.** The first offline run passed only because the browser's HTTP cache still held the app's JavaScript and CSS. With that cache cleared, a learner who lost signal right after a first visit got a blank page: the service worker had cached the page but not the hashed build files. The worker now reads them from `index.html` when it installs and caches them. Re-tested with the browser cache cleared: the app, the four diseases and the three newest lessons appear offline, with the offline notice shown.
 
