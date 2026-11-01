@@ -44,8 +44,8 @@ export function LandingScreen({
             </p>
           </div>
           <figure>
-            <img src="/images/bp-check.svg" alt="Umuntu apimwa umuvuduko w'amaraso" width="320" height="200" />
-            <figcaption>Isomo: Gupima umuvuduko w'amaraso</figcaption>
+            <img src="/images/bp-check.jpg" alt="Umukozi w'ubuzima apima umuvuduko w'amaraso w'umusore" width="320" height="200" />
+            <figcaption>Urubyiruko rwipimisha umuvuduko w'amaraso mu Rwanda. Ifoto: Davyimage, CC BY-SA 4.0</figcaption>
           </figure>
         </div>
       </section>

@@ -5,12 +5,7 @@ import type { ReactNode } from 'react';
 export function BrandMark({ tagline = true }: { tagline?: boolean }) {
   return (
     <span className="brand">
-      <span className="brand-emblem" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M12 20s-7-4.3-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.7 12 20 12 20Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          <path d="M6.5 12.5h3l1.5-2.5 2 4 1.3-2h3.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
+      <span className="brand-emblem" aria-hidden="true">B</span>
       <span>
         <span className="brand-name">Baho</span>
         {tagline && <span className="brand-tagline">Urubuga rw'inyigisho ku ndwara zitandura</span>}

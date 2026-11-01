@@ -20,7 +20,7 @@ const walk = (dir) => readdirSync(dir).flatMap((name) => {
 });
 
 // The staff portal is in English, so only learner-facing text needs translating.
-const staffFiles = ['frontend/src/components/screens/AdminScreen.tsx', 'frontend/src/services/api.ts'];
+const staffFiles = ['frontend/src/components/screens/AdminScreen.tsx', 'frontend/src/services/api.ts', 'frontend/src/data/photoCredits.ts'];
 const isStaffFile = (path) => staffFiles.includes(path) || path.startsWith('frontend/src/components/admin/') || /\.test\.tsx?$/.test(path);
 // English staff labels that live in shared files (roles, lesson statuses, staff sign-in).
 const looksEnglish = (text) => /\b(the|and|with|from|your|their|sign|staff|admin|writer|specialist|approved|published|draft|review|requested|email|password|home)\b/i.test(text);

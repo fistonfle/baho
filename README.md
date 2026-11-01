@@ -123,7 +123,7 @@ The first admin is created only from the `BAHO_ADMIN_*` values; there is no publ
 ```text
 baho/
 ├── frontend/                     React + TypeScript PWA (Vite)
-│   ├── public/                   sw.js (service worker), manifest, icons, robots.txt, lesson illustrations
+│   ├── public/                   sw.js (service worker), manifest, icons, robots.txt, lesson photographs (images/)
 │   ├── nginx.conf, Dockerfile    production image (nginx serving the build)
 │   └── src/
 │       ├── App.tsx               app controller: data loading, navigation, handlers
@@ -152,6 +152,7 @@ baho/
 │   ├── Baho-Technical-Report.pdf the technical report
 │   ├── testing.md                testing strategies and results
 │   ├── deployment.md             server setup
+│   ├── photo-credits.md          authors and licences of the lesson photographs
 │   ├── evidence/                 Lighthouse reports, compatibility, load tests, test output
 │   └── translations/             Kinyarwanda text spreadsheet for review
 ├── scripts/
@@ -196,7 +197,7 @@ Testing found and fixed three problems: a layout shift from an unsized image, mi
 
 ## Designs and screenshots
 
-The interface follows a formal information-portal layout, revised after supervisor feedback that the first version looked generic: utility bar, masthead, main navigation, breadcrumbs, titled panels, data tables and a footer, all from one stylesheet (`frontend/src/styles/portal.css`). Colours: primary green `#0b5845`, navy `#14304d`, neutral borders; status colours only for badges and notices. No emojis, gradients or decorative fonts.
+The interface follows a formal information-portal layout, revised after supervisor feedback that the first version looked generic: utility bar, masthead, main navigation, breadcrumbs, titled panels, data tables and a footer, all from one stylesheet (`frontend/src/styles/portal.css`). Colours: primary green `#0b5845`, navy `#14304d`, neutral borders; status colours only for badges and notices. No emojis, gradients or decorative fonts. Lessons and diseases use real photographs (several from Rwanda) from Wikimedia Commons under open licences; authors and licences are listed in [docs/photo-credits.md](docs/photo-credits.md) and in the app under *Ubufasha*.
 
 | | | |
 |---|---|---|

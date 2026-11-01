@@ -337,7 +337,7 @@ function App() {
     }
     dispatch(markLessonCompleteAction(lessonId));
     logActivity();
-    if (celebrate) notify('Wakoze neza! Isomo ryarangiye. 🎉');
+    if (celebrate) notify('Wakoze neza! Isomo ryarangiye.');
   };
 
   const saveHealthProfile = async (profile: HealthProfile) => {
