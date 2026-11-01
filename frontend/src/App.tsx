@@ -62,7 +62,7 @@ import {
   type Screen
 } from './store/appSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import type { Category, Curriculum, Lesson, QuestionItem, QuizScore } from './types';
+import type { Category, Curriculum, Lesson, QuestionItem } from './types';
 
 const PROFILE_KEY = 'baho-profile';
 const PATH_KEY = 'baho-active-path';

@@ -3,6 +3,7 @@
 // specialist must be approved by one of them before an admin can publish it.
 
 import { pool } from '../../config/db.js';
+import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 
@@ -113,7 +114,7 @@ export const recordReview = (lessonId, reviewerId, decision, note) => withFallba
     const result = await pool.query(
       `UPDATE content SET status = $1, review_note = $2, reviewed_by = $3, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
        WHERE id = $4 RETURNING *`,
-      [decision === 'approve' ? 'approved' : 'rejected', note, reviewerId, lessonId]
+      [LessonWorkflow.reviewOutcome(decision), note, reviewerId, lessonId]
     );
     return { lesson: mapLesson(result.rows[0]) };
   },
@@ -122,7 +123,7 @@ export const recordReview = (lessonId, reviewerId, decision, note) => withFallba
     const check = await canReview(lesson, reviewerId);
     if (check) return check;
     Object.assign(lesson, {
-      status: decision === 'approve' ? 'approved' : 'rejected',
+      status: LessonWorkflow.reviewOutcome(decision),
       reviewNote: note,
       reviewedBy: reviewerId,
       reviewedAt: new Date().toISOString()

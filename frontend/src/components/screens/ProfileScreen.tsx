@@ -124,14 +124,14 @@ export function ProfileScreen({
         </div>
 
         <aside className="stack">
-          <Panel title="Ingingo z'imyigire" actions={<button className="btn-link small" onClick={onViewPaths}>Hindura</button>}>
+          <Panel title="Gahunda y'imyigire" actions={<button className="btn-link small" onClick={onViewPaths}>Hindura</button>}>
             {activePath && progress ? (
               <>
                 <p><strong>{activePath.title}</strong></p>
                 <div className="progress"><span style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} /></div>
                 <p className="small muted" style={{ marginTop: 6 }}>{progress.done} kuri {progress.total} warangije</p>
               </>
-            ) : <p className="muted small">Nta ngingo urahitamo.</p>}
+            ) : <p className="muted small">Nta gahunda urahitamo.</p>}
           </Panel>
           <Panel title="Ingingo nkurikirana" actions={<button className="btn-link small" onClick={onEditInterests}>Hindura</button>}>
             <p className="small">{interests.length ? interests.join(', ') : 'Nta ngingo wahisemo.'}</p>

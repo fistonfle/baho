@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 
 import type { AuthForm } from '../../store/appSlice';
+import { isPin, isRwandanPhone } from '../../lib/phone';
 import { PageHeader } from '../ui';
 
 // Learners register and sign in with a phone number and a PIN, because most
@@ -13,8 +14,6 @@ const headings: Record<AuthMode, { title: string; text: string; button: string }
   register: { title: 'Fungura konti', text: 'Ukeneye nimero ya telefoni gusa. Tubika aho ugeze wiga, amanota, ibyo dukwiye kukwibutsa n\'ibibazo watubajije.', button: 'Fungura konti' }
 };
 
-// Same rule as the server: 07X XXX XXXX with an MTN or Airtel prefix, with or without +250.
-export const isRwandanPhone = (value: string) => /^(?:\+?250|0)7[2389]\d{7}$/.test(value.replace(/[\s().-]/g, ''));
 
 export function AuthScreen({
   mode,
@@ -51,7 +50,7 @@ export function AuthScreen({
       onError('Andika nimero ya telefoni yo mu Rwanda, urugero 078 123 4567.');
       return;
     }
-    if (!useEmail && !/^\d{4,6}$/.test(form.password)) {
+    if (!useEmail && !isPin(form.password)) {
       onError('PIN igomba kuba imibare 4 kugeza kuri 6.');
       return;
     }

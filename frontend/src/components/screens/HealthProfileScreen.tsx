@@ -42,7 +42,7 @@ export function HealthProfileScreen({
       <PageHeader
         crumbs={fromOnboarding ? [{ label: 'Kwiyandikisha' }, { label: 'Umwirondoro w\'ubuzima' }] : [{ label: 'Ahabanza', onClick: onSkip }, { label: 'Umwirondoro w\'ubuzima' }]}
         title="Umwirondoro w'ubuzima"
-        lead="Ibi bisubizo bidufasha kuguhitiramo ingingo y'imyigire n'amasomo akubereye. Ni ubushake."
+        lead="Ibi bisubizo bidufasha kuguhitiramo gahunda y'imyigire n'amasomo akubereye. Ni ubushake."
       />
       {fromOnboarding && (
         <ol className="stepper">

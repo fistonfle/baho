@@ -3,7 +3,7 @@
 
 const ACTIVITY_KEY = 'baho-activity-days';
 
-const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+export const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 const readDays = (): string[] => {
   try {
@@ -19,9 +19,10 @@ export const recordActivity = () => {
   localStorage.setItem(ACTIVITY_KEY, JSON.stringify([...days].slice(-60)));
 };
 
-export const getStreak = () => {
-  const days = new Set(readDays());
-  const cursor = new Date();
+// Walks back one day at a time from today (or yesterday, if today has no activity
+// yet) while each day is in the set: O(streak length) lookups in a Set.
+export const countStreak = (days: Set<string>, today: Date) => {
+  const cursor = new Date(today);
   if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
   let streak = 0;
   while (days.has(dayKey(cursor))) {
@@ -30,6 +31,8 @@ export const getStreak = () => {
   }
   return streak;
 };
+
+export const getStreak = () => countStreak(new Set(readDays()), new Date());
 
 // The last seven days, oldest first, for the small streak calendar.
 export const getWeek = () => {

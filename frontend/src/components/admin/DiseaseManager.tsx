@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { api, type DiseasePayload } from '../services/api';
-import { setCategories, setFeedbackMessage, upsertCurriculum } from '../store/appSlice';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import type { Curriculum } from '../types';
-import { Panel } from './ui';
+import { api, type DiseasePayload } from '../../services/api';
+import { setCategories, setFeedbackMessage, upsertCurriculum } from '../../store/appSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { Curriculum } from '../../types';
+import { Panel } from '../ui';
 
 type DiseaseForm = { name: string; icon: string; about: string; description: string; riskFactors: string; warningSigns: string; prevention: string };
 
