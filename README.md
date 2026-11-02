@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Live app** | https://baho.filito.rw |
-| **Walkthrough video** | [demo/Baho-Walkthrough.mp4](demo/Baho-Walkthrough.mp4) |
+| **Walkthrough video** | https://youtu.be/K1vu1umaocE (8 min 46 s; file: [demo/Baho-Walkthrough.mp4](demo/Baho-Walkthrough.mp4)) |
 | **Technical report (PDF)** | [docs/Baho-Technical-Report.pdf](docs/Baho-Technical-Report.pdf) |
 | **Repository** | https://github.com/fistonfle/baho |
 | **Capstone** | BSc Software Engineering, African Leadership University (FullStack track) |
@@ -162,7 +162,7 @@ baho/
 ├── scripts/
 │   ├── evidence/                 headless-Chrome scripts for screenshots and compatibility checks
 │   └── translations/             export / apply scripts for the Kinyarwanda review
-├── demo/                         walkthrough video
+├── demo/                         Baho-Walkthrough.mp4 (narrated walkthrough, also on YouTube)
 ├── .github/workflows/deploy.yml  CI/CD: tests → Docker images → deploy
 └── package.json                  root scripts (setup, dev, test, build, translations)
 ```
