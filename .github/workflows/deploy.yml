@@ -11,6 +11,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# One deploy at a time: two pushes in quick succession otherwise restart the
+# containers at the same moment and the second run fails on a name conflict.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   APP_DIR: /app/baho
