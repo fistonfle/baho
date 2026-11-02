@@ -10,3 +10,6 @@ frontend/vite.config.d.ts
 
 # Lesson recordings uploaded in development
 backend/uploads/
+
+# Packaged submissions are built from the repository, not stored in it
+demo/*.zip
