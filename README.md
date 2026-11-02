@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Live app** | https://baho.filito.rw |
-| **Walkthrough video** | https://youtu.be/K1vu1umaocE (8 min 46 s; file: [demo/Baho-Walkthrough.mp4](demo/Baho-Walkthrough.mp4)) |
+| **Walkthrough video** | [Google Drive](https://drive.google.com/file/d/1_zNSDlDi8jTz1MEercGTen0InET0_bhB/view?usp=sharing) (8 min 46 s; file: [demo/Baho-Walkthrough.mp4](demo/Baho-Walkthrough.mp4)) |
 | **Technical report (PDF)** | [docs/Baho-Technical-Report.pdf](docs/Baho-Technical-Report.pdf) |
 | **Repository** | https://github.com/fistonfle/baho |
 | **Capstone** | BSc Software Engineering, African Leadership University (FullStack track) |
