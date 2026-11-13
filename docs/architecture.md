@@ -13,15 +13,17 @@ Source of the diagram: [`designs/architecture.mmd`](../designs/architecture.mmd)
    - Service worker (`public/sw.js`): network-first pages, cached app files (read from `index.html` at install), cached lesson recordings answered by byte range so seeking works offline.
 2. **Server: Node 20 + Express REST API** (`backend/`)
    - Routes in `src/routes/index.js` under `/api/v1`; `authenticate` (HMAC-signed token) and `requireRole` protect staff routes.
-   - Modules: `auth` (phone + PIN for learners, email for staff), `content`, `review` (specialist approval), `media` (recordings), `learning` (programmes, diseases, quizzes), `progress`, `questions`, `issues`, `reminders`, `health`.
+   - Modules: `auth` (phone + PIN for learners, email for staff, password reset by email), `content`, `review` (specialist approval), `media` (recordings), `learning` (programmes, diseases, quizzes), `progress`, `questions`, `issues`, `reminders`, `health`.
    - Domain classes: `LessonWorkflow` (lesson status rules), `PhoneNumber` and `LoginGuard` (sign-in), `MediaStore` (recordings, recognised by file signature).
    - Each service uses PostgreSQL and falls back to an in-memory store with the same contract when the database is unavailable (demo mode and tests).
-3. **Database: PostgreSQL 16** — 14 tables, see [`designs/erd.svg`](../designs/erd.svg) and [`database/schema.sql`](../database/schema.sql). Recordings are files in the `baho_media` volume, not in the database.
+3. **Database: PostgreSQL 16** — 15 tables, see [`designs/erd.svg`](../designs/erd.svg) and [`database/schema.sql`](../database/schema.sql). Recordings are files in the `baho_media` volume, not in the database.
 
 ## Key flows
 
 - **Personalisation:** topics chosen at sign-up and the encrypted health profile stay on the phone. They decide the study programme, the order of diseases, the "Ibyo wahisemo" lesson list and the ranked "for you" lessons.
 - **Lesson review:** a writer's lesson is saved as `review`. If its disease has a specialist, it waits in that specialist's queue (`GET /review/queue`); approval (`POST /review/lessons/:id`) sets `approved`, and only then can an admin publish it (`PATCH /admin/content/:id/status`, otherwise `409`).
+- **Password reset:** a staff member asks for a link (`POST /auth/forgot-password`); the server stores only the SHA-256 hash of a random token in `password_resets` and emails the link through SMTP (`modules/mail/mailer.js`). `POST /auth/reset-password` consumes the token once, writes the new scrypt hash and clears any sign-in lockout. The answer is the same whether or not the address has an account.
+- **Learner PIN recovery:** learners have no email, so an admin lists or searches accounts (`GET /admin/learners`) and issues a new PIN (`POST /admin/learners/:id/pin`), returned once in the response and never stored in the clear. The learner then changes it from their profile (`POST /auth/change-password`), which applies PIN rules to phone accounts and password rules to staff accounts.
 - **Recordings:** staff upload a person reading the lesson (`POST /admin/media/audio`); the server checks it is real audio, stores it under a random name and serves it at `/api/v1/media/…`. Lessons without a recording show no player.
 - **Quiz:** answers go to `POST /quiz-attempts`; the server grades them and stores the score. Guests are graded on the device.
 - **Offline:** after the first visit the app opens from the service worker; reports written offline wait in an outbox and are sent when the connection returns.

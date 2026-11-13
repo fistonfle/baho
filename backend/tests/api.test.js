@@ -654,3 +654,175 @@ test('Staff upload a recorded lesson; only real audio is accepted and it is serv
     server.close();
   }
 });
+
+test('A forgotten staff password is reset through a one-time emailed link', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    const email = 'seeded-admin@example.test';
+
+    // The answer never says whether the address belongs to an account.
+    const unknown = await postJson(`${baseUrl}/api/v1/auth/forgot-password`, { email: 'nobody@example.test' });
+    assert.equal(unknown.status, 200);
+    const unknownBody = await unknown.json();
+    assert.equal(unknownBody.resetLink, undefined);
+
+    const requested = await postJson(`${baseUrl}/api/v1/auth/forgot-password`, { email });
+    assert.equal(requested.status, 200);
+    const requestedBody = await requested.json();
+    assert.equal(requestedBody.message, unknownBody.message);
+    // No SMTP server is configured in tests, so the link comes back instead.
+    assert.ok(requestedBody.resetLink, 'the reset link is returned when email is not configured');
+    const token = new URL(requestedBody.resetLink).searchParams.get('reset');
+    assert.ok(token && token.length >= 32);
+
+    // A missing address is refused outright.
+    const noEmail = await postJson(`${baseUrl}/api/v1/auth/forgot-password`, {});
+    assert.equal(noEmail.status, 400);
+
+    // The new password must be long enough, and the token survives a refusal.
+    const tooShort = await postJson(`${baseUrl}/api/v1/auth/reset-password`, { token, password: 'short' });
+    assert.equal(tooShort.status, 400);
+
+    const unknownToken = await postJson(`${baseUrl}/api/v1/auth/reset-password`, {
+      token: 'f'.repeat(64),
+      password: 'a-brand-new-password'
+    });
+    assert.equal(unknownToken.status, 400);
+
+    const changed = await postJson(`${baseUrl}/api/v1/auth/reset-password`, {
+      token,
+      password: 'a-brand-new-password'
+    });
+    assert.equal(changed.status, 200);
+
+    // The old password no longer works and the new one does.
+    const oldPassword = await postJson(`${baseUrl}/api/v1/auth/login`, {
+      identifier: email,
+      password: 'seeded-admin-pass-123'
+    });
+    assert.equal(oldPassword.status, 401);
+
+    const newPassword = await postJson(`${baseUrl}/api/v1/auth/login`, {
+      identifier: email,
+      password: 'a-brand-new-password'
+    });
+    assert.equal(newPassword.status, 200);
+    const session = await newPassword.json();
+    assert.equal(session.user.role, 'admin');
+    adminToken = session.token;
+
+    // The link cannot be used twice.
+    const replayed = await postJson(`${baseUrl}/api/v1/auth/reset-password`, {
+      token,
+      password: 'another-password-entirely'
+    });
+    assert.equal(replayed.status, 400);
+  } finally {
+    server.close();
+  }
+});
+
+test('An admin finds a learner and gives them a new PIN', async () => {
+  const { server, baseUrl } = await startServer();
+  const getJson = (path, token) => fetch(`${baseUrl}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  try {
+    // Only admins may see learner accounts.
+    assert.equal((await getJson('/api/v1/admin/learners')).status, 401);
+    assert.equal((await getJson('/api/v1/admin/learners', learnerToken)).status, 403);
+
+    const listed = await getJson('/api/v1/admin/learners', adminToken);
+    assert.equal(listed.status, 200);
+    const { learners } = await listed.json();
+    const learner = learners.find((entry) => entry.phone === '+250781234567');
+    assert.ok(learner, 'the registered learner is listed');
+    // Staff accounts are not learners and never appear here.
+    assert.ok(!learners.some((entry) => entry.phone === null));
+
+    // The list can be searched by phone number, however it is written.
+    const searched = await getJson('/api/v1/admin/learners?search=078%20123%204567', adminToken);
+    const searchedBody = await searched.json();
+    assert.equal(searchedBody.learners.length, 1);
+    assert.equal(searchedBody.learners[0].id, learner.id);
+
+    // A learner cannot reset their own PIN this way.
+    const forbidden = await postJson(`${baseUrl}/api/v1/admin/learners/${learner.id}/pin`, {}, learnerToken);
+    assert.equal(forbidden.status, 403);
+
+    // A PIN that is not 4 to 6 digits is refused.
+    const badPin = await postJson(`${baseUrl}/api/v1/admin/learners/${learner.id}/pin`, { pin: '12' }, adminToken);
+    assert.equal(badPin.status, 400);
+
+    // Asking without a PIN generates one and returns it once.
+    const generated = await postJson(`${baseUrl}/api/v1/admin/learners/${learner.id}/pin`, {}, adminToken);
+    assert.equal(generated.status, 200);
+    const issued = await generated.json();
+    assert.match(issued.pin, /^[1-9][0-9]{4}$/);
+
+    const oldPin = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '2580' });
+    assert.equal(oldPin.status, 401);
+
+    const newPin = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: issued.pin });
+    assert.equal(newPin.status, 200);
+    learnerToken = (await newPin.json()).token;
+
+    // An unknown learner, and a staff account, are both refused.
+    assert.equal((await postJson(`${baseUrl}/api/v1/admin/learners/999999/pin`, {}, adminToken)).status, 404);
+    const staffList = await getJson('/api/v1/admin/creators', adminToken);
+    const staffId = (await staffList.json()).staff[0].id;
+    const staffTarget = await postJson(`${baseUrl}/api/v1/admin/learners/${staffId}/pin`, {}, adminToken);
+    assert.equal(staffTarget.status, 400);
+  } finally {
+    server.close();
+  }
+});
+
+test('A learner changes their own PIN, and staff their own password', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    // The current PIN has to be right.
+    const wrongCurrent = await postJson(`${baseUrl}/api/v1/auth/change-password`, {
+      current: '0000', next: '2468'
+    }, learnerToken);
+    assert.equal(wrongCurrent.status, 401);
+
+    // The PIN set by the admin in the previous test is the current one.
+    const listed = await fetch(`${baseUrl}/api/v1/admin/learners?search=0781234567`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const target = (await listed.json()).learners[0];
+    const reissued = await postJson(`${baseUrl}/api/v1/admin/learners/${target.id}/pin`, { pin: '5555' }, adminToken);
+    assert.equal(reissued.status, 200);
+
+    const signedIn = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '5555' });
+    const token = (await signedIn.json()).token;
+
+    // A new PIN must be 4 to 6 digits and different from the current one.
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/change-password`, { current: '5555', next: '12' }, token)).status, 400);
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/change-password`, { current: '5555', next: '5555' }, token)).status, 400);
+    // A learner cannot set a long password instead of a PIN.
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/change-password`, { current: '5555', next: 'a-long-password' }, token)).status, 400);
+
+    const changed = await postJson(`${baseUrl}/api/v1/auth/change-password`, { current: '5555', next: '2468' }, token);
+    assert.equal(changed.status, 200);
+
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '5555' })).status, 401);
+    const withNew = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '2468' });
+    assert.equal(withNew.status, 200);
+
+    // Staff send a password, which is held to the longer rule.
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/change-password`, {
+      current: 'a-brand-new-password', next: '1234'
+    }, adminToken)).status, 400);
+    const staffChanged = await postJson(`${baseUrl}/api/v1/auth/change-password`, {
+      current: 'a-brand-new-password', next: 'an-even-newer-password'
+    }, adminToken);
+    assert.equal(staffChanged.status, 200);
+
+    // Signing in without a token is still required for this endpoint.
+    assert.equal((await postJson(`${baseUrl}/api/v1/auth/change-password`, { current: 'x', next: 'y' })).status, 401);
+  } finally {
+    server.close();
+  }
+});

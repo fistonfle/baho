@@ -5,7 +5,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 | Approach | Tool | Result |
 |---|---|---|
 | Unit testing | Node test runner, Vitest | 45 tests pass |
-| Integration (API) testing | Node test runner over HTTP | 18 tests pass |
+| Integration (API) testing | Node test runner over HTTP | 21 tests pass |
 | Input and error-handling testing | inside the tests above | invalid input is rejected with clear errors |
 | Performance testing | Lighthouse 12.6 on the live site | 99 (mid-range phone), 82 (low-end phone), 100 (desktop), final version with photographs |
 | Compatibility and offline testing | Chrome 156, Safari on iOS 26.5, 6 screen widths | no horizontal scrolling; works offline after the first visit |
@@ -38,7 +38,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 
 **How.** `backend/tests/api.test.js`, run in demo mode (in-memory data) so no database is needed; the same flows were also run against PostgreSQL during development.
 
-**Results.** 18 tests pass, covering: audio upload (anonymous and learner uploads refused, a text file renamed as audio refused with 415, a real recording served back with its type and with byte ranges for seeking); health check; public catalogue; first-admin seeding; anonymous and learner access to staff routes is refused (401/403); phone sign-up and sign-in; duplicate accounts (409); writers cannot publish or edit others' lessons; drafts stay private until published; learners only see their own questions; FAQ and issue management; reminders and progress validation; quizzes graded on the server; a disease added by an admin gets its own topic and programme; **a lesson on a disease with a specialist cannot be published until that specialist approves it (409), and specialists only see their own diseases**.
+**Results.** 21 tests pass, covering: audio upload (anonymous and learner uploads refused, a text file renamed as audio refused with 415, a real recording served back with its type and with byte ranges for seeking); health check; public catalogue; first-admin seeding; anonymous and learner access to staff routes is refused (401/403); phone sign-up and sign-in; duplicate accounts (409); writers cannot publish or edit others' lessons; drafts stay private until published; learners only see their own questions; FAQ and issue management; reminders and progress validation; quizzes graded on the server; a disease added by an admin gets its own topic and programme; **a lesson on a disease with a specialist cannot be published until that specialist approves it (409), and specialists only see their own diseases**; and the staff password reset end to end (an unknown address gets the same answer as a real one, a short password is refused, the emailed token works once, the old password stops working and the link cannot be replayed); and learner PIN recovery (only an admin may list learners or issue a PIN, a staff account cannot be targeted that way, the issued PIN replaces the old one, and a learner can then change it themselves while a learner's new PIN must still be 4 to 6 digits).
 
 ## 3. Testing with different inputs and error handling
 
@@ -55,6 +55,12 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 | Learner opens a staff route | refused | 401 without a token, 403 with a learner token |
 | No network | app opens from the service worker; issue reports are queued | sent automatically when the connection returns |
 | Upload of a text file renamed `.mp3` | refused | 415 "Upload an MP3, M4A, OGG, WAV or WebM recording" |
+| Password reset asked for an address with no account | same answer as for a real one | no way to find out who has an account |
+| Reset link used twice, or after an hour | refused | 400 "This reset link has expired or has already been used" |
+| New password shorter than 8 characters | refused; the link stays usable | 400 with the reason |
+| Learner asks to set a long password instead of a 4–6 digit PIN | refused | 400 "A PIN is 4 to 6 digits" |
+| Learner sends the wrong current PIN when changing it | refused | 401, and the PIN is unchanged |
+| Admin tries to issue a PIN for a staff account | refused | 400 "it resets its password by email" |
 | Upload over 20 MB | refused before sending, and by the API | 413 |
 | Lesson without a recording | no audio player shown | player hidden; lessons with a recording show it |
 

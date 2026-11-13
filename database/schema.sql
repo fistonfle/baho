@@ -1,4 +1,4 @@
--- Baho PostgreSQL schema (14 tables). See designs/erd.svg for the diagram.
+-- Baho PostgreSQL schema (15 tables). See designs/erd.svg for the diagram.
 -- The backend creates and migrates these tables automatically on start-up
 -- (backend/src/config/db.js); this file is the readable reference.
 
@@ -140,6 +140,17 @@ CREATE TABLE IF NOT EXISTS issues (
     title VARCHAR(180) NOT NULL,
     description TEXT NOT NULL,
     status VARCHAR(30) DEFAULT 'Open',                -- Open | In review | Resolved
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A one-time link emailed to a staff member who forgot their password.
+-- Only the SHA-256 hash of the token is stored; the token itself is in the link.
+CREATE TABLE IF NOT EXISTS password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

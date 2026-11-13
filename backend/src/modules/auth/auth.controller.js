@@ -1,8 +1,12 @@
+import crypto from 'crypto';
+
 import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { loginGuard, PhoneNumber } from './phone.js';
 import { createToken, hashPassword, verifyPassword } from './security.js';
+import { consumeResetToken, createResetToken, clearResetTokens, tokenTtlMinutes } from './reset.service.js';
+import { sendMail } from '../mail/mailer.js';
 import { setSpecialistTopics, topicsByUser } from '../review/review.service.js';
 
 const staffRoles = ['creator', 'specialist', 'admin'];
@@ -188,9 +192,276 @@ export const register = async (req, res) => {
     if (inMemoryStore.users.some((user) => user.phone === cleanPhone)) {
       return res.status(409).json({ message: 'An account with that phone number already exists' });
     }
-    const user = { id: Date.now(), fullName: name.trim(), email: null, phone: cleanPhone, passwordHash: hashPassword(pin) };
+    const user = { id: Date.now(), fullName: name.trim(), email: null, phone: cleanPhone, passwordHash: hashPassword(pin), createdAt: new Date().toISOString() };
     inMemoryStore.users.push(user);
     const identity = publicUser(user);
     return res.status(201).json({ message: 'Registration successful in demo mode', user: identity, token: createToken(identity) });
   }
+};
+
+// --- Password reset -------------------------------------------------------
+// Staff sign in with an email address, so a forgotten password is recovered by
+// email. Learners sign in with a phone number and have no address on file, so
+// these endpoints only ever match a staff account; recovering a forgotten PIN
+// is not built yet.
+
+const appBaseUrl = () => (process.env.APP_BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
+const resetLink = (token) => `${appBaseUrl()}/?reset=${token}`;
+
+const findUserByEmail = async (email) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, full_name AS "fullName", email FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows[0] ?? null;
+  } catch {
+    return inMemoryStore.users.find((entry) => entry.email === email) ?? null;
+  }
+};
+
+const resetEmail = (name, link) => ({
+  subject: 'Reset your Baho password',
+  text: [
+    `Hello ${name || 'there'},`,
+    '',
+    'Someone asked to reset the password of the Baho staff account registered with this email address.',
+    `Open the link below within ${tokenTtlMinutes} minutes to choose a new password:`,
+    '',
+    link,
+    '',
+    'The link can be used once. If you did not ask for this, ignore this message: your password stays as it is.',
+    '',
+    'Baho — baho.filito.rw'
+  ].join('\n'),
+  html: `
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
+      <p>Hello ${name || 'there'},</p>
+      <p>Someone asked to reset the password of the Baho staff account registered with this email address.</p>
+      <p>
+        <a href="${link}" style="display:inline-block;background:#0b5845;color:#ffffff;padding:12px 20px;border-radius:4px;text-decoration:none">
+          Choose a new password
+        </a>
+      </p>
+      <p>The link works for ${tokenTtlMinutes} minutes and can be used once. If the button does not open, copy this address into your browser:</p>
+      <p style="word-break:break-all"><a href="${link}">${link}</a></p>
+      <p>If you did not ask for this, ignore this message: your password stays as it is.</p>
+      <p style="color:#5b6b7a">Baho — baho.filito.rw</p>
+    </div>`
+});
+
+// The answer is the same whether or not the address belongs to an account, so
+// this endpoint cannot be used to find out who has one.
+export const requestPasswordReset = async (req, res) => {
+  const email = normalizedEmail(req.body?.email);
+  const answer = { message: 'If that email address belongs to a staff account, a reset link is on its way.' };
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ message: 'Enter the email address of your staff account' });
+  }
+
+  const user = await findUserByEmail(email);
+  if (!user) return res.json(answer);
+
+  const { token } = await createResetToken(user.id);
+  const link = resetLink(token);
+  const message = resetEmail(user.fullName ?? user.full_name, link);
+  const result = await sendMail({ to: email, ...message });
+
+  // In development, with no SMTP server configured, the link is returned so the
+  // flow can be finished without email. Never in production.
+  if (!result.delivered && process.env.NODE_ENV !== 'production') {
+    return res.json({ ...answer, resetLink: link, delivered: false });
+  }
+  return res.json(answer);
+};
+
+export const resetPassword = async (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password) {
+    return res.status(400).json({ message: 'The reset link and a new password are required' });
+  }
+  if (String(password).length < 8) {
+    return res.status(400).json({ message: 'The new password must be at least 8 characters' });
+  }
+
+  const userId = await consumeResetToken(token);
+  if (!userId) {
+    return res.status(400).json({ message: 'This reset link has expired or has already been used. Ask for a new one.' });
+  }
+
+  const passwordHash = hashPassword(password);
+  let email = null;
+  try {
+    const result = await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING email',
+      [passwordHash, userId]
+    );
+    if (!result.rows[0]) return res.status(400).json({ message: 'That account no longer exists' });
+    email = result.rows[0].email;
+  } catch {
+    const user = inMemoryStore.users.find((entry) => entry.id === userId);
+    if (!user) return res.status(400).json({ message: 'That account no longer exists' });
+    user.passwordHash = passwordHash;
+    email = user.email;
+  }
+
+  // Any other link that was sent stops working, and a lockout from the failed
+  // attempts that led here is lifted so the new password can be used at once.
+  await clearResetTokens(userId);
+  if (email) loginGuard.clear(email);
+
+  return res.json({ message: 'Your password has been changed. Sign in with the new one.' });
+};
+
+// --- Learner PIN recovery -------------------------------------------------
+// A learner signs in with a phone number and a PIN and has no email address,
+// so there is nowhere to send a reset link. Instead an administrator finds the
+// account by phone number and sets a new PIN, which is shown once so it can be
+// read out to the learner. Nothing else about the account changes, and the
+// health profile is encrypted on the learner's own device either way.
+
+const publicLearner = (user) => ({
+  id: user.id,
+  fullName: user.fullName ?? user.full_name,
+  phone: user.phone,
+  createdAt: user.createdAt ?? user.created_at ?? null
+});
+
+// A PIN an administrator can read out over the phone: 5 digits, never starting
+// with a zero so it cannot be written down wrongly.
+const generatePin = () => String(crypto.randomInt(10000, 100000));
+
+export const getLearners = async (req, res) => {
+  const search = String(req.query?.search || '').trim();
+  const digits = search.replace(/\D/g, '');
+  const like = `%${search}%`;
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.full_name AS "fullName", u.phone, u.created_at AS "createdAt"
+       FROM users u LEFT JOIN staff s ON s.user_id = u.id
+       WHERE s.id IS NULL AND u.phone IS NOT NULL
+         AND ($1 = '' OR u.full_name ILIKE $2 OR u.phone LIKE $3)
+       ORDER BY u.created_at DESC LIMIT 50`,
+      [search, like, digits ? `%${digits}%` : '%']
+    );
+    return res.json({ learners: result.rows });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) {
+      return res.status(503).json({ message: 'Could not load learner accounts' });
+    }
+    const staffIds = new Set(inMemoryStore.staff.map((entry) => entry.userId));
+    const learners = inMemoryStore.users
+      .filter((user) => user.phone && !staffIds.has(user.id))
+      .filter((user) => {
+        if (!search) return true;
+        const name = String(user.fullName || '').toLowerCase();
+        return name.includes(search.toLowerCase()) || (digits && String(user.phone).includes(digits));
+      })
+      .slice(0, 50)
+      .map(publicLearner);
+    return res.json({ learners });
+  }
+};
+
+export const resetLearnerPin = async (req, res) => {
+  const id = Number(req.params.id);
+  const requested = req.body?.pin;
+  if (!Number.isInteger(id)) return res.status(400).json({ message: 'Unknown learner' });
+  if (requested !== undefined && !PhoneNumber.isPin(requested)) {
+    return res.status(400).json({ message: 'A PIN is 4 to 6 digits' });
+  }
+
+  const pin = requested === undefined ? generatePin() : String(requested);
+  const passwordHash = hashPassword(pin);
+
+  let learner = null;
+  try {
+    const found = await pool.query(
+      `SELECT u.id, u.full_name AS "fullName", u.phone, s.id AS "staffId"
+       FROM users u LEFT JOIN staff s ON s.user_id = u.id WHERE u.id = $1`,
+      [id]
+    );
+    const row = found.rows[0];
+    if (!row) return res.status(404).json({ message: 'No learner with that id' });
+    if (row.staffId) return res.status(400).json({ message: 'That is a staff account; it resets its password by email' });
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, id]);
+    learner = row;
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) {
+      return res.status(503).json({ message: 'Could not change the PIN' });
+    }
+    const user = inMemoryStore.users.find((entry) => entry.id === id);
+    if (!user) return res.status(404).json({ message: 'No learner with that id' });
+    if (inMemoryStore.staff.some((entry) => entry.userId === id)) {
+      return res.status(400).json({ message: 'That is a staff account; it resets its password by email' });
+    }
+    user.passwordHash = passwordHash;
+    learner = user;
+  }
+
+  // Wrong PINs before the call to the administrator may have locked the number.
+  if (learner.phone) loginGuard.clear(learner.phone);
+
+  return res.json({
+    message: 'The PIN has been changed. Read it to the learner now; it is not shown again.',
+    pin,
+    learner: publicLearner(learner)
+  });
+};
+
+// --- Changing your own PIN or password ------------------------------------
+// A learner given a temporary PIN by an administrator should be able to pick
+// their own, so the administrator does not keep knowing it. The same endpoint
+// serves staff, who send a password instead; what counts as valid follows the
+// kind of account, not what the caller claims to be.
+export const changePassword = async (req, res) => {
+  const { current, next } = req.body || {};
+  if (!current || !next) {
+    return res.status(400).json({ message: 'Send the current and the new PIN or password' });
+  }
+
+  let user = null;
+  try {
+    const result = await pool.query(
+      'SELECT id, email, phone, password_hash AS "passwordHash" FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    user = result.rows[0] ?? null;
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) {
+      return res.status(503).json({ message: 'Could not change it just now' });
+    }
+    user = inMemoryStore.users.find((entry) => entry.id === req.user.id) ?? null;
+  }
+  if (!user) return res.status(404).json({ message: 'That account no longer exists' });
+
+  const usesPin = Boolean(user.phone) && !user.email;
+  if (usesPin ? !PhoneNumber.isPin(next) : String(next).length < 8) {
+    return res.status(400).json({
+      message: usesPin ? 'A PIN is 4 to 6 digits' : 'The new password must be at least 8 characters'
+    });
+  }
+  if (String(current) === String(next)) {
+    return res.status(400).json({ message: 'The new one must be different from the current one' });
+  }
+  if (!verifyPassword(current, user.passwordHash)) {
+    return res.status(401).json({ message: usesPin ? 'That is not your current PIN' : 'That is not your current password' });
+  }
+
+  const passwordHash = hashPassword(next);
+  try {
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, user.id]);
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) {
+      return res.status(503).json({ message: 'Could not change it just now' });
+    }
+    const stored = inMemoryStore.users.find((entry) => entry.id === user.id);
+    if (stored) stored.passwordHash = passwordHash;
+  }
+
+  // Any reset link that is still in an inbox stops working.
+  await clearResetTokens(user.id);
+  return res.json({ message: usesPin ? 'Your PIN has been changed' : 'Your password has been changed' });
 };

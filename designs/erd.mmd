@@ -16,6 +16,7 @@ erDiagram
     users ||--o{ reminders : "sets"
     users ||--o{ questions : "asks"
     users ||--o{ issues : "reports"
+    users ||--o{ password_resets : "resets password"
 
     users {
         int id PK
@@ -117,4 +118,11 @@ erDiagram
         varchar title
         text description
         varchar status
+    }
+    password_resets {
+        int id PK
+        int user_id FK
+        varchar token_hash UK "sha256 of the emailed token"
+        timestamp expires_at
+        timestamp used_at
     }

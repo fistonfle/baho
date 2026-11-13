@@ -48,6 +48,8 @@
 | Progress, learning streak and a seven-day calendar | `lib/activity.ts` | FR13 |
 | Exercise guidance by level, reminders with notifications, searchable FAQ, questions to health workers, issue reports | `ExerciseScreen.tsx`, `RemindersScreen.tsx`, `FaqScreen.tsx` | FR04, FR05, FR18, FR19 |
 | **Sign-in with a phone number and PIN** for learners (most have no email); lockout after 5 wrong PINs | `modules/auth/phone.js`, `screens/AuthScreen.tsx` | FR10 |
+| **Password reset by email** for staff: a one-time link, valid for an hour, sent over SMTP (Gmail by default); only the hash of the token is stored | `modules/auth/reset.service.js`, `modules/mail/mailer.js`, `screens/PasswordResetScreen.tsx` | FR10 |
+| **PIN recovery for learners**: an admin finds the account in *Staff portal → Learners* and issues a new PIN, shown once; the learner then changes it themselves from their profile | `auth.controller.js` (`getLearners`, `resetLearnerPin`, `changePassword`), `components/admin/LearnerPanel.tsx`, `screens/ProfileScreen.tsx` | FR10 |
 | **Specialist approval**: lessons on a disease with a specialist must be approved before publishing | `domain/LessonWorkflow.js`, `modules/review/`, `components/admin/SpecialistWorkspace.tsx` | FR16, FR17 |
 | Staff portal, a separate English mode with a **View as learner** switch: review and publish, lesson editor with quiz and audio upload, diseases, learner questions, staff and specialist assignment, reports, FAQ | `screens/AdminScreen.tsx`, `components/admin/` | FR12, FR16, FR17 |
 | **Offline**: the service worker caches the app and audio; lessons are kept on the device; reports written offline wait in an outbox | `public/sw.js`, `lib/offline.ts` | FR06, FR19 |
@@ -108,7 +110,17 @@ AUTH_TOKEN_SECRET=<long random secret>
 BAHO_ADMIN_NAME=        # first administrator, created on start-up
 BAHO_ADMIN_EMAIL=
 BAHO_ADMIN_PASSWORD=    # at least 12 characters
+
+# Password reset email for staff accounts (optional in development).
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=            # a Gmail address
+SMTP_PASS=            # a Google app password, not the account password
+MAIL_FROM=Baho <your-address@gmail.com>
+APP_BASE_URL=http://localhost:5173
 ```
+
+**Password reset.** Staff who forget their password use *Forgot your password?* on the staff sign-in page. The server emails a one-time link that is valid for an hour; only the SHA-256 hash of its token is stored, and using it ends any lockout from the failed attempts. With Gmail, `SMTP_PASS` must be a 16-character [app password](https://support.google.com/accounts/answer/185833) created with 2-Step Verification on; the normal account password is rejected by Gmail's SMTP server. While `SMTP_USER`/`SMTP_PASS` are empty the link is written to the server log and returned in the response instead of being emailed, so the flow can be finished in development; that never happens when `NODE_ENV=production`, as it is in the Docker image. Learners have no address on file, so they cannot be sent a link: an administrator opens *Staff portal → Learners*, finds the account by name or phone number and issues a new PIN, which is shown once so it can be read out. The learner then sets their own PIN under *Umwirondoro wanjye → Hindura PIN*, so the administrator does not keep knowing it. Any sign-in lockout from the wrong PINs that led to the call is cleared at the same time.
 
 The first admin is created only from the `BAHO_ADMIN_*` values; there is no public staff sign-up. Admins then create writers, specialists and other admins in **Staff portal → Staff**. The frontend calls `http://localhost:4000/api/v1` by default; set `VITE_API_BASE_URL` in `frontend/.env.local` to use another API.
 
@@ -172,7 +184,7 @@ baho/
 ## Testing and evidence
 
 ```bash
-npm test                       # backend: 18 API integration tests + 6 unit tests (no database needed)
+npm test                       # backend: 21 API integration tests + 6 unit tests (no database needed)
 npm --prefix frontend test     # frontend: 39 unit tests (Vitest)
 npm run build                  # type check (strict, no unused code) and production build
 ```
@@ -180,7 +192,7 @@ npm run build                  # type check (strict, no unused code) and product
 | Strategy | What it covers | Result |
 |---|---|---|
 | **Unit tests** | Lesson workflow rules, phone/PIN validation, sign-in lockout, audio format detection, recommendation ranking, learner choices (topics and diseases first), risk tags, streaks, store reducers | 45 unit tests pass |
-| **Integration tests** | Every API module through HTTP: roles and permissions, phone sign-up, lesson review and publishing, audio upload, quizzes, progress, reminders, FAQ | 18 tests pass |
+| **Integration tests** | Every API module through HTTP: roles and permissions, phone sign-up, staff password reset, learner PIN recovery, lesson review and publishing, audio upload, quizzes, progress, reminders, FAQ | 21 tests pass |
 | **Performance** (Lighthouse, live site) | Mid-range phone, low-end phone (6× slower CPU, 3G), desktop | 99 / 82 / 100 performance (final version, with photographs); 100 accessibility, best practices and SEO |
 | **Compatibility** | Screen widths 320–1920 px, Chrome 156, Safari on iOS 26.5, offline after first visit | No overflow; works offline |
 | **Load** (local) | 50 concurrent users for 15 s per endpoint | 5,400–21,000 requests/s, p99 ≤ 11 ms, no errors |
@@ -228,7 +240,7 @@ Wireframes from the proposal: [`designs/wireframes/`](designs/wireframes). UML: 
 
 ## Database schema
 
-14 PostgreSQL tables. Full DDL: [`database/schema.sql`](database/schema.sql); the backend applies it on start-up. Diagram source: [`designs/erd.mmd`](designs/erd.mmd).
+15 PostgreSQL tables. Full DDL: [`database/schema.sql`](database/schema.sql); the backend applies it on start-up. Diagram source: [`designs/erd.mmd`](designs/erd.mmd).
 
 ![Entity relationship diagram](designs/erd.svg)
 
@@ -238,6 +250,7 @@ Wireframes from the proposal: [`designs/wireframes/`](designs/wireframes). UML: 
 | Content | `categories`, `content` (lessons, with `reviewed_by`, `review_note`, `reviewed_at`), `quiz_questions`, `faqs` |
 | Study programmes and diseases | `curricula` (a programme; with a condition it is also a disease), `curriculum_lessons` |
 | Learner activity | `progress`, `quiz_attempts`, `reminders`, `questions`, `issues` |
+| Account recovery | `password_resets` (hashed, single-use staff reset tokens) |
 
 The health profile is deliberately **not** in the database: it stays encrypted on the learner's device.
 
@@ -251,6 +264,9 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 |---|---|---|
 | `POST /auth/register` | Create a learner account: `{ name, phone, pin }` | Public |
 | `POST /auth/login` | Sign in with `{ identifier, password }`: phone + PIN, or staff email + password | Public |
+| `POST /auth/forgot-password` | Email a one-time password-reset link to a staff account | Public |
+| `POST /auth/reset-password` | Set a new password from `{ token, password }` | Public |
+| `POST /auth/change-password` | Change your own PIN (learners) or password (staff) with `{ current, next }` | 🔒 |
 | `GET /categories`, `GET /content`, `GET /content/:id` | Topics and published lessons (with image and quiz) | Public |
 | `GET /curricula` | Study programmes and diseases with their ordered lessons | Public |
 | `GET /faq` | Frequently asked questions | Public |
@@ -267,6 +283,8 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 | `POST /review/lessons/:id` | Approve a lesson, or request changes with a note | 🛡 specialist |
 | `PUT /admin/staff/:id/topics` | Set the diseases a specialist reviews | 🛡 admin |
 | `GET/POST /admin/creators` | List staff; create writer, specialist or admin accounts | 🛡 admin |
+| `GET /admin/learners` | List or search learner accounts by name or phone number | 🛡 admin |
+| `POST /admin/learners/:id/pin` | Give a learner a new PIN, returned once to read out to them | 🛡 admin |
 | `POST/PATCH/DELETE /admin/faqs` | Manage the FAQ | 🛡 admin |
 | `GET/PATCH /admin/issues` | Review and resolve reports | 🛡 admin |
 | `POST /admin/media/audio` | Upload a lesson recording (MP3, M4A, OGG, WAV, WebM; checked by file signature, max 20 MB) | 🛡 admin, creator |

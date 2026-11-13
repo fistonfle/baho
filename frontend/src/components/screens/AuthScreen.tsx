@@ -23,6 +23,7 @@ export function AuthScreen({
   onSubmit,
   onBack,
   onError,
+  onForgotPassword,
   staffSignIn = false
 }: {
   mode: AuthMode;
@@ -32,6 +33,7 @@ export function AuthScreen({
   onSubmit: () => void;
   onBack: () => void;
   onError: (message: string) => void;
+  onForgotPassword: () => void;
   staffSignIn?: boolean;
 }) {
   const [staffLogin, setStaffLogin] = useState(staffSignIn);
@@ -121,6 +123,11 @@ export function AuthScreen({
           {useEmail ? null : mode === 'login'
             ? <p className="small">Nta konti ufite? <button type="button" className="btn-link" onClick={() => { switchMethod(false); onModeChange('register'); }}>Fungura konti ukoresheje telefoni</button></p>
             : <p className="small">Usanzwe ufite konti? <button type="button" className="btn-link" onClick={() => onModeChange('login')}>Injira</button></p>}
+          {useEmail && (
+            <p className="small">
+              <button type="button" className="btn-link" onClick={onForgotPassword}>Forgot your password?</button>
+            </p>
+          )}
           {mode === 'login' && (
             <p className="small">
               {useEmail

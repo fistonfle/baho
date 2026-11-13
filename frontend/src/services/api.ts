@@ -35,6 +35,13 @@ export const setAuthToken = (token: string | null) => {
   authToken = token;
 };
 
+export type Learner = {
+  id: number;
+  fullName: string;
+  phone: string;
+  createdAt: string | null;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   // Files (recordings) are sent as they are; everything else is JSON.
@@ -133,6 +140,33 @@ export const api = {
     }),
   register: (payload: { name: string; phone: string; pin: string }) =>
     request<{ message: string; token: string; user: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  // Staff password reset by email. `resetLink` comes back only in development,
+  // when no SMTP server is configured, so the flow can still be finished.
+  forgotPassword: (payload: { email: string }) =>
+    request<{ message: string; resetLink?: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  resetPassword: (payload: { token: string; password: string }) =>
+    request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  // Learner accounts and PIN recovery (admins only). Learners have no email
+  // address, so an admin gives them a new PIN instead of sending a link.
+  getLearners: (search = '') =>
+    request<{ learners: Learner[] }>(`/admin/learners${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  resetLearnerPin: (id: number, pin?: string) =>
+    request<{ message: string; pin: string; learner: Learner }>(`/admin/learners/${id}/pin`, {
+      method: 'POST',
+      body: JSON.stringify(pin ? { pin } : {})
+    }),
+  // Changing your own PIN (learners) or password (staff).
+  changePassword: (payload: { current: string; next: string }) =>
+    request<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify(payload)
     })

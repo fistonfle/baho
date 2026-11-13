@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
+import { isPin } from '../../lib/phone';
 import { pathProgress, type HealthProfile } from '../../lib/personalization';
+import { api } from '../../services/api';
 import type { Curriculum } from '../../types';
 import { PageHeader, Panel, StatusBadge } from '../ui';
 
@@ -71,6 +73,68 @@ export function ProfileScreen({
     setEditingName(false);
   };
 
+  // Changing your own PIN, so a learner who was given a temporary one by an
+  // administrator can pick their own.
+  const [changingPin, setChangingPin] = useState(false);
+  const [pins, setPins] = useState({ current: '', next: '', repeat: '' });
+  const [pinBusy, setPinBusy] = useState(false);
+  const [pinError, setPinError] = useState('');
+  const [pinDone, setPinDone] = useState(false);
+  const digitsOnly = (value: string) => value.replace(/\D/g, '');
+
+  const closePinForm = () => {
+    setChangingPin(false);
+    setPins({ current: '', next: '', repeat: '' });
+    setPinError('');
+  };
+
+  const savePin = async () => {
+    setPinError('');
+    if (!isPin(pins.current)) {
+      setPinError('Andika PIN usanzwe ukoresha.');
+      return;
+    }
+    if (!isPin(pins.next)) {
+      setPinError('PIN nshya igomba kuba imibare 4 kugeza kuri 6.');
+      return;
+    }
+    if (pins.next !== pins.repeat) {
+      setPinError('PIN nshya ebyiri ntizihura.');
+      return;
+    }
+    if (pins.next === pins.current) {
+      setPinError('PIN nshya igomba gutandukana n\'iya kera.');
+      return;
+    }
+    setPinBusy(true);
+    try {
+      await api.changePassword({ current: pins.current, next: pins.next });
+      setPinDone(true);
+      closePinForm();
+    } catch {
+      setPinError('Ntibyakunze. Reba neza ko PIN usanzwe ukoresha ari yo.');
+    } finally {
+      setPinBusy(false);
+    }
+  };
+
+  const pinField = (id: string, label: string, key: 'current' | 'next' | 'repeat') => (
+    <div className="form-group">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        className="input pin-input"
+        type="password"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={6}
+        autoComplete={key === 'current' ? 'current-password' : 'new-password'}
+        value={pins[key]}
+        onChange={(event) => setPins({ ...pins, [key]: digitsOnly(event.target.value) })}
+      />
+    </div>
+  );
+
   return (
     <div className="container">
       <PageHeader
@@ -108,6 +172,25 @@ export function ProfileScreen({
               {account?.phone ? <><dt>Telefoni</dt><dd>{account.phone.replace(/^\+250(\d{3})(\d{3})(\d{3})$/, '0$1 $2 $3')}</dd></> : <><dt>Imeyili</dt><dd>{account?.email ?? '–'}</dd></>}
               <dt>Uruhare</dt><dd><StatusBadge label={account ? roleLabels[account.role] ?? account.role : 'Umushyitsi'} tone={account ? 'success' : 'warning'} /></dd>
             </dl>
+            {account?.phone && (
+              <div style={{ marginTop: 16 }}>
+                {pinDone && <p className="alert alert-success small">PIN yawe yahindutse. Koresha iyo nshya ubutaha winjira.</p>}
+                {changingPin ? (
+                  <form className="stack-sm" onSubmit={(event) => { event.preventDefault(); void savePin(); }}>
+                    {pinError && <p className="alert alert-danger small">{pinError}</p>}
+                    {pinField('pin-current', 'PIN usanzwe ukoresha', 'current')}
+                    {pinField('pin-next', 'PIN nshya', 'next')}
+                    {pinField('pin-repeat', 'Ongera wandike PIN nshya', 'repeat')}
+                    <div className="row">
+                      <button className="btn btn-primary btn-sm" type="submit" disabled={pinBusy}>{pinBusy ? 'Birabikwa…' : 'Bika PIN nshya'}</button>
+                      <button className="btn btn-secondary btn-sm" type="button" onClick={closePinForm}>Reka</button>
+                    </div>
+                  </form>
+                ) : (
+                  <button className="btn btn-sm" type="button" onClick={() => { setPinDone(false); setChangingPin(true); }}>Hindura PIN</button>
+                )}
+              </div>
+            )}
             {!account && <p className="alert alert-info small" style={{ marginTop: 16 }}>Ukoresha Baho nk'umushyitsi: amakuru yawe abitswe kuri iyi telefoni gusa. Fungura konti kugira ngo aho ugeze n'amanota bibikwe, kandi ubashe kubaza inzobere.</p>}
           </Panel>
 

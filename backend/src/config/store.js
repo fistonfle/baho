@@ -26,5 +26,6 @@ export const inMemoryStore = {
   specialistTopics: [],
   faqs: seedFaqs.map((faq, index) => ({ id: index + 1, ...faq })),
   issues: [],
-  questions: []
+  questions: [],
+  passwordResets: []
 };

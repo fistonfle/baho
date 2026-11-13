@@ -10,6 +10,7 @@ import { FaqScreen } from './components/screens/FaqScreen';
 import { LandingScreen } from './components/screens/LandingScreen';
 import { LibraryScreen, scrollToPlayer } from './components/screens/LibraryScreen';
 import { NcdScreen } from './components/screens/NcdScreen';
+import { PasswordResetScreen } from './components/screens/PasswordResetScreen';
 import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { RemindersScreen } from './components/screens/RemindersScreen';
 import { HealthProfileScreen } from './components/screens/HealthProfileScreen';
@@ -115,6 +116,11 @@ function App() {
   const [activePathSlug, setActivePathSlug] = useState<string | null>(() => localStorage.getItem(PATH_KEY));
   const [riskFromOnboarding, setRiskFromOnboarding] = useState(false);
   const [staffSignIn, setStaffSignIn] = useState(false);
+  // A staff member who opens the link from a password-reset email arrives at
+  // /?reset=<token>; the token is taken out of the address so it is not left in
+  // the history or shared by accident.
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [streak, setStreak] = useState(getStreak);
   const [knowledgeResults, setKnowledgeResults] = useState(loadKnowledgeResults);
   const [pendingIssues, setPendingIssues] = useState(() => getOutbox().length);
@@ -122,6 +128,16 @@ function App() {
   const notifiedReminders = useRef(new Set<string>());
 
   const navigate = (screen: Screen) => dispatch(setCurrentScreen(screen));
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('reset');
+    if (!token) return;
+    setResetToken(token);
+    setShowPasswordReset(true);
+    setStaffSignIn(true);
+    dispatch(setCurrentScreen('auth'));
+    window.history.replaceState({}, '', window.location.pathname);
+  }, [dispatch]);
   // Every screen opens at the top, including changes made by the store (sign-in, sign-out).
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -514,6 +530,15 @@ function App() {
           />
         );
       case 'auth':
+        if (showPasswordReset) {
+          return (
+            <PasswordResetScreen
+              token={resetToken}
+              onDone={() => { setShowPasswordReset(false); setResetToken(null); setStaffSignIn(true); dispatch(setAuthMode('login')); }}
+              onBack={() => { setShowPasswordReset(false); setResetToken(null); }}
+            />
+          );
+        }
         return (
           <AuthScreen
             mode={authMode}
@@ -523,6 +548,7 @@ function App() {
             onSubmit={() => void submitAuth()}
             onBack={() => navigate(userName ? 'dashboard' : 'landing')}
             onError={notify}
+            onForgotPassword={() => { setResetToken(null); setShowPasswordReset(true); }}
             staffSignIn={staffSignIn}
           />
         );

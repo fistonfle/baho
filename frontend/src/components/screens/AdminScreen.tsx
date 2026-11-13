@@ -26,10 +26,11 @@ import { roleNames, issueStatus } from '../admin/shared';
 import { ContentForm } from '../admin/ContentForm';
 import { LessonPreview } from '../admin/LessonPreview';
 import { SpecialistWorkspace } from '../admin/SpecialistWorkspace';
+import { LearnerPanel } from '../admin/LearnerPanel';
 import { StaffPanel } from '../admin/StaffPanel';
 import { DiseaseManager } from '../admin/DiseaseManager';
 
-type Tab = 'review' | 'content' | 'diseases' | 'questions' | 'staff' | 'issues' | 'faq' | 'pending' | 'history';
+type Tab = 'review' | 'content' | 'diseases' | 'questions' | 'staff' | 'learners' | 'issues' | 'faq' | 'pending' | 'history';
 
 export function AdminScreen() {
   const dispatch = useAppDispatch();
@@ -206,6 +207,7 @@ export function AdminScreen() {
     { id: 'diseases', label: 'Diseases', roles: ['admin'] },
     { id: 'questions', label: 'Learner questions', count: pendingQuestions.length, roles: ['admin', 'creator', 'specialist'] },
     { id: 'staff', label: 'Staff', roles: ['admin'] },
+    { id: 'learners', label: 'Learners', roles: ['admin'] },
     { id: 'issues', label: 'Reports', count: openIssues.length, roles: ['admin'] },
     { id: 'faq', label: 'FAQ', roles: ['admin'] }
   ];
@@ -339,6 +341,8 @@ export function AdminScreen() {
       )}
 
       {tab === 'staff' && <StaffPanel />}
+
+      {tab === 'learners' && <LearnerPanel />}
 
       {tab === 'issues' && (
         <Panel title="User reports" flush>
