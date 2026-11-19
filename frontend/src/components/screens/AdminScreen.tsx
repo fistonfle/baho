@@ -56,10 +56,11 @@ export function AdminScreen() {
   const categoryName = (id?: number) => categories.find((category) => category.id === id)?.name ?? '';
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
 
-  // Topics that have a specialist need their approval before publishing.
-  // A lesson is this specialist's to act on when its disease is one of theirs.
-  const myTopics = new Set(staff.find((member) => member.id === authUser?.id)?.topicIds ?? []);
-  const isMine = (item: AdminContentItem) => isSpecialist && myTopics.has(item.categoryId ?? 0);
+  // The server sends a specialist only the lessons on the diseases they are
+  // assigned to, so everything in their list is theirs to act on, and it checks
+  // again on every write. Reading the assignment here as well would mean asking
+  // for the staff list, which only an administrator may see.
+  const canAct = isSpecialist;
 
   const awaitingSpecialist = adminContent.filter((item) => item.status === 'review').length;
   const pendingQuestions = questions.filter((item) => item.status !== 'Answered');
@@ -109,7 +110,7 @@ export function AdminScreen() {
       curriculumIds: item.curriculumIds || [],
       status: item.status
     }));
-    setTab('content');
+    setTab('write');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -221,7 +222,7 @@ export function AdminScreen() {
   const tabs: { id: Tab; label: string; count?: number; roles: string[] }[] = [
     { id: 'pending', label: 'Waiting for review', roles: ['specialist'] },
     { id: 'history', label: 'Reviewed', roles: ['specialist'] },
-    { id: 'write', label: 'Write a lesson', roles: ['creator'] },
+    { id: 'write', label: isCreator ? 'Write a lesson' : 'Edit a lesson', roles: ['creator', 'specialist'] },
     { id: 'content', label: isCreator ? 'My lessons' : 'All lessons', roles: ['admin', 'creator', 'specialist'] },
     { id: 'diseases', label: 'Diseases', roles: ['admin'] },
     { id: 'questions', label: 'Learner questions', count: pendingQuestions.length, roles: ['creator', 'specialist'] },
@@ -263,10 +264,14 @@ export function AdminScreen() {
                   <div className="actions">
                     <button className="btn btn-secondary btn-sm" onClick={() => setPreviewId(previewId === item.id ? null : item.id)}>{previewId === item.id ? 'Close' : 'Read'}</button>
                     {isCreator && ['draft', 'review', 'rejected'].includes(item.status) && <button className="btn btn-secondary btn-sm" onClick={() => editContent(item)}>Edit</button>}
-                    {isMine(item) && item.status === 'approved' && (
+                    {/* A specialist answers for what is taught about their own
+                        diseases, so a lesson on one of them stays theirs to
+                        correct and to re-record, published or not. */}
+                    {canAct && <button className="btn btn-secondary btn-sm" onClick={() => editContent(item)}>Edit</button>}
+                    {canAct && item.status !== 'published' && (
                       <button className="btn btn-primary btn-sm" onClick={() => void changeContentStatus(item.id, 'published')}>Publish</button>
                     )}
-                    {isMine(item) && item.status === 'published' && <button className="btn btn-secondary btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Unpublish</button>}
+                    {canAct && item.status === 'published' && <button className="btn btn-secondary btn-sm" onClick={() => void changeContentStatus(item.id, 'rejected')}>Unpublish</button>}
                     {isAdmin && mode === 'all' && <button className="btn btn-danger btn-sm" onClick={() => void removeContent(item.id)}>Delete</button>}
                   </div>
                 </td>
@@ -284,7 +289,7 @@ export function AdminScreen() {
   const listDescription = isCreator
     ? 'Your own lessons. Edit one while it is a draft, in review or sent back.'
     : isSpecialist
-      ? 'Every lesson on the platform. You can publish or unpublish the ones on your own diseases, from Waiting for review.'
+      ? 'Every lesson on your own diseases, whoever wrote it. You can correct one, replace its recording, and publish or unpublish it.'
       : 'Every lesson on the platform, for your oversight. Writing and publishing belong to writers and specialists; you can remove a lesson if you have to.';
 
   const title = isSpecialist ? 'Specialist review' : isCreator ? 'Writer workspace' : 'Staff portal';
@@ -319,6 +324,19 @@ export function AdminScreen() {
 
       {tab === 'write' && isCreator && (
         <ContentForm onSave={(status) => void saveContent(status)} />
+      )}
+
+      {/* A specialist corrects what a writer drafted; they do not start a
+          lesson themselves, which is what keeps writing and approving in two
+          different pairs of hands. */}
+      {tab === 'write' && isSpecialist && (
+        editingContentId
+          ? <ContentForm onSave={(status) => void saveContent(status)} asSpecialist />
+          : (
+            <Panel title="Edit a lesson">
+              <Empty>Open All lessons and choose Edit on the lesson you want to correct.</Empty>
+            </Panel>
+          )
       )}
 
       {tab === 'content' && (

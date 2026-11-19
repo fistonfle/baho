@@ -246,9 +246,9 @@ function App() {
   // Staff data is only loaded when the staff area is opened.
   useEffect(() => {
     if (currentScreen !== 'admin' || !isStaff) return;
-    if (authUser?.role !== 'specialist') {
-      api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Could not load the lessons.'));
-    }
+    // Every staff role has a lesson list now: a writer's own, a specialist's
+    // diseases, and all of them for an administrator. The server decides which.
+    api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Could not load the lessons.'));
     api.getQuestions().then((response) => dispatch(setQuestions(response.questions.map(toQuestionItem)))).catch(() => undefined);
     if (authUser?.role === 'admin') {
       api.getCreators().then((response) => dispatch(setAdminCreators(response.staff))).catch(() => undefined);

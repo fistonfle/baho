@@ -26,10 +26,28 @@ const mapContent = (row) => ({
 
 const userName = (id) => inMemoryStore.users.find((user) => user.id === id)?.fullName ?? '';
 
+const outsideSpecialty = async (userId, categoryId) => {
+  const topics = await getSpecialistTopics(userId);
+  return !topics.includes(Number(categoryId));
+};
+
+// Who may put a lesson in front of learners: the specialist assigned to that
+// disease, and never for a lesson they wrote themselves. The second half is the
+// part that matters. A specialist may write, edit and re-record lessons on their
+// own diseases, which is why they must not also be the one who approves their
+// own writing: the safeguard is two people, not two job titles.
+const mayPublish = async (user, categoryId, creatorId) => {
+  if (user?.role !== 'specialist') return false;
+  if (await outsideSpecialty(user.id, categoryId)) return false;
+  return Number(creatorId) !== Number(user.id);
+};
+
 // A lesson can only be published by the specialist for its disease; any other
 // request to publish is sent to review instead.
-const allowedStatus = async (_categoryId, requested, current) =>
-  new LessonWorkflow().resolve(requested, current);
+const allowedStatus = async (categoryId, requested, current, user = null, creatorId = null) => {
+  if (requested === 'published' && await mayPublish(user, categoryId, creatorId)) return 'published';
+  return new LessonWorkflow().resolve(requested, current);
+};
 
 // Saves the optional quiz and learning-path links sent with a lesson.
 const saveLearningInput = async (contentId, body) => {
@@ -153,18 +171,36 @@ const adminContentQuery = `
   LEFT JOIN users w ON w.id = c.creator_id
   LEFT JOIN users r ON r.id = c.reviewed_by`;
 
+// A writer sees their own work. A specialist sees every lesson on the diseases
+// they are responsible for, whoever wrote it and whoever published it, because
+// they answer for what is taught about those diseases. An administrator sees
+// all of it, because they answer for the platform.
 export const getAdminContent = async (req, res) => {
+  const role = req.user?.role;
   try {
-    const result = req.user?.role === 'creator'
-      ? await pool.query(`${adminContentQuery} WHERE c.creator_id = $1 ORDER BY c.created_at DESC, c.id DESC`, [req.user.id])
-      : await pool.query(`${adminContentQuery} ORDER BY c.created_at DESC, c.id DESC`);
+    let result;
+    if (role === 'creator') {
+      result = await pool.query(`${adminContentQuery} WHERE c.creator_id = $1 ORDER BY c.created_at DESC, c.id DESC`, [req.user.id]);
+    } else if (role === 'specialist') {
+      const topics = await getSpecialistTopics(req.user.id);
+      result = await pool.query(
+        `${adminContentQuery} WHERE c.category_id = ANY($1::int[]) ORDER BY c.created_at DESC, c.id DESC`,
+        [topics.map(Number)]
+      );
+    } else {
+      result = await pool.query(`${adminContentQuery} ORDER BY c.created_at DESC, c.id DESC`);
+    }
     return res.json({ content: await attachLearningData(result.rows.map(mapContent), { includeLinks: true }) });
   } catch (error) {
     if (!isConnectionFailure(error)) return res.status(503).json({ message: 'Could not load admin content' });
-    const content = (req.user?.role === 'creator'
-      ? inMemoryStore.content.filter((entry) => entry.creatorId === req.user.id)
-      : [...inMemoryStore.content]
-    ).map((entry) => ({ ...entry, creatorName: userName(entry.creatorId), reviewerName: userName(entry.reviewedBy) }));
+    let mine = [...inMemoryStore.content];
+    if (role === 'creator') {
+      mine = mine.filter((entry) => entry.creatorId === req.user.id);
+    } else if (role === 'specialist') {
+      const topics = (await getSpecialistTopics(req.user.id)).map(Number);
+      mine = mine.filter((entry) => topics.includes(Number(entry.categoryId)));
+    }
+    const content = mine.map((entry) => ({ ...entry, creatorName: userName(entry.creatorId), reviewerName: userName(entry.reviewedBy) }));
     return res.json({ content: await attachLearningData(content.map(mapContent), { includeLinks: true }) });
   }
 };
@@ -237,10 +273,16 @@ export const updateContent = async (req, res) => {
     if (req.user?.role === 'creator' && !['draft', 'review', 'rejected'].includes(existing.status)) {
       return res.status(403).json({ message: 'Published content cannot be edited by creators' });
     }
+    // A specialist is responsible for what is taught about their diseases, so
+    // they may correct a lesson or replace its recording, published or not, and
+    // only on those diseases.
+    if (req.user?.role === 'specialist' && await outsideSpecialty(req.user.id, Number(categoryId))) {
+      return res.status(403).json({ message: 'This lesson is outside your specialty' });
+    }
     const result = await pool.query(
       `UPDATE content SET category_id = $1, title = $2, summary = $3, body = $4, audio_url = $5, image_url = $6, status = COALESCE($7, status), updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *`,
       [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, imageUrl.trim() || null,
-        status ? await allowedStatus(Number(categoryId), status, existing.status) : null, id]
+        status ? await allowedStatus(Number(categoryId), status, existing.status, req.user, existing.creator_id) : null, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Content not found' });
     await saveLearningInput(id, req.body);
@@ -256,9 +298,14 @@ export const updateContent = async (req, res) => {
     if (req.user?.role === 'creator' && !['draft', 'review', 'rejected'].includes(inMemoryStore.content[index].status)) {
       return res.status(403).json({ message: 'Published content cannot be edited by creators' });
     }
+    if (req.user?.role === 'specialist' && await outsideSpecialty(req.user.id, Number(categoryId))) {
+      return res.status(403).json({ message: 'This lesson is outside your specialty' });
+    }
     const existing = inMemoryStore.content[index];
     const allowed = LessonWorkflow.allowedFor(req.user?.role);
-    const nextStatus = status && allowed.includes(status) ? await allowedStatus(Number(categoryId), status, existing.status) : existing.status;
+    const nextStatus = status && allowed.includes(status)
+      ? await allowedStatus(Number(categoryId), status, existing.status, req.user, existing.creatorId)
+      : existing.status;
     inMemoryStore.content[index] = {
       ...existing,
       ...mapContent({
@@ -297,12 +344,8 @@ export const deleteContent = async (req, res) => {
 };
 
 // Only the specialist assigned to a lesson's disease may change its status, and
-// only for that disease. The route is the one that takes a published lesson back
-// off the platform; publishing itself happens by approving a review.
-const outsideSpecialty = async (userId, categoryId) => {
-  const topics = await getSpecialistTopics(userId);
-  return !topics.includes(Number(categoryId));
-};
+// only for that disease: publishing it, or taking a published lesson back off
+// the platform.
 
 export const updateContentStatus = async (req, res) => {
   const id = Number(req.params.id);
@@ -312,11 +355,14 @@ export const updateContentStatus = async (req, res) => {
   }
   const needsApproval = { message: 'A specialist must approve this lesson before it is published' };
   const notYours = { message: 'This lesson is outside your specialty' };
+  const ownWriting = { message: 'You cannot publish a lesson you wrote yourself' };
   try {
-    const current = (await pool.query('SELECT category_id, status FROM content WHERE id = $1', [id])).rows[0];
+    const current = (await pool.query('SELECT category_id, status, creator_id FROM content WHERE id = $1', [id])).rows[0];
     if (!current) return res.status(404).json({ message: 'Content not found' });
     if (await outsideSpecialty(req.user.id, current.category_id)) return res.status(403).json(notYours);
-    if ((await allowedStatus(current.category_id, status, current.status)) !== status) return res.status(409).json(needsApproval);
+    if ((await allowedStatus(current.category_id, status, current.status, req.user, current.creator_id)) !== status) {
+      return res.status(409).json(Number(current.creator_id) === Number(req.user.id) ? ownWriting : needsApproval);
+    }
     const result = await pool.query(
       'UPDATE content SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
       [status, id]
@@ -328,7 +374,9 @@ export const updateContentStatus = async (req, res) => {
     const content = inMemoryStore.content.find((entry) => entry.id === id);
     if (!content) return res.status(404).json({ message: 'Content not found' });
     if (await outsideSpecialty(req.user.id, content.categoryId)) return res.status(403).json(notYours);
-    if ((await allowedStatus(content.categoryId, status, content.status)) !== status) return res.status(409).json(needsApproval);
+    if ((await allowedStatus(content.categoryId, status, content.status, req.user, content.creatorId)) !== status) {
+      return res.status(409).json(Number(content.creatorId) === Number(req.user.id) ? ownWriting : needsApproval);
+    }
     content.status = status;
     return res.json({ message: 'Content status updated in demo mode', content });
   }

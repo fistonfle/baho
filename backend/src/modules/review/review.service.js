@@ -6,6 +6,7 @@ import { pool } from '../../config/db.js';
 import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
+import { attachLearningData } from '../learning/learning.service.js';
 
 const withFallback = async (databaseWork, memoryWork) => {
   try {
@@ -67,6 +68,11 @@ export const topicHasSpecialist = (categoryId) => withFallback(
   () => inMemoryStore.specialistTopics.some((entry) => entry.categoryId === Number(categoryId))
 );
 
+// A specialist decides whether health content is safe to put in front of a
+// learner, so they are sent the whole lesson: the recording as well as the
+// text, because for a learner who does not read comfortably the recording is
+// the lesson, and the quiz with its marked answers, because a wrong answer
+// marked correct teaches the wrong thing as surely as a wrong paragraph.
 const mapLesson = (row) => ({
   id: row.id,
   categoryId: row.category_id ?? row.categoryId,
@@ -75,6 +81,7 @@ const mapLesson = (row) => ({
   title: row.title,
   summary: row.summary || '',
   body: row.body,
+  audioUrl: row.audio_url ?? row.audioUrl ?? '',
   imageUrl: row.image_url ?? row.imageUrl ?? '',
   status: row.status,
   reviewNote: row.review_note ?? row.reviewNote ?? '',
@@ -92,15 +99,16 @@ export const reviewQueue = (userId) => withFallback(
       WHERE (c.status = 'review' AND (c.creator_id IS NULL OR c.creator_id <> $1))
          OR c.reviewed_by = $1
       ORDER BY c.status = 'review' DESC, c.updated_at DESC`, [userId]);
-    return result.rows.map(mapLesson);
+    return attachLearningData(result.rows.map(mapLesson));
   },
   () => {
     const topics = inMemoryStore.specialistTopics.filter((entry) => entry.userId === userId).map((entry) => entry.categoryId);
-    return inMemoryStore.content
+    const queued = inMemoryStore.content
       .filter((lesson) => topics.includes(lesson.categoryId))
       .filter((lesson) => (lesson.status === 'review' && lesson.creatorId !== userId) || lesson.reviewedBy === userId)
       .map((lesson) => mapLesson({ ...lesson, creatorName: inMemoryStore.users.find((user) => user.id === lesson.creatorId)?.fullName }))
       .sort((a, b) => Number(b.status === 'review') - Number(a.status === 'review'));
+    return attachLearningData(queued);
   }
 );
 

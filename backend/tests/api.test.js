@@ -760,7 +760,12 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
 
     // A creator submits a diabetes lesson; the admin has no say in publishing it.
     const submitted = await postJson(`${baseUrl}/api/v1/admin/content`, {
-      categoryId: 3, title: 'Isukari n\'imbuto', body: 'Imbuto zirimo isukari karemano.', status: 'review'
+      categoryId: 3,
+      title: 'Isukari n\'imbuto',
+      body: 'Imbuto zirimo isukari karemano.',
+      status: 'review',
+      audioUrl: '/api/v1/media/isukari.mp3',
+      quiz: [{ question: 'Imbuto zirimo iki?', options: ['Isukari karemano', 'Umunyu'], answerIndex: 0, explanation: '' }]
     }, creatorToken);
     const lesson = (await submitted.json()).content;
     assert.equal(lesson.status, 'review');
@@ -777,6 +782,14 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
     assert.equal(creatorQueue.status, 403);
     const queue = (await (await fetch(`${baseUrl}/api/v1/review/queue`, { headers: { Authorization: `Bearer ${diabetesToken}` } })).json()).lessons;
     assert.ok(queue.some((item) => item.id === lesson.id && item.status === 'review'));
+
+    // A specialist decides whether this is safe to teach, so they are sent the
+    // whole lesson: the recording, and the quiz with the answer it marks correct.
+    const forReview = queue.find((item) => item.id === lesson.id);
+    assert.equal(forReview.audioUrl, '/api/v1/media/isukari.mp3', 'the specialist cannot hear the lesson');
+    assert.equal(forReview.quiz.length, 1, 'the specialist cannot see the quiz');
+    assert.equal(forReview.quiz[0].question, 'Imbuto zirimo iki?');
+    assert.equal(forReview.quiz[0].options[forReview.quiz[0].answerIndex], 'Isukari karemano');
 
     // Asking for changes needs a note and sends the lesson back to the creator.
     const noNote = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'changes' }, diabetesToken);
@@ -1095,6 +1108,66 @@ test('Push notifications are declared off when the server is not set up for them
     assert.equal((await postJson(`${baseUrl}/api/v1/push/subscribe`, { subscription: device })).status, 401);
     assert.equal((await fetch(`${baseUrl}/api/v1/push/status`)).status, 401);
     assert.equal((await postJson(`${baseUrl}/api/v1/push/unsubscribe`, { endpoint: device.endpoint })).status, 401);
+  } finally {
+    server.close();
+  }
+});
+
+// A specialist answers for what is taught about their diseases, so they see
+// every lesson on those diseases whoever wrote it, may correct one or replace
+// its recording, and may publish it. They see nothing outside their specialty.
+test('A specialist owns the lessons on their own diseases, and only those', async () => {
+  const { server, baseUrl } = await startServer();
+  const patchJson = (url, body, token) => fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  });
+  const signIn = async (email) => (await (await postJson(`${baseUrl}/api/v1/auth/login`, { email, password: 'specialist-pass-1' })).json()).token;
+
+  try {
+    const diabetes = await signIn('dr.diabetes@example.test');   // topic 3
+    const cancer = await signIn('dr.cancer@example.test');       // topic 5
+
+    const mine = (await (await fetch(`${baseUrl}/api/v1/admin/content`, { headers: { Authorization: `Bearer ${diabetes}` } })).json()).content;
+    assert.ok(mine.length > 0, 'the specialist sees nothing at all');
+    assert.ok(mine.every((lesson) => lesson.categoryId === 3), 'the specialist sees lessons outside their specialty');
+
+    // A writer's lesson on that disease, which the specialist did not write.
+    const written = (await (await postJson(`${baseUrl}/api/v1/admin/content`, {
+      categoryId: 3, title: 'Kugenzura isukari', body: 'Ibanze ku kugenzura isukari buri munsi.', status: 'draft'
+    }, creatorToken)).json()).content;
+
+    // Correcting it, and giving it a recording, is the specialist's to do.
+    const corrected = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
+      categoryId: 3,
+      title: 'Kugenzura isukari',
+      body: 'Ibanze ku kugenzura isukari buri munsi, nk\'uko muganga abigusaba.',
+      audioUrl: '/api/v1/media/isukari-nshya.mp3'
+    }, diabetes);
+    assert.equal(corrected.status, 200, await corrected.clone().text());
+    assert.equal((await corrected.json()).content.audioUrl, '/api/v1/media/isukari-nshya.mp3');
+
+    // And publishing it, without a second step from anybody.
+    const published = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'published' }, diabetes);
+    assert.equal(published.status, 200, await published.clone().text());
+    assert.equal((await published.json()).content.status, 'published');
+
+    // A published lesson on their disease stays theirs to correct.
+    const again = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
+      categoryId: 3, title: 'Kugenzura isukari', body: 'Ibanze ku kugenzura isukari buri munsi.'
+    }, diabetes);
+    assert.equal(again.status, 200, await again.clone().text());
+
+    // The specialist for another disease is shut out of all of it.
+    const notTheirs = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
+      categoryId: 3, title: 'Kugenzura isukari', body: 'Nta cyo mbivugaho.'
+    }, cancer);
+    assert.equal(notTheirs.status, 403);
+    assert.equal((await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'draft' }, cancer)).status, 403);
+
+    // And an administrator still cannot publish anything at all.
+    assert.equal((await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'published' }, adminToken)).status, 403);
   } finally {
     server.close();
   }

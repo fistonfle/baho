@@ -11,9 +11,12 @@ import { imageChoices } from './shared';
 import { AudioUpload } from './AudioUpload';
 import { QuizEditor } from './QuizEditor';
 
-// Only writers reach this form, and every lesson now goes to the specialist for
-// its disease, so there is one path through it and one thing to say about it.
-export function ContentForm({ onSave }: { onSave: (status: string) => void }) {
+// Two people reach this form. A writer drafts a lesson and sends it to the
+// specialist for its disease. That specialist opens the same form to correct a
+// lesson on one of their own diseases, or to replace its recording, and their
+// save can publish it, because for their diseases they are the authority there
+// is no step after.
+export function ContentForm({ onSave, asSpecialist = false }: { onSave: (status: string) => void; asSpecialist?: boolean }) {
   const dispatch = useAppDispatch();
   const contentForm = useAppSelector((state) => state.app.contentForm);
   const editingContentId = useAppSelector((state) => state.app.editingContentId);
@@ -27,13 +30,14 @@ export function ContentForm({ onSave }: { onSave: (status: string) => void }) {
   }));
 
   return (
-    <form className="panel creator-content-form" onSubmit={(event) => { event.preventDefault(); onSave('review'); }}>
+    <form className="panel creator-content-form" onSubmit={(event) => { event.preventDefault(); onSave(asSpecialist ? 'published' : 'review'); }}>
       <div className="panel-head">
         <div>
           <h2>{editingContentId ? 'Edit lesson' : 'New lesson'}</h2>
           <p>
-            The specialist for this disease has to approve the lesson, and their approval
-            publishes it. Until a specialist is assigned to the disease, the lesson waits.
+            {asSpecialist
+              ? 'This lesson is on one of your diseases. Correct the text, or replace the recording, then keep it where it is or publish it.'
+              : 'The specialist for this disease has to approve the lesson, and their approval publishes it. Until a specialist is assigned to the disease, the lesson waits.'}
           </p>
         </div>
         {editingContentId && <StatusBadge label="Editing" tone="info" />}
@@ -98,8 +102,17 @@ export function ContentForm({ onSave }: { onSave: (status: string) => void }) {
         </div>
       </div>
       <div className="panel-foot form-actions creator-form-actions">
-        <button type="button" className="btn btn-secondary" onClick={() => onSave('draft')}>Save as draft</button>
-        <button type="submit" className="btn btn-primary">Send to specialist</button>
+        {asSpecialist ? (
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => onSave(contentForm.status || 'draft')}>Save changes</button>
+            <button type="submit" className="btn btn-primary">Save and publish</button>
+          </>
+        ) : (
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => onSave('draft')}>Save as draft</button>
+            <button type="submit" className="btn btn-primary">Send to specialist</button>
+          </>
+        )}
         {editingContentId && (
           <button type="button" className="btn btn-link" onClick={() => { dispatch(setEditingContentId(null)); dispatch(updateContentForm(emptyContentForm)); }}>
             Cancel editing

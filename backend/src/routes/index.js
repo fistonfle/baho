@@ -22,7 +22,7 @@ router.get('/content/:id', getContentById);
 router.get('/faq', getFaqs);
 router.get('/curricula', getCurricula);
 router.use('/media', serveMedia);
-router.post('/admin/media/audio', authenticate, requireRole('admin', 'creator'), readAudioBody, uploadAudio);
+router.post('/admin/media/audio', authenticate, requireRole('admin', 'creator', 'specialist'), readAudioBody, uploadAudio);
 router.post('/quiz-attempts', authenticate, submitQuizAttempt);
 router.post('/admin/diseases', authenticate, requireRole('admin'), postDisease);
 router.patch('/admin/diseases/:id', authenticate, requireRole('admin'), patchDisease);
@@ -66,11 +66,14 @@ router.get('/review/queue', authenticate, requireRole('specialist'), getReviewQu
 router.post('/review/lessons/:id', authenticate, requireRole('specialist'), reviewLesson);
 // Lessons belong to writers and specialists. Writers draft them and send them
 // for review; the specialist for the disease approves, which publishes, or sends
-// the lesson back. An administrator can see every lesson, because they answer
-// for the platform, and can delete one as housekeeping, but takes no part in
-// deciding what learners are taught.
+// the lesson back. That specialist may also edit a lesson on their own diseases
+// and replace its recording, published or not, and may publish one directly,
+// with the one exception that nobody publishes a lesson they wrote themselves.
+// An administrator can see every lesson, because they answer for the platform,
+// and can delete one as housekeeping, but takes no part in deciding what
+// learners are taught.
 router.post('/admin/content', authenticate, requireRole('creator'), createContent);
-router.patch('/admin/content/:id', authenticate, requireRole('creator'), updateContent);
+router.patch('/admin/content/:id', authenticate, requireRole('creator', 'specialist'), updateContent);
 router.patch('/admin/content/:id/status', authenticate, requireRole('specialist'), updateContentStatus);
 router.delete('/admin/content/:id', authenticate, requireRole('admin'), deleteContent);
 router.get('/admin/content', authenticate, requireRole('admin', 'creator', 'specialist'), getAdminContent);
