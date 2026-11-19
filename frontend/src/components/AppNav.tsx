@@ -23,8 +23,10 @@ export function NavIcon({ name }: { name: string }) {
 
 const learnerItems: NavItem[] = [
   { screen: 'dashboard', label: 'Ahabanza', icon: 'home' },
-  { screen: 'library', label: 'Amasomo', icon: 'book' },
+  // Diseases come before lessons: a learner arrives with a condition in mind,
+  // their own or a relative's, and the lessons follow from it.
   { screen: 'ncd', label: 'Indwara', icon: 'heart' },
+  { screen: 'library', label: 'Amasomo', icon: 'book' },
   { screen: 'exercise', label: 'Imyitozo', icon: 'run' },
   { screen: 'reminders', label: 'Ibyo tukwibutsa', icon: 'bell' },
   // Help must be one tap away on phones too: FAQ, questions to health workers, reports.
@@ -196,8 +198,8 @@ export function SiteFooter({ onNavigate }: { onNavigate?: (screen: Screen) => vo
         <div>
           <h2>Serivisi</h2>
           <ul>
-            <li><button onClick={() => onNavigate?.('library')}>Amasomo</button></li>
             <li><button onClick={() => onNavigate?.('ncd')}>Indwara zitandura</button></li>
+            <li><button onClick={() => onNavigate?.('library')}>Amasomo</button></li>
             <li><button onClick={() => onNavigate?.('checkup')}>Isuzuma ry'ubumenyi</button></li>
           </ul>
         </div>
