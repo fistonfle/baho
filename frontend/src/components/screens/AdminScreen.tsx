@@ -438,16 +438,16 @@ export function AdminScreen() {
                     <li key={faq.id ?? faq.question}>
                       <button
                         type="button"
-                        className="row-between faq-row"
+                        className="faq-question"
                         aria-expanded={open}
                         onClick={() => setOpenFaqId(open ? null : faq.id ?? null)}
-                        style={{ width: '100%', textAlign: 'left', background: 'none', border: 0, padding: '12px 0', cursor: 'pointer' }}
+                        style={{ cursor: 'pointer' }}
                       >
                         <strong>{faq.question || 'Untitled question'}</strong>
                         <span className="muted" aria-hidden="true">{open ? '\u2212' : '+'}</span>
                       </button>
                       {open && (
-                        <div className="stack-sm" style={{ paddingBottom: 12 }}>
+                        <div className="stack-sm faq-editor">
                           <label className="visually-hidden" htmlFor={`faq-q-${faq.id}`}>Question</label>
                           <input
                             id={`faq-q-${faq.id}`}

@@ -309,6 +309,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .faq-item:last-child { border-bottom: 0; }
 .faq-question { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 14px 20px; border: 0; background: none; color: var(--ink); font-weight: 600; text-align: left; }
 .faq-question:hover { background: var(--surface-alt); }
+.faq-editor { padding: 0 20px 16px; }
 .faq-answer { padding: 0 20px 16px; }
 
 .image-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
@@ -350,7 +351,7 @@ textarea.input { min-height: 110px; resize: vertical; }
   .tab-bar button.active { color: var(--brand); box-shadow: inset 0 3px var(--brand); }
   .site-footer .container { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .toast { right: 12px; bottom: 76px; left: 12px; max-width: none; }
-  .panel-head, .panel-body, .list-button, .faq-question { padding-left: 16px; padding-right: 16px; }
+  .panel-head, .panel-body, .list-button, .faq-question, .faq-editor { padding-left: 16px; padding-right: 16px; }
   .question-table td:last-child { width: auto; }
   .question-table tr { display: grid; }
   .question-table td { border-bottom: 0; }
