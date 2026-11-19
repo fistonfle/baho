@@ -2,6 +2,8 @@ import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { getSpecialistTopics } from '../review/review.service.js';
+import { appBaseUrl, sendMail } from '../mail/mailer.js';
+import { sendPush } from '../push/push.service.js';
 
 // A learner's question follows the same path as a lesson. A writer drafts the
 // answer, and the specialist assigned to that disease approves it, which is what
@@ -150,6 +152,80 @@ export const createQuestion = async (req, res) => {
   }
 };
 
+// Telling a learner that a reply is waiting.
+//
+// Until SMS is available, a learner who has chosen to give an email address is
+// told by email. The message carries no health information at all: not the
+// disease, not the question, not the answer. It says a reply is waiting and
+// points at the app, where the learner reads it behind their own PIN. An email
+// passes through servers nobody here controls, so nothing that would say
+// something about this person's health is put into one.
+const answerReadyEmail = (name) => ({
+  subject: 'Baho: hari igisubizo kugutegereje',
+  text: [
+    `Muraho ${name || ''}`.trim() + ',',
+    '',
+    'Ikibazo wabajije kuri Baho cyarasubijwe. Fungura Baho wisomere igisubizo:',
+    '',
+    appBaseUrl(),
+    '',
+    'Ubu butumwa ntibukubiyemo amakuru y\'ubuzima bwawe.',
+    '',
+    '--',
+    'Your question on Baho has been answered. Open Baho to read the reply.',
+    'This message carries nothing about your health.',
+    '',
+    'Baho \u2014 baho.filito.rw'
+  ].join('\n'),
+  html: `
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
+      <p>Muraho ${name || ''},</p>
+      <p>Ikibazo wabajije kuri Baho cyarasubijwe. Fungura Baho wisomere igisubizo.</p>
+      <p>
+        <a href="${appBaseUrl()}" style="display:inline-block;background:#0b5845;color:#ffffff;padding:12px 20px;border-radius:4px;text-decoration:none">
+          Fungura Baho
+        </a>
+      </p>
+      <p style="color:#5b7083;font-size:13px">Ubu butumwa ntibukubiyemo amakuru y&rsquo;ubuzima bwawe.</p>
+      <p style="color:#5b7083;font-size:13px">Your question on Baho has been answered. This message carries nothing about your health.</p>
+      <p style="color:#5b7083;font-size:13px">Baho &mdash; baho.filito.rw</p>
+    </div>
+  `
+});
+
+// The learner is found by the id stored on the question, which is the one place
+// the link between a person and what they asked is kept.
+const notifyAsker = async (question) => {
+  const ownerId = question.user_id ?? question.userId;
+  if (!ownerId) return { delivered: false, reason: 'no-owner' };
+  try {
+    // The phone first, where a learner will actually see it. The push payload
+    // is encrypted to that device, so it may name what it is about; it still
+    // carries no answer, because the answer is read in the app behind the PIN.
+    const pushed = await sendPush(ownerId, {
+      title: 'Baho',
+      body: 'Ikibazo wabajije cyarasubijwe. Fungura Baho wisome igisubizo.',
+      tag: `question-${question.id}`
+    });
+
+    let learner = null;
+    try {
+      learner = (await pool.query('SELECT full_name, email FROM users WHERE id = $1', [ownerId])).rows[0] ?? null;
+    } catch {
+      const stored = inMemoryStore.users.find((entry) => entry.id === ownerId);
+      learner = stored ? { full_name: stored.fullName, email: stored.email } : null;
+    }
+    if (!learner?.email) return { delivered: Boolean(pushed.sent), reason: 'no-email', pushed: pushed.sent };
+    const mailed = await sendMail({ to: learner.email, ...answerReadyEmail(learner.full_name) });
+    return { ...mailed, delivered: Boolean(mailed.delivered || pushed.sent), pushed: pushed.sent };
+  } catch (error) {
+    // A reply that reached the learner's screen must not fail because a mail
+    // server was unreachable.
+    console.error(`[mail] Could not tell the learner their answer is ready: ${error.message}`);
+    return { delivered: false, reason: error.message };
+  }
+};
+
 const readQuestion = async (id) => {
   try {
     return (await pool.query('SELECT * FROM questions WHERE id = $1', [id])).rows[0] ?? null;
@@ -213,12 +289,14 @@ export const answerQuestion = async (req, res) => {
       [QuestionStatus.answered, approved, req.user.id, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Question not found' });
-    return res.json({ message: 'Answer approved and sent to the learner', question: result.rows[0] });
+    const told = await notifyAsker(result.rows[0]);
+    return res.json({ message: 'Answer approved and sent to the learner', question: result.rows[0], notified: Boolean(told.delivered) });
   } catch (error) {
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not save the answer' });
     }
     Object.assign(question, { status: QuestionStatus.answered, answer: approved, reviewedBy: req.user.id });
-    return res.json({ message: 'Answer approved in demo mode', question });
+    const told = await notifyAsker(question);
+    return res.json({ message: 'Answer approved in demo mode', question, notified: Boolean(told.delivered) });
   }
 };

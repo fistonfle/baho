@@ -4,13 +4,14 @@ import { getHealth } from '../modules/health/health.controller.js';
 import { getCategories, getContent, getContentById, getFaqs, createFaq, updateFaq, deleteFaq, getAdminContent, createContent, updateContent, deleteContent, updateContentStatus } from '../modules/content/content.controller.js';
 import { getQuestions, createQuestion, answerQuestion, draftAnswer } from '../modules/questions/questions.controller.js';
 import { createIssue, getIssues, updateIssueStatus } from '../modules/issues/issues.controller.js';
-import { changePassword, createCreator, getCreators, getLearners, login, register, requestPasswordReset, resetLearnerPin, resetPassword } from '../modules/auth/auth.controller.js';
+import { changePassword, createCreator, getCreators, getLearners, login, register, requestPasswordReset, resetLearnerPin, resetPassword, updateMyEmail } from '../modules/auth/auth.controller.js';
 import { authenticate, requireRole } from '../modules/auth/security.js';
 import { createReminder, deleteReminder, getReminders } from '../modules/reminders/reminders.controller.js';
 import { completeLesson, getProgress } from '../modules/progress/progress.controller.js';
 import { getCurricula, patchDisease, postDisease, submitQuizAttempt } from '../modules/learning/learning.controller.js';
 import { getReviewQueue, putSpecialistTopics, reviewLesson } from '../modules/review/review.controller.js';
 import { readAudioBody, serveMedia, uploadAudio } from '../modules/media/media.controller.js';
+import { getPushKey, getPushStatus, subscribeToPush, unsubscribeFromPush } from '../modules/push/push.controller.js';
 
 const router = express.Router();
 
@@ -46,6 +47,16 @@ router.post('/auth/register', register);
 router.post('/auth/forgot-password', requestPasswordReset);
 router.post('/auth/reset-password', resetPassword);
 router.post('/auth/change-password', authenticate, changePassword);
+// Optional, and the learner's own to remove. Baho uses it only to say that a
+// reply to their question is waiting, never to send anything about their health.
+router.patch('/profile/email', authenticate, requireRole('learner'), updateMyEmail);
+
+// Notifications on the phone itself. The key is public; everything else needs
+// the learner to be signed in, and a device can be unsubscribed at any time.
+router.get('/push/key', getPushKey);
+router.get('/push/status', authenticate, getPushStatus);
+router.post('/push/subscribe', authenticate, subscribeToPush);
+router.post('/push/unsubscribe', authenticate, unsubscribeFromPush);
 router.post('/admin/creators', authenticate, requireRole('admin'), createCreator);
 router.get('/admin/creators', authenticate, requireRole('admin'), getCreators);
 router.get('/admin/learners', authenticate, requireRole('admin'), getLearners);

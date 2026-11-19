@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { isPin } from '../../lib/phone';
+import { disablePush, enablePush, pushState, type PushState } from '../../lib/push';
 import { pathProgress, type HealthProfile } from '../../lib/personalization';
 import { api } from '../../services/api';
 import type { Curriculum } from '../../types';
@@ -27,6 +28,7 @@ export function ProfileScreen({
   interests,
   healthProfile,
   onRename,
+  onSaveEmail,
   onEditInterests,
   onEditHealthProfile,
   onClearHealthProfile,
@@ -49,6 +51,7 @@ export function ProfileScreen({
   interests: string[];
   healthProfile: HealthProfile;
   onRename: (name: string) => void;
+  onSaveEmail: (email: string) => Promise<string | null>;
   onEditInterests: () => void;
   onEditHealthProfile: () => void;
   onClearHealthProfile: () => void;
@@ -66,6 +69,7 @@ export function ProfileScreen({
   const answeredQuestions = Object.keys(healthProfile.answers).length;
   const hasHealthProfile = healthProfile.conditions.length > 0 || answeredQuestions > 0;
   const isStaff = ['admin', 'creator', 'specialist'].includes(account?.role ?? '');
+  const isLearner = Boolean(account) && !isStaff;
 
   const saveName = () => {
     if (!nameDraft.trim()) return;
@@ -116,6 +120,68 @@ export function ProfileScreen({
     } finally {
       setPinBusy(false);
     }
+  };
+
+  // An optional email address. Baho uses it to say that a reply to a question is
+  // waiting, and to send the reminders the learner set. It can be removed at any
+  // time. SMS is the channel most learners would actually read; this stands in
+  // until that is available.
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState(account?.email ?? '');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailDone, setEmailDone] = useState('');
+
+  const saveEmail = async (value: string) => {
+    setEmailError('');
+    setEmailBusy(true);
+    const failure = await onSaveEmail(value);
+    setEmailBusy(false);
+    if (failure) {
+      setEmailError(failure);
+      return;
+    }
+    setEmailDone(value ? 'Imeyili yawe yabitswe.' : 'Imeyili yawe yakuweho.');
+    setEditingEmail(false);
+  };
+
+  // Notifications on this device. The answer depends on the phone and on what
+  // the learner has already allowed, so it is read when the screen opens rather
+  // than assumed.
+  const [notifications, setNotifications] = useState<PushState>('unsupported');
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const [notifyError, setNotifyError] = useState('');
+
+  useEffect(() => {
+    if (!isLearner) return;
+    void pushState().then(setNotifications);
+  }, [isLearner]);
+
+  const turnOnNotifications = async () => {
+    setNotifyError('');
+    setNotifyBusy(true);
+    const failure = await enablePush();
+    setNotifyBusy(false);
+    if (!failure) {
+      setNotifications('on');
+      return;
+    }
+    if (failure === 'blocked') {
+      setNotifications('blocked');
+      return;
+    }
+    setNotifyError(failure === 'server'
+      ? 'Ubu butumwa ntiburaboneka kuri seriveri.'
+      : failure === 'unsupported'
+        ? 'Iyi telefoni ntiyemera ubu butumwa.'
+        : 'Ntibyakunze. Ongera ugerageze.');
+  };
+
+  const turnOffNotifications = async () => {
+    setNotifyBusy(true);
+    await disablePush();
+    setNotifyBusy(false);
+    setNotifications('off');
   };
 
   const pinField = (id: string, label: string, key: 'current' | 'next' | 'repeat') => (
@@ -169,9 +235,58 @@ export function ProfileScreen({
                   <>{displayName} {!account && <button className="btn-link small" onClick={() => setEditingName(true)}>Hindura</button>}</>
                 )}
               </dd>
-              {account?.phone ? <><dt>Telefoni</dt><dd>{account.phone.replace(/^\+250(\d{3})(\d{3})(\d{3})$/, '0$1 $2 $3')}</dd></> : <><dt>Imeyili</dt><dd>{account?.email ?? '–'}</dd></>}
+              {account?.phone && <><dt>Telefoni</dt><dd>{account.phone.replace(/^\+250(\d{3})(\d{3})(\d{3})$/, '0$1 $2 $3')}</dd></>}
+              {account && (
+                <>
+                  <dt>Imeyili</dt>
+                  <dd>
+                    {account.email ?? 'Nta yo'}
+                    {isLearner && !editingEmail && (
+                      <button className="btn-link small" style={{ marginLeft: 8 }} onClick={() => { setEmailDone(''); setEmailDraft(account.email ?? ''); setEditingEmail(true); }}>
+                        {account.email ? 'Hindura' : 'Ongeraho'}
+                      </button>
+                    )}
+                  </dd>
+                </>
+              )}
               <dt>Uruhare</dt><dd><StatusBadge label={account ? roleLabels[account.role] ?? account.role : 'Umushyitsi'} tone={account ? 'success' : 'warning'} /></dd>
             </dl>
+            {isLearner && (
+              <div style={{ marginTop: 16 }}>
+                {emailDone && <p className="alert alert-success small">{emailDone}</p>}
+                {editingEmail ? (
+                  <form className="stack-sm" onSubmit={(event) => { event.preventDefault(); void saveEmail(emailDraft.trim()); }}>
+                    {emailError && <p className="alert alert-danger small">{emailError}</p>}
+                    <div className="form-group">
+                      <label htmlFor="profile-email">Imeyili (si itegeko)</label>
+                      <input
+                        id="profile-email"
+                        className="input"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="izina@urugero.com"
+                        value={emailDraft}
+                        onChange={(event) => setEmailDraft(event.target.value)}
+                      />
+                    </div>
+                    <div className="row">
+                      <button className="btn btn-primary btn-sm" type="submit" disabled={emailBusy}>{emailBusy ? 'Birabikwa\u2026' : 'Bika'}</button>
+                      <button className="btn btn-secondary btn-sm" type="button" onClick={() => { setEditingEmail(false); setEmailError(''); }}>Reka</button>
+                      {account?.email && (
+                        <button className="btn btn-danger btn-sm" type="button" disabled={emailBusy} onClick={() => void saveEmail('')}>Kuraho</button>
+                      )}
+                    </div>
+                  </form>
+                ) : (
+                  <p className="small muted">
+                    Niba utanze imeyili, Baho izakwandikira igihe ikibazo wabajije gisubijwe, kandi ikoherereze inyibutsa wiyandikiye.
+                    Ubutumwa ku kibazo ntibukubiyemo amakuru y'ubuzima bwawe; inyibutsa yoherezwa n'amagambo wowe ubwawe wanditse.
+                    Ushobora kuyikuraho igihe cyose. (Ubutumwa bwa SMS buzaza vuba.)
+                  </p>
+                )}
+              </div>
+            )}
+
             {account?.phone && (
               <div style={{ marginTop: 16 }}>
                 {pinDone && <p className="alert alert-success small">PIN yawe yahindutse. Koresha iyo nshya ubutaha winjira.</p>}
@@ -219,6 +334,30 @@ export function ProfileScreen({
           <Panel title="Ingingo nkurikirana" actions={<button className="btn-link small" onClick={onEditInterests}>Hindura</button>}>
             <p className="small">{interests.length ? interests.join(', ') : 'Nta ngingo wahisemo.'}</p>
           </Panel>
+          {isLearner && (
+            <Panel title="Kumenyeshwa">
+              {notifications === 'on' ? (
+                <>
+                  <p className="small">Iyi telefoni irakumenyesha igihe ikibazo cyawe gisubijwe, kandi ikagufasha kwibuka ibyo wiyandikiye.</p>
+                  <button className="btn btn-secondary btn-sm" disabled={notifyBusy} onClick={() => void turnOffNotifications()}>
+                    {notifyBusy ? 'Tegereza\u2026' : 'Hagarika'}
+                  </button>
+                </>
+              ) : notifications === 'blocked' ? (
+                <p className="small muted">Wahagaritse ubu butumwa muri mushakisha yawe. Nubwemerera muri mushakisha, Baho izongera kukumenyesha.</p>
+              ) : notifications === 'off' ? (
+                <>
+                  <p className="small">Baho ishobora kukumenyesha kuri iyi telefoni igihe ikibazo cyawe gisubijwe, no kukwibutsa ibyo wiyandikiye. Nta kintu cyerekeye ubuzima bwawe kiba muri ubwo butumwa.</p>
+                  {notifyError && <p className="alert alert-danger small">{notifyError}</p>}
+                  <button className="btn btn-primary btn-sm" disabled={notifyBusy} onClick={() => void turnOnNotifications()}>
+                    {notifyBusy ? 'Tegereza\u2026' : 'Emera kumenyeshwa'}
+                  </button>
+                </>
+              ) : (
+                <p className="small muted">Iyi telefoni cyangwa iyi mushakisha ntiyemera ubutumwa bwa Baho. Kuri iPhone, banza wongere Baho ku rupapuro rwawe rw'imbere. Ushobora no gukoresha imeyili.</p>
+              )}
+            </Panel>
+          )}
           <Panel title="Umwirondoro w'ubuzima">
             <p className="small muted">Bibitswe kuri iyi telefoni gusa, bihishwe. Ntibyoherezwa kuri seriveri, nubwo waba ufite konti.</p>
             {hasHealthProfile ? (

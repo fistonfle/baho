@@ -14,7 +14,15 @@ const pass = process.env.SMTP_PASS || '';
 const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465;
 const from = process.env.MAIL_FROM || (user ? `Baho <${user}>` : 'Baho <no-reply@baho.local>');
 
-export const isMailConfigured = () => Boolean(user && pass);
+// Demo mode is the offline/test mode: the database is switched off and nothing
+// may leave the machine, so no message is ever sent from it however the SMTP
+// settings are filled in. Without this a test run would post real email to the
+// made-up addresses the tests use.
+export const isMailConfigured = () => Boolean(user && pass) && process.env.BAHO_DEMO_MODE !== 'true';
+
+// Where the app itself lives, for links inside a message. Kept here so every
+// module that writes an email uses the same address.
+export const appBaseUrl = () => (process.env.APP_BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 let transport = null;
 

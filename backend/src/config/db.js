@@ -174,6 +174,21 @@ const createSchemaSql = `
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS content_id INTEGER REFERENCES content(id) ON DELETE SET NULL;
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS drafted_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+
+  -- A device signed up for notifications. The endpoint is the push service's
+  -- own address for that device, which is why it, and not the user, is unique:
+  -- one learner may use Baho on a phone and on a shared computer.
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- The day a repeating reminder was last emailed, so it goes out once a day.
+  ALTER TABLE reminders ADD COLUMN IF NOT EXISTS last_sent_on DATE;
 `;
 
 const seedTables = async () => {

@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { defaultCategories, offlineLessons } from '../data/healthContent';
-import type { Category, Curriculum, Interest, IssueReport, Lesson, QuestionItem, QuizQuestion, QuizScore, Reminder } from '../types';
+import type { Category, Curriculum, Interest, IssueReport, Lesson, QuestionItem, QuestionStatus, QuizQuestion, QuizScore, Reminder } from '../types';
 
 export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'profile' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'privacy' | 'admin';
 
@@ -265,8 +265,8 @@ const appSlice = createSlice({
     },
     // `status` is the question's new state: a writer's save leaves it Drafted,
     // a specialist's approval makes it Answered.
-    answerQuestionSuccess: (state, action: PayloadAction<{ id: number; answer: string; status?: string }>) => {
-      const status = action.payload.status ?? 'Answered';
+    answerQuestionSuccess: (state, action: PayloadAction<{ id: number; answer: string; status?: QuestionStatus }>) => {
+      const status: QuestionStatus = action.payload.status ?? 'Answered';
       state.questions = state.questions.map((item) =>
         item.id === action.payload.id ? { ...item, status, answer: action.payload.answer } : item
       );
@@ -310,6 +310,11 @@ const appSlice = createSlice({
       state.authForm = emptyAuthForm;
       state.feedbackMessage = '';
       state.currentScreen = isStaff ? 'admin' : 'dashboard';
+    },
+    // A learner adding or removing their optional email address. Only that field
+    // changes, so the screen they are on does not move under them.
+    setAccountEmail: (state, action: PayloadAction<string | null>) => {
+      if (state.authUser) state.authUser = { ...state.authUser, email: action.payload };
     },
     clearAuthenticatedUser: (state) => {
       state.authToken = null;
@@ -387,6 +392,7 @@ export const {
   markLessonComplete,
   updateAuthForm,
   setAuthMode,
+  setAccountEmail,
   setAuthenticatedUser,
   clearAuthenticatedUser,
   setFeedbackMessage,

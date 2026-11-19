@@ -175,5 +175,19 @@ export const api = {
     request<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify(payload)
+    }),
+  // A learner's optional email address, used only to say a reply is waiting.
+  // Passing an empty string removes it.
+  // Notifications on the device itself.
+  getPushKey: () => request<{ key: string | null; enabled: boolean }>('/push/key'),
+  getPushStatus: () => request<{ enabled: boolean; devices: boolean }>('/push/status'),
+  subscribePush: (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    request<{ message: string }>('/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription }) }),
+  unsubscribePush: (endpoint: string) =>
+    request<{ message: string }>('/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) }),
+  setMyEmail: (email: string) =>
+    request<{ message: string; user: { id: number; name: string; email: string | null; phone: string | null; role: string } }>('/profile/email', {
+      method: 'PATCH',
+      body: JSON.stringify({ email })
     })
 };

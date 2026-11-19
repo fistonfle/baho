@@ -1023,3 +1023,79 @@ test('A learner changes their own PIN, and staff their own password', async () =
     server.close();
   }
 });
+
+// A learner may add an email address so Baho can tell them a reply has arrived
+// and send the reminders they set. It is optional, unique, and theirs to remove.
+test('A learner can add and remove an optional email address', async () => {
+  const { server, baseUrl } = await startServer();
+  const patchJson = (url, body, token) => fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  });
+
+  try {
+    const signIn = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '2468' });
+    assert.equal(signIn.status, 200, await signIn.clone().text());
+    const learner = (await signIn.json()).token;
+
+    assert.equal((await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'not-an-address' }, learner)).status, 400);
+
+    const saved = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'Learner.One@Example.Test' }, learner);
+    assert.equal(saved.status, 200, await saved.clone().text());
+    // Stored in one case, so it cannot be taken twice by a difference of capitals.
+    assert.equal((await saved.json()).user.email, 'learner.one@example.test');
+
+    // It is a real sign-in identity, which is why it has to stay unique.
+    const byEmail = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: 'learner.one@example.test', password: '2468' });
+    assert.equal(byEmail.status, 200, await byEmail.clone().text());
+
+    const second = await postJson(`${baseUrl}/api/v1/auth/register`, { name: 'Learner Two', phone: '0788000111', pin: '1357' });
+    assert.equal(second.status, 201, await second.clone().text());
+    const taken = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'learner.one@example.test' }, (await second.json()).token);
+    assert.equal(taken.status, 409);
+
+    // Staff sign in with their email address, so this is not the way to change it.
+    assert.equal((await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'elsewhere@example.test' }, adminToken)).status, 403);
+
+    const removed = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: '' }, learner);
+    assert.equal(removed.status, 200, await removed.clone().text());
+    assert.equal((await removed.json()).user.email, null);
+
+    assert.equal((await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'x@example.test' })).status, 401);
+  } finally {
+    server.close();
+  }
+});
+
+// Web push. Demo mode is the offline mode, so notifications are off in it and
+// these check that the endpoints say so plainly instead of half working, and
+// that nothing about a device can be registered without signing in.
+test('Push notifications are declared off when the server is not set up for them', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    const key = await fetch(`${baseUrl}/api/v1/push/key`);
+    assert.equal(key.status, 200);
+    const published = await key.json();
+    assert.equal(published.enabled, false);
+    assert.equal(published.key, null);
+
+    const signIn = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: '0781234567', password: '2468' });
+    const learner = (await signIn.json()).token;
+
+    const status = await fetch(`${baseUrl}/api/v1/push/status`, { headers: { Authorization: `Bearer ${learner}` } });
+    assert.equal(status.status, 200);
+    assert.deepEqual(await status.json(), { enabled: false, devices: false });
+
+    const device = { endpoint: 'https://push.example.test/abc', keys: { p256dh: 'key', auth: 'auth' } };
+    const offered = await postJson(`${baseUrl}/api/v1/push/subscribe`, { subscription: device }, learner);
+    assert.equal(offered.status, 503, await offered.clone().text());
+
+    // A device can never be attached to an account that is not signed in.
+    assert.equal((await postJson(`${baseUrl}/api/v1/push/subscribe`, { subscription: device })).status, 401);
+    assert.equal((await fetch(`${baseUrl}/api/v1/push/status`)).status, 401);
+    assert.equal((await postJson(`${baseUrl}/api/v1/push/unsubscribe`, { endpoint: device.endpoint })).status, 401);
+  } finally {
+    server.close();
+  }
+});

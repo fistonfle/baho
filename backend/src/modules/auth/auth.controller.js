@@ -6,7 +6,7 @@ import { inMemoryStore } from '../../config/store.js';
 import { loginGuard, PhoneNumber } from './phone.js';
 import { createToken, hashPassword, verifyPassword } from './security.js';
 import { consumeResetToken, createResetToken, clearResetTokens, tokenTtlMinutes } from './reset.service.js';
-import { sendMail } from '../mail/mailer.js';
+import { appBaseUrl, sendMail } from '../mail/mailer.js';
 import { setSpecialistTopics, topicsByUser } from '../review/review.service.js';
 
 const staffRoles = ['creator', 'specialist', 'admin'];
@@ -224,8 +224,6 @@ export const register = async (req, res) => {
 // email. Learners sign in with a phone number and have no address on file, so
 // these endpoints only ever match a staff account; recovering a forgotten PIN
 // is not built yet.
-
-const appBaseUrl = () => (process.env.APP_BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 const resetLink = (token) => `${appBaseUrl()}/?reset=${token}`;
 
@@ -530,4 +528,47 @@ export const changePassword = async (req, res) => {
   // Any reset link that is still in an inbox stops working.
   await clearResetTokens(user.id);
   return res.json({ message: usesPin ? 'Your PIN has been changed' : 'Your password has been changed' });
+};
+
+// A learner may add an email address so Baho can tell them a reply to their
+// question has arrived. It is optional, it can be removed at any time, and the
+// message it carries says only that a reply is waiting: the disease, the
+// question and the answer never leave the app. This is a stand-in until SMS is
+// available, which is the channel a rural learner actually reads.
+export const updateMyEmail = async (req, res) => {
+  const raw = req.body?.email;
+  const clearing = raw === null || String(raw ?? '').trim() === '';
+  const email = clearing ? null : normalizedEmail(raw);
+
+  if (!clearing && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ message: 'Enter a valid email address' });
+  }
+
+  const done = (user) => res.json({
+    message: clearing ? 'Your email address has been removed' : 'Your email address has been saved',
+    user: publicUser(user, 'learner')
+  });
+
+  try {
+    const result = await pool.query(
+      'UPDATE users SET email = $1 WHERE id = $2 RETURNING id, full_name, email, phone, preferred_language',
+      [email, req.user.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ message: 'Account not found' });
+    return done(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'That email address is already used by another account' });
+    }
+    if (!isDatabaseUnavailable(error)) {
+      return res.status(503).json({ message: 'Could not save the email address' });
+    }
+    const user = inMemoryStore.users.find((entry) => entry.id === req.user.id);
+    if (!user) return res.status(404).json({ message: 'Account not found' });
+    if (email && inMemoryStore.users.some((entry) => entry.id !== user.id && entry.email === email)) {
+      return res.status(409).json({ message: 'That email address is already used by another account' });
+    }
+    user.email = email;
+    return done(user);
+  }
 };

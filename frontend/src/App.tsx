@@ -36,6 +36,7 @@ import {
   setActiveCategory,
   setAdminContent,
   setAdminCreators,
+  setAccountEmail,
   setAuthenticatedUser,
   setAuthMode,
   setCompletedLessons,
@@ -499,6 +500,22 @@ function App() {
     }
   };
 
+  // A learner's optional email address. Returns null when it saved, or the
+  // message to show when it did not.
+  const saveMyEmail = async (email: string): Promise<string | null> => {
+    try {
+      const response = await api.setMyEmail(email);
+      dispatch(setAccountEmail(response.user.email));
+      localStorage.setItem('baho-user', JSON.stringify(response.user));
+      return null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('already used')) return 'Iyi meyili isanzwe ikoreshwa na konti indi.';
+      if (message.includes('valid email')) return 'Andika imeyili yuzuye, urugero izina@urugero.com.';
+      return 'Ntibyakunze. Ongera ugerageze.';
+    }
+  };
+
   const signOut = () => {
     setAuthToken(null);
     localStorage.removeItem('baho-token');
@@ -634,6 +651,7 @@ function App() {
             interests={selectedInterests}
             healthProfile={healthProfile}
             onRename={(name) => { dispatch(setUserName(name)); notify('Izina ryahinduwe.'); }}
+            onSaveEmail={saveMyEmail}
             onEditInterests={() => navigate('onboarding')}
             onEditHealthProfile={() => navigate('risk')}
             onClearHealthProfile={() => void clearHealthProfile()}

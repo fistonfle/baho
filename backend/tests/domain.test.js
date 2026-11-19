@@ -5,6 +5,7 @@ import test from 'node:test';
 import { LessonWorkflow } from '../src/domain/LessonWorkflow.js';
 import { LoginGuard, PhoneNumber } from '../src/modules/auth/phone.js';
 import { MediaStore } from '../src/modules/media/MediaStore.js';
+import { kigaliNow } from '../src/modules/reminders/reminder.mailer.js';
 
 test('LessonWorkflow holds every publish request in review, whatever the disease', () => {
   const workflow = new LessonWorkflow();
@@ -75,4 +76,13 @@ test('MediaStore recognises recordings by their first bytes', () => {
   assert.equal(MediaStore.detect(pad(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])))?.extension, 'webm');
   assert.equal(MediaStore.detect(pad(Buffer.from('<html>'))), null, 'a web page is not audio');
   assert.equal(MediaStore.detect(Buffer.from('ID3')), null, 'too short');
+});
+
+test('Reminder times are read on the clock a learner in Rwanda is looking at', () => {
+  // 06:30 UTC is 08:30 in Kigali, which is UTC+2 the whole year round.
+  assert.deepEqual(kigaliNow(new Date('2026-03-14T06:30:00Z')), { date: '2026-03-14', time: '08:30' });
+  // Late evening UTC has already become the next day in Kigali.
+  assert.deepEqual(kigaliNow(new Date('2026-03-14T22:10:00Z')), { date: '2026-03-15', time: '00:10' });
+  // Midnight reads as 00:00, not 24:00.
+  assert.equal(kigaliNow(new Date('2026-03-14T22:00:00Z')).time, '00:00');
 });
