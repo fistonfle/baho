@@ -76,7 +76,10 @@ export function SpecialistWorkspace({ tab }: { tab: 'pending' | 'history' }) {
                     </div>
                   )}
                 </td>
-                <td>{lesson.creatorName || 'Admin'}</td>
+                {/* An administrator cannot write a lesson, so a lesson with no
+                    recorded writer is one whose author was never stored, not
+                    one the administrator wrote. */}
+                <td>{lesson.creatorName || '–'}</td>
                 <td>
                   <LessonStatusBadge status={lesson.status} />
                   {lesson.reviewNote && tab === 'history' && <div className="small muted" style={{ marginTop: 4 }}>{lesson.reviewNote}</div>}

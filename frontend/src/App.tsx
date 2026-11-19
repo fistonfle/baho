@@ -124,8 +124,14 @@ function App() {
   // A staff member who opens the link from a password-reset email arrives at
   // /?reset=<token>; the token is taken out of the address so it is not left in
   // the history or shared by accident.
-  const [resetToken, setResetToken] = useState<string | null>(null);
-  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  //
+  // This is read while the first render is being set up, not in an effect,
+  // because restoring a saved session also decides which screen to open. Read
+  // later, the address has already been cleaned and the session would send the
+  // visitor to the dashboard, closing the reset form in front of them.
+  const linkToken = useRef<string | null>(new URLSearchParams(window.location.search).get('reset'));
+  const [resetToken, setResetToken] = useState<string | null>(linkToken.current);
+  const [showPasswordReset, setShowPasswordReset] = useState(Boolean(linkToken.current));
   const [streak, setStreak] = useState(getStreak);
   const [knowledgeResults, setKnowledgeResults] = useState(loadKnowledgeResults);
   const [pendingIssues, setPendingIssues] = useState(() => getOutbox().length);
@@ -135,10 +141,7 @@ function App() {
   const navigate = (screen: Screen) => dispatch(setCurrentScreen(screen));
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('reset');
-    if (!token) return;
-    setResetToken(token);
-    setShowPasswordReset(true);
+    if (!linkToken.current) return;
     setStaffSignIn(true);
     dispatch(setCurrentScreen('auth'));
     window.history.replaceState({}, '', window.location.pathname);
@@ -158,7 +161,13 @@ function App() {
       dispatch(setUserName(profile.name));
       dispatch(setSelectedInterests(profile.interests));
     }
-    if (token && savedUser) {
+    // Somebody following a reset link is choosing a password, which may well be
+    // for a different account than the one this device last signed in as. The
+    // saved session is left where it is and the form stays in front of them;
+    // the next ordinary visit restores it as usual.
+    if (linkToken.current) {
+      // Nothing to restore here.
+    } else if (token && savedUser) {
       try {
         const user = JSON.parse(savedUser);
         setAuthToken(token);
@@ -167,8 +176,8 @@ function App() {
         localStorage.removeItem('baho-token');
         localStorage.removeItem('baho-user');
       }
-    } else {
-      if (profile) dispatch(setCurrentScreen('dashboard'));
+    } else if (profile) {
+      dispatch(setCurrentScreen('dashboard'));
     }
     loadSecure<HealthProfile>('health-profile').then(async (profile) => {
       if (profile) return setHealthProfile(profile);
