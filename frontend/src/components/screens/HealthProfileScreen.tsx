@@ -100,7 +100,8 @@ export function HealthProfileScreen({
             {tags.length === 0
               ? <p><strong>Nta byago bikomeye bigaragaye.</strong> Komeza imibereho myiza kandi wipimishe buri mwaka.</p>
               : <>
-                <p><strong>Tuzagushyirira imbere amasomo kuri izi ngingo:</strong> {tags.join(', ')}.</p>
+                <p style={{ marginBottom: 8 }}><strong>Tuzagushyirira imbere amasomo kuri izi ngingo:</strong></p>
+                <div className="tags" style={{ marginBottom: 10 }}>{tags.map((tag) => <span key={tag} className="tag tag-brand">{tag}</span>)}</div>
                 {tags.length >= 3 && <p>Turakugira inama yo kwipimisha umuvuduko w'amaraso n'isukari ku kigo nderabuzima.</p>}
               </>}
           </div>

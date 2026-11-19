@@ -45,8 +45,11 @@ export function NcdScreen({
               {diseases.map((item, index) => (
                 <li key={item.id}>
                   <button className={`list-button ${disease.id === item.id ? 'current' : ''}`} aria-pressed={disease.id === item.id} onClick={() => onSelectTopic(index)}>
-                    <span className="grow"><strong>{item.condition}</strong><small>Amasomo {item.lessonIds.length}</small></span>
-                    {chosenIds.includes(item.id) && <span className="badge badge-info">Wahisemo</span>}
+                    <span className="grow">
+                      <strong>{item.condition}</strong>
+                      <span className="meta"><span className="meta-item">Amasomo {item.lessonIds.length}</span></span>
+                    </span>
+                    {chosenIds.includes(item.id) && <span className="badge badge-info">Warihisemo</span>}
                   </button>
                 </li>
               ))}

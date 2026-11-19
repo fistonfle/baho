@@ -45,7 +45,10 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
             {levelExercises.map((exercise) => (
               <li key={exercise.id}>
                 <button className={`list-button ${selected.id === exercise.id ? 'current' : ''}`} onClick={() => setOpenId(exercise.id)}>
-                  <span className="grow"><strong>{exercise.title}</strong><small>Iminota {exercise.minutes}</small></span>
+                  <span className="grow">
+                    <strong>{exercise.title}</strong>
+                    <span className="meta"><span className="meta-item">Iminota {exercise.minutes}</span></span>
+                  </span>
                   {doneIds.includes(exercise.id) && <span className="badge badge-success">Wabikoze</span>}
                 </button>
               </li>
@@ -55,7 +58,13 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
 
         <article className="panel">
           <div className="panel-head">
-            <div><h2>{selected.title}</h2><p>Urwego: {selected.level} · Iminota {selected.minutes}</p></div>
+            <div>
+              <h2>{selected.title}</h2>
+              <div className="meta">
+                <span className="tag tag-brand">{selected.level}</span>
+                <span className="meta-item">Iminota {selected.minutes}</span>
+              </div>
+            </div>
           </div>
           <div className="panel-body">
             <figure className="article-figure"><Photo src="/images/walking.jpg" alt="Abantu bagenda n'amaguru ku muhanda" /></figure>

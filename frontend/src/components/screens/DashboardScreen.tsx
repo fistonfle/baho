@@ -119,7 +119,10 @@ export function DashboardScreen({
                         <span className={`step-no ${done ? 'done' : current ? 'next' : ''}`}>{done ? '✓' : index + 1}</span>
                         <span className="grow">
                           <strong>{lesson.title}</strong>
-                          <small>{lesson.category} · {lesson.duration}</small>
+                          <span className="meta">
+                            <span className="tag">{lesson.category}</span>
+                            <span className="meta-item">{lesson.duration}</span>
+                          </span>
                         </span>
                         {done && <span className="badge badge-success">Warirangije</span>}
                         {current && <span className="badge badge-info">Isomo rikurikira</span>}
@@ -152,7 +155,15 @@ export function DashboardScreen({
                   <button className="list-button" onClick={() => onOpenLesson(lesson)}>
                     <span className="grow">
                       <strong>{lesson.title}</strong>
-                      <small>{lesson.category} · {lesson.duration}{reasons.length > 0 && ` · ${reasons.join(', ')}`}</small>
+                      <span className="meta">
+                        <span className="tag">{lesson.category}</span>
+                        <span className="meta-item">{lesson.duration}</span>
+                      </span>
+                      {reasons.length > 0 && (
+                        // Why this lesson was chosen reads as a sentence, so it
+                        // keeps its own line rather than trailing the minutes.
+                        <span className="meta"><span className="meta-item">{reasons.join(', ')}</span></span>
+                      )}
                     </span>
                     <span className="btn btn-secondary btn-sm">Fungura</span>
                   </button>
@@ -164,10 +175,22 @@ export function DashboardScreen({
 
         <aside className="stack">
           <Panel title="Umwirondoro w'ubuzima">
-            <p className="small">{hasRiskCheck
-              ? (riskTags.length ? `Twibanda kuri: ${riskTags.join(', ')}.` : 'Nta byago bikomeye byagaragaye.')
-              : 'Uzuza umwirondoro kugira ngo tuguhitiremo gahunda ikubereye.'}</p>
-            <p className="small muted">Ingingo wahisemo: {selectedInterests.join(', ') || 'nta n\'imwe'}.</p>
+            {hasRiskCheck && riskTags.length > 0 ? (
+              <>
+                <p className="small muted">Twibanda kuri:</p>
+                <div className="tags" style={{ marginBottom: 12 }}>
+                  {riskTags.map((tag) => <span key={tag} className="tag tag-brand">{tag}</span>)}
+                </div>
+              </>
+            ) : (
+              <p className="small">{hasRiskCheck ? 'Nta byago bikomeye byagaragaye.' : 'Uzuza umwirondoro kugira ngo tuguhitiremo gahunda ikubereye.'}</p>
+            )}
+            <p className="small muted">Ingingo wahisemo:</p>
+            {selectedInterests.length > 0 ? (
+              <div className="tags" style={{ marginBottom: 12 }}>
+                {selectedInterests.map((interest) => <span key={interest} className="tag">{interest}</span>)}
+              </div>
+            ) : <p className="small muted">Nta n'imwe.</p>}
             <div className="row">
               <button className="btn btn-secondary btn-sm" onClick={onViewRiskCheck}>{hasRiskCheck ? 'Hindura umwirondoro' : 'Uzuza umwirondoro'}</button>
               <button className="btn-link small" onClick={onEditInterests}>Hindura ingingo</button>

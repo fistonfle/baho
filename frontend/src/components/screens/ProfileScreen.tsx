@@ -332,7 +332,9 @@ export function ProfileScreen({
             ) : <p className="muted small">Nta gahunda urahitamo.</p>}
           </Panel>
           <Panel title="Ingingo nkurikirana" actions={<button className="btn-link small" onClick={onEditInterests}>Hindura</button>}>
-            <p className="small">{interests.length ? interests.join(', ') : 'Nta ngingo wahisemo.'}</p>
+            {interests.length ? (
+              <div className="tags">{interests.map((interest) => <span key={interest} className="tag">{interest}</span>)}</div>
+            ) : <p className="small muted">Nta ngingo wahisemo.</p>}
           </Panel>
           {isLearner && (
             <Panel title="Kumenyeshwa">
@@ -362,7 +364,13 @@ export function ProfileScreen({
             <p className="small muted">Bibitswe kuri iyi telefoni gusa, bihishwe. Ntibyoherezwa kuri seriveri, nubwo waba ufite konti.</p>
             {hasHealthProfile ? (
               <>
-                <p className="small">Indwara: {healthProfile.conditions.length ? healthProfile.conditions.join(', ') : 'Nta na imwe'}<br />Ibibazo byasubijwe: {answeredQuestions} kuri 6</p>
+                {healthProfile.conditions.length ? (
+                  <>
+                    <p className="small muted" style={{ marginBottom: 6 }}>Indwara:</p>
+                    <div className="tags">{healthProfile.conditions.map((condition) => <span key={condition} className="tag tag-brand">{condition}</span>)}</div>
+                  </>
+                ) : <p className="small muted">Indwara: nta na imwe.</p>}
+                <p className="small muted" style={{ marginTop: 10 }}>Ibibazo byasubijwe: {answeredQuestions} kuri 6</p>
                 <div className="row">
                   <button className="btn btn-secondary btn-sm" onClick={onEditHealthProfile}>Hindura</button>
                   <button className="btn btn-danger btn-sm" onClick={() => { if (window.confirm('Gusiba umwirondoro w\'ubuzima kuri iyi telefoni?')) onClearHealthProfile(); }}>Siba</button>

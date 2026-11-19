@@ -90,7 +90,10 @@ export function LibraryScreen({
                   <button className={`list-button ${selectedLesson.id === lesson.id ? 'current' : ''}`} onClick={() => { setSelectedLesson(lesson); scrollToPlayer(); }}>
                     <span className="grow">
                       <strong>{lesson.title}</strong>
-                      <small>{lesson.category} · {lesson.duration}</small>
+                      <span className="meta">
+                        <span className="tag">{lesson.category}</span>
+                        <span className="meta-item">{lesson.duration}</span>
+                      </span>
                     </span>
                     {done && <span className="badge badge-success">{score ? `${score.score}/${score.total}` : 'Ryarangiye'}</span>}
                   </button>
@@ -107,8 +110,8 @@ export function LibraryScreen({
             )}
             <h2 style={{ fontSize: '1.4rem' }}>{selectedLesson.title}</h2>
             <div className="article-meta">
-              <span>Icyiciro: {selectedLesson.category}</span>
-              <span>Igihe: {selectedLesson.duration}</span>
+              <span className="tag tag-brand">{selectedLesson.category}</span>
+              <span className="meta-item">{selectedLesson.duration}</span>
               {isComplete && <span className="badge badge-success">Warirangije</span>}
             </div>
             <div className="article-body">

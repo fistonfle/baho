@@ -168,6 +168,21 @@ textarea.input { min-height: 110px; resize: vertical; }
 .badge-warning { border-color: #ecd3a4; background: var(--warning-tint); color: var(--warning); }
 .badge-danger { border-color: #e9beb7; background: var(--danger-tint); color: var(--danger); }
 .badge-info { border-color: #bcd2ea; background: var(--info-tint); color: var(--info); }
+
+/* Tags: a list of topics or diseases is a list of separate things, and a line
+   of commas does not read that way on a phone. Same shape as a badge, quieter,
+   so the two never compete in one panel. */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface-alt); color: var(--text); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+.tag-brand { border-color: #b9d2c9; background: var(--brand-tint); color: var(--brand); }
+.tag-muted { background: var(--surface); color: var(--muted); font-weight: 500; }
+
+/* The line under a title: what the thing is, then how long it takes. The
+   stylesheet draws the separator, so no screen has to spell out a dot and a
+   missing piece never leaves one stranded. */
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.meta-item { color: var(--muted); font-size: 0.78rem; }
+.meta-item + .meta-item::before { content: '\00b7'; margin-right: 6px; color: var(--line-strong); }
 .alert { padding: 12px 16px; border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); background: var(--surface-alt); font-size: 0.9rem; }
 .alert-info { border-color: #bcd2ea; border-left-color: var(--info); background: var(--info-tint); }
 .alert-warning { border-color: #ecd3a4; border-left-color: #c47f0e; background: var(--warning-tint); }
@@ -205,6 +220,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .list-button .grow { flex: 1; min-width: 0; }
 .list-button strong { display: block; color: var(--ink); font-weight: 600; }
 .list-button small { color: var(--muted); }
+.list-button .meta { margin-top: 3px; }
 .step-no { display: grid; width: 26px; height: 26px; flex: none; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
 .step-no.done { border-color: var(--success); background: var(--success); color: #fff; }
 .step-no.next { border-color: var(--brand); color: var(--brand); }
@@ -222,7 +238,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 /* ---------- Article (lesson) ---------- */
 .article-figure { margin: 0 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .article-figure img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: cover; }
-.article-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 16px; color: var(--muted); font-size: 0.85rem; }
+.article-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 16px; color: var(--muted); font-size: 0.85rem; }
 .article-body p { color: var(--text); font-size: 1rem; line-height: 1.75; }
 .section-title { margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 1rem; }
 

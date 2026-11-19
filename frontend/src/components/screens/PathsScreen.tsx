@@ -48,7 +48,7 @@ export function PathsScreen({
                           {active && <span className="badge badge-success">Uri kuyiga</span>}
                         </div>
                       </td>
-                      <td>{curriculum.condition ?? 'Kwirinda muri rusange'}</td>
+                      <td><span className="tag tag-brand">{curriculum.condition ?? 'Kwirinda muri rusange'}</span></td>
                       <td style={{ minWidth: 140 }}>
                         <div className="small">{done} kuri {total}</div>
                         <div className="progress"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
