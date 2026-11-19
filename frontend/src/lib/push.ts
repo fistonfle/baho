@@ -33,12 +33,24 @@ const registration = async () => {
   return navigator.serviceWorker.ready.catch(() => null);
 };
 
+const asPayload = (subscription: PushSubscription) =>
+  subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+
+// Reading the state also repairs it. The browser keeps its subscription even
+// when the server has lost the matching row, after a database restore or a
+// sign-in on a device that subscribed while signed in as somebody else. Left
+// alone, the screen would say notifications are on while nothing could ever
+// arrive, so an existing subscription is handed to the server again here. The
+// server stores it against the endpoint, so repeating it changes nothing.
 export const pushState = async (): Promise<PushState> => {
   if (!pushSupported()) return 'unsupported';
   if (Notification.permission === 'denied') return 'blocked';
   const worker = await registration();
   if (!worker) return 'unsupported';
-  return (await worker.pushManager.getSubscription()) ? 'on' : 'off';
+  const subscription = await worker.pushManager.getSubscription();
+  if (!subscription) return 'off';
+  await api.subscribePush(asPayload(subscription)).catch(() => undefined);
+  return 'on';
 };
 
 // Returns null when the device is now subscribed, or a reason it is not.
@@ -63,7 +75,7 @@ export const enablePush = async (): Promise<string | null> => {
     applicationServerKey: toBytes(key)
   });
 
-  await api.subscribePush(subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } });
+  await api.subscribePush(asPayload(subscription));
   return null;
 };
 
