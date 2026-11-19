@@ -321,6 +321,36 @@ const appSlice = createSlice({
       state.authUser = null;
       state.currentScreen = 'landing';
     },
+    // Everything the person who just signed out was able to see, emptied in one
+    // step. A borrowed or shared phone is the ordinary case for Baho, so what
+    // one account loaded must not still be sitting in memory for whoever picks
+    // the phone up next: a staff list carries colleagues' names and email
+    // addresses, and a learner's questions are about their own health.
+    clearSessionData: (state) => {
+      state.adminContent = [];
+      state.adminCreators = [];
+      state.issues = [];
+      state.questions = [];
+      state.answerDrafts = {};
+      state.editingContentId = null;
+      state.contentForm = emptyContentForm;
+      state.creatorForm = emptyCreatorForm;
+      state.questionForm = { topic: 'Umuvuduko w\'amaraso', question: '' };
+      state.faqForm = { question: '', answer: '' };
+      state.issueForm = { title: '', description: '' };
+      state.feedbackMessage = '';
+    },
+    // The learner data held in memory, so an account never opens on top of
+    // whatever a guest on this phone had been doing. The guest's own copy stays
+    // in storage untouched and comes back when the account signs out.
+    clearLearnerData: (state) => {
+      state.userName = '';
+      state.selectedInterests = [];
+      state.completedLessons = [];
+      state.quizScores = [];
+      state.reminders = [];
+      state.riskTags = [];
+    },
     setFeedbackMessage: (state, action: PayloadAction<string>) => {
       state.feedbackMessage = action.payload;
     },
@@ -392,6 +422,8 @@ export const {
   markLessonComplete,
   updateAuthForm,
   setAuthMode,
+  clearLearnerData,
+  clearSessionData,
   setAccountEmail,
   setAuthenticatedUser,
   clearAuthenticatedUser,

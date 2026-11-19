@@ -24,10 +24,13 @@ import { ALL, emptyHealthProfile, learnerTopics, MINE, orderDiseases, pathProgre
 import { loadSecure, removeSecure, saveSecure } from './lib/secureStore';
 import { api, setAuthToken } from './services/api';
 import {
+  type AuthUser,
   addIssueLocal,
   addQuestionLocal,
   addReminder as addReminderAction,
   clearAuthenticatedUser,
+  clearLearnerData,
+  clearSessionData,
   defaultFaqItems,
   defaultReminders,
   readGuestData,
@@ -68,6 +71,11 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import type { Category, Curriculum, Lesson, QuestionItem, QuestionStatus } from './types';
 
 const PROFILE_KEY = 'baho-profile';
+// The learner's name and chosen topics are held on this device only; the
+// server never sees them. A guest and every account that signs in on the same
+// phone therefore need a copy each, or an account opens on the guest's topics
+// and then saves its own over them.
+const profileKey = (userId?: number | null) => (userId ? `${PROFILE_KEY}-${userId}` : PROFILE_KEY);
 const PATH_KEY = 'baho-active-path';
 const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'privacy', 'risk'];
 
@@ -156,27 +164,35 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('baho-token');
     const savedUser = localStorage.getItem('baho-user');
-    const profile = loadCache<{ name: string; interests: typeof selectedInterests }>(PROFILE_KEY);
-    if (profile) {
-      dispatch(setUserName(profile.name));
-      dispatch(setSelectedInterests(profile.interests));
-    }
     // Somebody following a reset link is choosing a password, which may well be
     // for a different account than the one this device last signed in as. The
     // saved session is left where it is and the form stays in front of them;
     // the next ordinary visit restores it as usual.
-    if (linkToken.current) {
-      // Nothing to restore here.
-    } else if (token && savedUser) {
+    let session: AuthUser | null = null;
+    if (!linkToken.current && token && savedUser) {
       try {
-        const user = JSON.parse(savedUser);
-        setAuthToken(token);
-        dispatch(setAuthenticatedUser({ token, user }));
+        session = JSON.parse(savedUser) as AuthUser;
       } catch {
         localStorage.removeItem('baho-token');
         localStorage.removeItem('baho-user');
       }
-    } else if (profile) {
+    }
+    // Staff have no learner profile, and must not be shown the one belonging to
+    // whoever uses this phone as a learner.
+    const staffSession = ['admin', 'creator', 'specialist'].includes(session?.role ?? '');
+    // An account reads only its own copy. The guest's topics stay the guest's,
+    // even on a device where the two used to share one.
+    const profile = staffSession
+      ? null
+      : loadCache<{ name: string; interests: typeof selectedInterests }>(profileKey(session?.id));
+    if (profile) {
+      dispatch(setUserName(profile.name));
+      dispatch(setSelectedInterests(profile.interests));
+    }
+    if (session && token) {
+      setAuthToken(token);
+      dispatch(setAuthenticatedUser({ token, user: session }));
+    } else if (profile && !linkToken.current) {
       dispatch(setCurrentScreen('dashboard'));
     }
     loadSecure<HealthProfile>('health-profile').then(async (profile) => {
@@ -270,8 +286,9 @@ function App() {
   }, [authUser, quizScores]);
 
   useEffect(() => {
-    if (userName.trim()) saveCache(PROFILE_KEY, { name: userName.trim(), interests: selectedInterests });
-  }, [userName, selectedInterests]);
+    if (isStaff || !userName.trim()) return;
+    saveCache(profileKey(authUser?.id), { name: userName.trim(), interests: selectedInterests });
+  }, [authUser, isStaff, userName, selectedInterests]);
 
   // Track connectivity and send queued issue reports once the connection returns.
   useEffect(() => {
@@ -502,7 +519,19 @@ function App() {
       setAuthToken(response.token);
       localStorage.setItem('baho-token', response.token);
       localStorage.setItem('baho-user', JSON.stringify(response.user));
+      // A guest may have been using this phone a minute ago. Their progress,
+      // reminders and quiz answers stay in storage, but none of it belongs to
+      // the account now opening, so the screen starts from the account's own
+      // data, which loads from the server a moment later.
+      dispatch(clearSessionData());
+      dispatch(clearLearnerData());
       dispatch(setAuthenticatedUser({ token: response.token, user: response.user }));
+      // The account's own topics, if it has chosen any on this device before.
+      // Progress, reminders and questions arrive from the server a moment later.
+      const mine = loadCache<{ name: string; interests: typeof selectedInterests }>(profileKey(response.user.id));
+      if (mine && !['admin', 'creator', 'specialist'].includes(response.user.role)) {
+        dispatch(setSelectedInterests(mine.interests));
+      }
       notify(authMode === 'register' ? 'Konti yawe yafunguwe neza.' : ['admin', 'creator', 'specialist'].includes(response.user.role) ? `Welcome, ${response.user.name}.` : 'Murakaza neza!');
     } catch (error) {
       notify(translateAuthError(error instanceof Error ? error.message : ''));
@@ -530,13 +559,20 @@ function App() {
     localStorage.removeItem('baho-token');
     localStorage.removeItem('baho-user');
     dispatch(clearAuthenticatedUser());
-    dispatch(setQuestions([]));
-    // Bring back this device's guest data; the account's data must not be saved over it.
+    // Everything that account could see goes first: lessons, the staff list,
+    // reports, and the learner questions it was holding.
+    dispatch(clearSessionData());
+    dispatch(clearLearnerData());
+    // Then this device's own guest data comes back. It was never written over
+    // while somebody was signed in, so it is exactly as the guest left it.
+    const guest = readGuestData<{ name: string; interests: typeof selectedInterests } | null>(`baho-cache-${profileKey()}`, null);
+    dispatch(setUserName(guest?.name ?? ''));
+    dispatch(setSelectedInterests(guest?.interests ?? []));
     dispatch(setCompletedLessons(readGuestData('baho-progress', [])));
     dispatch(setReminders(readGuestData('baho-reminders', defaultReminders)));
     dispatch(setQuizScores(readGuestData('baho-cache-quiz-scores', [])));
     notify('Wasohotse muri konti yawe.');
-    if (userName) navigate('dashboard');
+    navigate(guest?.name ? 'dashboard' : 'landing');
   };
 
   const reportIssue = async () => {

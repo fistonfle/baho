@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import reducer, { clearAuthenticatedUser, markLessonComplete, recordQuizScore, setAuthenticatedUser } from './appSlice';
+import reducer, { clearAuthenticatedUser, clearLearnerData, clearSessionData, markLessonComplete, recordQuizScore, setAuthenticatedUser } from './appSlice';
 
 const initial = reducer(undefined, { type: 'init' });
 const user = (role: string) => ({ token: 't', user: { id: 1, name: 'Uwase', email: null, phone: '+250781234567', role } });
@@ -24,6 +24,42 @@ describe('appSlice', () => {
     const signedOut = reducer(signedIn, clearAuthenticatedUser());
     expect(signedOut.authUser).toBeNull();
     expect(signedOut.authToken).toBeNull();
+  });
+
+  it('leaves nothing of the staff portal behind for the next person on the phone', () => {
+    const loaded = {
+      ...initial,
+      adminContent: [{ id: 1, title: 'Umuvuduko', status: 'review' }],
+      adminCreators: [{ id: 2, fullName: 'Dr Keza', email: 'keza@example.rw', role: 'specialist' }],
+      issues: [{ id: 3, title: 'Audio', description: 'Ntiyumvikana', status: 'open' }],
+      answerDrafts: { 4: 'Igisubizo' },
+      editingContentId: 1,
+      feedbackMessage: 'Saved'
+    } as unknown as typeof initial;
+    const cleared = reducer(loaded, clearSessionData());
+    expect(cleared.adminContent).toHaveLength(0);
+    expect(cleared.adminCreators).toHaveLength(0);
+    expect(cleared.issues).toHaveLength(0);
+    expect(cleared.answerDrafts).toEqual({});
+    expect(cleared.editingContentId).toBeNull();
+    expect(cleared.feedbackMessage).toBe('');
+  });
+
+  it('does not open an account on top of the guest learner data', () => {
+    const guest = {
+      ...initial,
+      userName: 'Mukamana',
+      selectedInterests: ['Umuvuduko w\'amaraso'],
+      completedLessons: [1, 2],
+      quizScores: [{ contentId: 1, score: 2, total: 2 }],
+      riskTags: ['bp']
+    } as unknown as typeof initial;
+    const cleared = reducer(guest, clearLearnerData());
+    expect(cleared.userName).toBe('');
+    expect(cleared.selectedInterests).toHaveLength(0);
+    expect(cleared.completedLessons).toHaveLength(0);
+    expect(cleared.quizScores).toHaveLength(0);
+    expect(cleared.riskTags).toHaveLength(0);
   });
 
   it('records a completed lesson only once', () => {
