@@ -74,7 +74,7 @@ export function RemindersScreen({
           <div className="panel-head"><h2>Ongeraho icyo twakibutsa</h2></div>
           <div className="panel-body">
             <div className="form-group">
-              <label htmlFor="reminder-preset">Icyitegererezo</label>
+              <label htmlFor="reminder-preset">Hitamo urugero rw'ibyo twakwibutsa</label>
               <select
                 id="reminder-preset"
                 className="input"
@@ -84,7 +84,9 @@ export function RemindersScreen({
                   if (preset) onFormChange({ label: preset.label, time: preset.time });
                 }}
               >
-                <option value="">Hitamo icyitegererezo (si ngombwa)</option>
+                {/* The resting choice: the list is a shortcut, and a learner
+                    who writes their own reminder below passes it by. */}
+                <option value="">Ntakiri muri uru rutonde</option>
                 {presets.map((preset) => <option key={preset.label} value={preset.label}>{preset.label} ({preset.time})</option>)}
               </select>
             </div>
