@@ -15,6 +15,7 @@ import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { RemindersScreen } from './components/screens/RemindersScreen';
 import { HealthProfileScreen } from './components/screens/HealthProfileScreen';
 import { PathsScreen } from './components/screens/PathsScreen';
+import { PrivacyScreen } from './components/screens/PrivacyScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { defaultCategories, offlineDiseases, offlineLessons, tipOfTheDay } from './data/healthContent';
 import { getStreak, recordActivity } from './lib/activity';
@@ -63,11 +64,11 @@ import {
   type Screen
 } from './store/appSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import type { Category, Curriculum, Lesson, QuestionItem } from './types';
+import type { Category, Curriculum, Lesson, QuestionItem, QuestionStatus } from './types';
 
 const PROFILE_KEY = 'baho-profile';
 const PATH_KEY = 'baho-active-path';
-const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'risk'];
+const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'privacy', 'risk'];
 
 const translateAuthError = (message: string) => {
   const normalized = message.toLowerCase();
@@ -80,12 +81,15 @@ const translateAuthError = (message: string) => {
   return 'Habaye ikibazo. Ongera ugerageze.';
 };
 
+const questionStatuses: QuestionStatus[] = ['Pending', 'Drafted', 'Answered'];
+
 const toQuestionItem = (item: any): QuestionItem => ({
   id: item.id,
   topic: item.topic,
   question: item.question,
-  status: item.status === 'Answered' ? 'Answered' : 'Pending',
-  answer: item.answer ?? undefined
+  status: questionStatuses.includes(item.status) ? item.status : 'Pending',
+  answer: item.answer ?? undefined,
+  contentId: item.content_id ?? item.contentId ?? undefined
 });
 
 const toLesson = (item: any, categories: Category[]): Lesson => ({
@@ -373,6 +377,31 @@ function App() {
     navigate('dashboard');
   };
 
+  // Everything this device holds, removed from the device.  The privacy page
+  // offers it so the promise it makes is a control the learner can use, not a
+  // sentence they have to trust.
+  const clearDeviceData = async () => {
+    // The encrypted health profile first, since that is what the page promises.
+    await removeSecure('health-profile');
+    await removeSecure('risk-answers');
+    // Then every other key this app owns.  The signed-in session is deliberately
+    // left alone: this button clears the device, it does not sign anybody out.
+    try {
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith('baho-') && key !== 'baho-token' && key !== 'baho-user')
+        .forEach((key) => localStorage.removeItem(key));
+    } catch { /* storage blocked: nothing was written in the first place */ }
+    // Finally the state held in memory, or the effects that persist it would
+    // write the same values straight back.
+    setHealthProfile(emptyHealthProfile);
+    setActivePathSlug(null);
+    dispatch(setUserName(''));
+    dispatch(setSelectedInterests([]));
+    dispatch(setCompletedLessons([]));
+    dispatch(setQuizScores([]));
+    dispatch(setReminders(defaultReminders));
+  };
+
   const clearHealthProfile = async () => {
     await removeSecure('health-profile');
     await removeSecure('risk-answers');
@@ -498,6 +527,19 @@ function App() {
       setPendingIssues(getOutbox().length);
       dispatch(updateIssueForm({ title: '', description: '' }));
       notify('Nta internet. Raporo izoherezwa internet nigaruka.');
+    }
+  };
+
+  // A question asked from inside a lesson carries the lesson, so the server sets
+  // the disease and the right specialist sees it.
+  const askAboutLesson = async (lessonId: number, question: string) => {
+    try {
+      const data = await api.createQuestion({ question, contentId: lessonId });
+      dispatch(addQuestionLocal(toQuestionItem(data.question)));
+      return true;
+    } catch {
+      notify('Ntibyashobotse kohereza ikibazo.');
+      return false;
     }
   };
 
@@ -657,6 +699,8 @@ function App() {
             setSelectedLesson={(lesson) => dispatch(setSelectedLesson(lesson))}
             markLessonComplete={(id) => void markLessonComplete(id)}
             submitQuiz={submitQuiz}
+            onAskAboutLesson={askAboutLesson}
+            isSignedIn={Boolean(authUser)}
             onHome={() => navigate('dashboard')}
           />
         );
@@ -708,6 +752,16 @@ function App() {
             onReportIssue={() => void reportIssue()}
             onSignIn={() => openAuth()}
             onHome={() => navigate('dashboard')}
+            onViewPrivacy={() => navigate('privacy')}
+          />
+        );
+      case 'privacy':
+        return (
+          <PrivacyScreen
+            isSignedIn={Boolean(authUser)}
+            onHome={() => navigate('dashboard')}
+            onAskQuestion={() => navigate('faq')}
+            onDeleteLocalData={clearDeviceData}
           />
         );
       case 'admin':

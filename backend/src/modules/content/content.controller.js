@@ -3,7 +3,7 @@ import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { inMemoryStore } from '../../config/store.js';
 import { attachLearningData, saveCurriculumLinks, saveQuiz, validateQuiz } from '../learning/learning.service.js';
 import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
-import { topicHasSpecialist } from '../review/review.service.js';
+import { getSpecialistTopics } from '../review/review.service.js';
 
 // draft -> review -> approved (by a specialist) -> published; rejected = changes requested.
 const isConnectionFailure = isDatabaseUnavailable;
@@ -26,10 +26,10 @@ const mapContent = (row) => ({
 
 const userName = (id) => inMemoryStore.users.find((user) => user.id === id)?.fullName ?? '';
 
-// In a topic that has a specialist, a lesson can only be published after the
-// specialist approved it; a request to publish earlier is sent to review instead.
-const allowedStatus = async (categoryId, requested, current) =>
-  new LessonWorkflow({ hasSpecialist: await topicHasSpecialist(categoryId) }).resolve(requested, current);
+// A lesson can only be published by the specialist for its disease; any other
+// request to publish is sent to review instead.
+const allowedStatus = async (_categoryId, requested, current) =>
+  new LessonWorkflow().resolve(requested, current);
 
 // Saves the optional quiz and learning-path links sent with a lesson.
 const saveLearningInput = async (contentId, body) => {
@@ -296,6 +296,14 @@ export const deleteContent = async (req, res) => {
   }
 };
 
+// Only the specialist assigned to a lesson's disease may change its status, and
+// only for that disease. The route is the one that takes a published lesson back
+// off the platform; publishing itself happens by approving a review.
+const outsideSpecialty = async (userId, categoryId) => {
+  const topics = await getSpecialistTopics(userId);
+  return !topics.includes(Number(categoryId));
+};
+
 export const updateContentStatus = async (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body || {};
@@ -303,9 +311,11 @@ export const updateContentStatus = async (req, res) => {
     return res.status(400).json({ message: 'A valid content id and status are required' });
   }
   const needsApproval = { message: 'A specialist must approve this lesson before it is published' };
+  const notYours = { message: 'This lesson is outside your specialty' };
   try {
     const current = (await pool.query('SELECT category_id, status FROM content WHERE id = $1', [id])).rows[0];
     if (!current) return res.status(404).json({ message: 'Content not found' });
+    if (await outsideSpecialty(req.user.id, current.category_id)) return res.status(403).json(notYours);
     if ((await allowedStatus(current.category_id, status, current.status)) !== status) return res.status(409).json(needsApproval);
     const result = await pool.query(
       'UPDATE content SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
@@ -317,6 +327,7 @@ export const updateContentStatus = async (req, res) => {
     if (!isConnectionFailure(error)) return res.status(503).json({ message: 'Could not update content status' });
     const content = inMemoryStore.content.find((entry) => entry.id === id);
     if (!content) return res.status(404).json({ message: 'Content not found' });
+    if (await outsideSpecialty(req.user.id, content.categoryId)) return res.status(403).json(notYours);
     if ((await allowedStatus(content.categoryId, status, content.status)) !== status) return res.status(409).json(needsApproval);
     content.status = status;
     return res.json({ message: 'Content status updated in demo mode', content });

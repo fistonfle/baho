@@ -20,7 +20,8 @@ export function FaqScreen({
   onAskQuestion,
   onReportIssue,
   onSignIn,
-  onHome
+  onHome,
+  onViewPrivacy
 }: {
   faqItems: { id?: number; question: string; answer: string }[];
   topics: string[];
@@ -35,6 +36,7 @@ export function FaqScreen({
   onReportIssue: () => void;
   onSignIn: () => void;
   onHome: () => void;
+  onViewPrivacy: () => void;
 }) {
   const [search, setSearch] = useState('');
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -151,6 +153,15 @@ export function FaqScreen({
               ))}
             </ul>
           </details>
+          <section className="panel">
+            <div className="panel-head"><h2>Ibanga ryawe</h2></div>
+            <div className="panel-body">
+              <p>Soma icyo Baho ikora n'amakuru yawe, n'icyo itabika na rimwe.</p>
+              <button type="button" className="btn btn-secondary" onClick={onViewPrivacy}>
+                Amabwiriza n'ibanga ryawe
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     </div>

@@ -13,3 +13,7 @@ backend/uploads/
 
 # Packaged submissions are built from the repository, not stored in it
 demo/*.zip
+
+# Python bytecode from the report build scripts
+__pycache__/
+*.pyc

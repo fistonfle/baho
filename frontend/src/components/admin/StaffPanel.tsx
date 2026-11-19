@@ -19,14 +19,15 @@ export function StaffPanel() {
   const creatorForm = useAppSelector((state) => state.app.creatorForm);
   const categories = useAppSelector((state) => state.app.categories);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [editTopics, setEditTopics] = useState<number[]>([]);
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
   const topicNames = (ids: number[]) => ids.map((id) => categories.find((category) => category.id === id)?.name).filter(Boolean).join(', ');
   const toggle = (ids: number[], id: number) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]);
 
   const createStaff = async () => {
-    if (!creatorForm.fullName.trim() || !creatorForm.email.trim() || creatorForm.password.length < 8) {
-      notify('Enter a full name, an email and a password of at least 8 characters.');
+    if (!creatorForm.fullName.trim() || !creatorForm.email.trim()) {
+      notify('Enter a full name and an email address.');
       return;
     }
     if (creatorForm.role === 'specialist' && creatorForm.topicIds.length === 0) {
@@ -37,12 +38,16 @@ export function StaffPanel() {
       const response = await api.createCreator({
         fullName: creatorForm.fullName.trim(),
         email: creatorForm.email.trim(),
-        password: creatorForm.password,
         role: creatorForm.role,
         topicIds: creatorForm.role === 'specialist' ? creatorForm.topicIds : []
       });
       dispatch(addCreatorLocal(response.user));
-      notify(`Account created for the new ${roleNames[creatorForm.role].toLowerCase()}.`);
+      setInviteLink(response.invite?.link ?? null);
+      notify(
+        response.invite?.delivered
+          ? `Account created. ${creatorForm.email.trim()} has been emailed a link to choose a password.`
+          : 'Account created, but email is not configured. Send them the link below yourself.'
+      );
     } catch {
       notify('Could not create the account. The email may already be in use.');
     }
@@ -117,10 +122,10 @@ export function StaffPanel() {
             <label htmlFor="staff-email">Email</label>
             <input id="staff-email" className="input" type="email" value={creatorForm.email} onChange={(event) => dispatch(updateCreatorForm({ email: event.target.value }))} required />
           </div>
-          <div className="form-group">
-            <label htmlFor="staff-password">Temporary password</label>
-            <input id="staff-password" className="input" type="password" minLength={8} value={creatorForm.password} onChange={(event) => dispatch(updateCreatorForm({ password: event.target.value }))} required />
-          </div>
+          <p className="small muted">
+            You do not set a password. Baho emails this person a one-time link and they choose
+            their own, so nobody else ever knows it.
+          </p>
           <div className="form-group">
             <label htmlFor="staff-role">Role</label>
             <select id="staff-role" className="input" value={creatorForm.role} onChange={(event) => dispatch(updateCreatorForm({ role: event.target.value }))}>
@@ -143,6 +148,12 @@ export function StaffPanel() {
             </fieldset>
           )}
           <button className="btn btn-primary" type="submit">Create account</button>
+          {inviteLink && (
+            <div className="alert alert-info" style={{ marginTop: 12 }}>
+              <p className="small">Email is not set up on this server, so the invitation was not sent. Give this link to the new staff member. It can be used once.</p>
+              <p className="small" style={{ wordBreak: 'break-all' }}><code>{inviteLink}</code></p>
+            </div>
+          )}
         </div>
       </form>
     </div>

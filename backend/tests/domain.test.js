@@ -6,25 +6,27 @@ import { LessonWorkflow } from '../src/domain/LessonWorkflow.js';
 import { LoginGuard, PhoneNumber } from '../src/modules/auth/phone.js';
 import { MediaStore } from '../src/modules/media/MediaStore.js';
 
-test('LessonWorkflow holds a publish request in review until a specialist approves', () => {
-  const withSpecialist = new LessonWorkflow({ hasSpecialist: true });
-  assert.equal(withSpecialist.resolve('published', 'draft'), 'review');
-  assert.equal(withSpecialist.resolve('published', 'review'), 'review');
-  assert.equal(withSpecialist.resolve('published', 'approved'), 'published');
-  assert.equal(withSpecialist.isHeldForReview('published', 'draft'), true);
-  assert.equal(withSpecialist.resolve('draft', 'review'), 'draft', 'other moves are not blocked');
+test('LessonWorkflow holds every publish request in review, whatever the disease', () => {
+  const workflow = new LessonWorkflow();
+  assert.equal(workflow.resolve('published', 'draft'), 'review');
+  assert.equal(workflow.resolve('published', 'review'), 'review');
+  assert.equal(workflow.resolve('published', 'rejected'), 'review');
+  assert.equal(workflow.isHeldForReview('published', 'draft'), true);
+  assert.equal(workflow.resolve('draft', 'review'), 'draft', 'other moves are not blocked');
 
-  const withoutSpecialist = new LessonWorkflow({ hasSpecialist: false });
-  assert.equal(withoutSpecialist.resolve('published', 'draft'), 'published');
-  assert.equal(withoutSpecialist.isHeldForReview('published', 'draft'), false);
+  // Lessons approved under the earlier workflow can still be published.
+  assert.equal(workflow.resolve('published', 'approved'), 'published');
+  assert.equal(workflow.resolve('published', 'published'), 'published');
+  assert.equal(workflow.isHeldForReview('published', 'approved'), false);
 });
 
-test('LessonWorkflow knows the valid statuses and what each role may set', () => {
+test('LessonWorkflow knows the valid statuses, and approval publishes', () => {
   assert.equal(LessonWorkflow.isValid('approved'), true);
   assert.equal(LessonWorkflow.isValid('archived'), false);
   assert.deepEqual(LessonWorkflow.allowedFor('creator'), ['draft', 'review']);
-  assert.ok(LessonWorkflow.allowedFor('admin').includes('published'));
-  assert.equal(LessonWorkflow.reviewOutcome('approve'), 'approved');
+  // A specialist's approval publishes the lesson in one step: no separate
+  // administrative publish stands between the clinical decision and the learner.
+  assert.equal(LessonWorkflow.reviewOutcome('approve'), 'published');
   assert.equal(LessonWorkflow.reviewOutcome('changes'), 'rejected');
 });
 

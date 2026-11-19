@@ -91,18 +91,24 @@ export const api = {
     request<{ message: string; faq: any }>(`/admin/faqs/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   deleteFaq: (id: number) => request<{ message: string }>(`/admin/faqs/${id}`, { method: 'DELETE' }),
   getQuestions: () => request<{ questions: any[] }>('/questions'),
-  createQuestion: (payload: { topic: string; question: string }) =>
+  createQuestion: (payload: { topic?: string; question: string; contentId?: number }) =>
     request<{ message: string; question: any }>('/questions', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  answerQuestion: (id: number, answer: string) =>
-    request<{ message: string; question: any }>(`/questions/${id}/answer`, {
+  // A writer drafts; the specialist for the disease approves, which sends it.
+  draftAnswer: (id: number, answer: string) =>
+    request<{ message: string; question: any }>(`/questions/${id}/draft`, {
       method: 'POST',
       body: JSON.stringify({ answer })
     }),
-  createCreator: (payload: { fullName: string; email: string; password: string; role?: string; topicIds?: number[] }) =>
-    request<{ message: string; user: any }>('/admin/creators', {
+  answerQuestion: (id: number, answer?: string) =>
+    request<{ message: string; question: any }>(`/questions/${id}/answer`, {
+      method: 'POST',
+      body: JSON.stringify(answer === undefined ? {} : { answer })
+    }),
+  createCreator: (payload: { fullName: string; email: string; role?: string; topicIds?: number[] }) =>
+    request<{ message: string; user: any; invite?: { delivered: boolean; expiresInMinutes: number; link?: string } }>('/admin/creators', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),

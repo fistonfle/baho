@@ -16,7 +16,9 @@ const fromLines = (text: string) => text.split('\n').map((line) => line.trim()).
 
 // Admin tool to add a disease (it gets a lesson category and a learning path)
 // and to edit the information learners see in the NCD module.
-export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Curriculum) => void }) {
+// `onWriteLesson` is omitted for roles that do not write lessons, and the
+// button then does not appear at all.
+export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Curriculum) => void }) {
   const dispatch = useAppDispatch();
   const curricula = useAppSelector((state) => state.app.curricula);
   const categories = useAppSelector((state) => state.app.categories);
@@ -94,7 +96,7 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson: (disease: Cur
                   <td className="right">
                     <div className="actions">
                       <button className="btn btn-secondary btn-sm" onClick={() => startEdit(disease)}>Edit</button>
-                      <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Write lesson</button>
+                      {onWriteLesson && <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Write lesson</button>}
                     </div>
                   </td>
                 </tr>

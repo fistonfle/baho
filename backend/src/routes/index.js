@@ -2,7 +2,7 @@ import express from 'express';
 
 import { getHealth } from '../modules/health/health.controller.js';
 import { getCategories, getContent, getContentById, getFaqs, createFaq, updateFaq, deleteFaq, getAdminContent, createContent, updateContent, deleteContent, updateContentStatus } from '../modules/content/content.controller.js';
-import { getQuestions, createQuestion, answerQuestion } from '../modules/questions/questions.controller.js';
+import { getQuestions, createQuestion, answerQuestion, draftAnswer } from '../modules/questions/questions.controller.js';
 import { createIssue, getIssues, updateIssueStatus } from '../modules/issues/issues.controller.js';
 import { changePassword, createCreator, getCreators, getLearners, login, register, requestPasswordReset, resetLearnerPin, resetPassword } from '../modules/auth/auth.controller.js';
 import { authenticate, requireRole } from '../modules/auth/security.js';
@@ -30,7 +30,11 @@ router.patch('/admin/faqs/:id', authenticate, requireRole('admin'), updateFaq);
 router.delete('/admin/faqs/:id', authenticate, requireRole('admin'), deleteFaq);
 router.get('/questions', authenticate, getQuestions);
 router.post('/questions', authenticate, createQuestion);
-router.post('/questions/:id/answer', authenticate, requireRole('admin', 'creator', 'specialist'), answerQuestion);
+// A learner's health question takes the same path as a lesson: a writer drafts
+// the answer, and the specialist for that disease approves it, which is what
+// sends it to the learner.
+router.post('/questions/:id/draft', authenticate, requireRole('creator'), draftAnswer);
+router.post('/questions/:id/answer', authenticate, requireRole('specialist'), answerQuestion);
 router.post('/issues', createIssue);
 router.get('/reminders', authenticate, getReminders);
 router.post('/reminders', authenticate, createReminder);
@@ -49,11 +53,16 @@ router.post('/admin/learners/:id/pin', authenticate, requireRole('admin'), reset
 router.put('/admin/staff/:id/topics', authenticate, requireRole('admin'), putSpecialistTopics);
 router.get('/review/queue', authenticate, requireRole('specialist'), getReviewQueue);
 router.post('/review/lessons/:id', authenticate, requireRole('specialist'), reviewLesson);
-router.post('/admin/content', authenticate, requireRole('admin', 'creator'), createContent);
-router.patch('/admin/content/:id', authenticate, requireRole('admin', 'creator'), updateContent);
-router.patch('/admin/content/:id/status', authenticate, requireRole('admin'), updateContentStatus);
+// Lessons belong to writers and specialists. Writers draft them and send them
+// for review; the specialist for the disease approves, which publishes, or sends
+// the lesson back. An administrator can see every lesson, because they answer
+// for the platform, and can delete one as housekeeping, but takes no part in
+// deciding what learners are taught.
+router.post('/admin/content', authenticate, requireRole('creator'), createContent);
+router.patch('/admin/content/:id', authenticate, requireRole('creator'), updateContent);
+router.patch('/admin/content/:id/status', authenticate, requireRole('specialist'), updateContentStatus);
 router.delete('/admin/content/:id', authenticate, requireRole('admin'), deleteContent);
-router.get('/admin/content', authenticate, requireRole('admin', 'creator'), getAdminContent);
+router.get('/admin/content', authenticate, requireRole('admin', 'creator', 'specialist'), getAdminContent);
 router.get('/admin/issues', authenticate, requireRole('admin'), getIssues);
 router.patch('/admin/issues/:id', authenticate, requireRole('admin'), updateIssueStatus);
 

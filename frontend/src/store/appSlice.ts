@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { defaultCategories, offlineLessons } from '../data/healthContent';
 import type { Category, Curriculum, Interest, IssueReport, Lesson, QuestionItem, QuizQuestion, QuizScore, Reminder } from '../types';
 
-export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'profile' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'admin';
+export type Screen = 'landing' | 'auth' | 'onboarding' | 'risk' | 'paths' | 'profile' | 'dashboard' | 'library' | 'ncd' | 'checkup' | 'exercise' | 'reminders' | 'faq' | 'privacy' | 'admin';
 
 export const defaultLessons: Lesson[] = offlineLessons;
 
@@ -59,8 +59,9 @@ const emptyAuthForm: AuthForm = { name: '', identifier: '', password: '' };
 
 export type StaffMember = { id: number; fullName: string; email: string; role: string; topicIds?: number[] };
 
-type CreatorForm = { fullName: string; email: string; password: string; role: string; topicIds: number[] };
-const emptyCreatorForm: CreatorForm = { fullName: '', email: '', password: '', role: 'creator', topicIds: [] };
+// No password: a new staff member sets their own through an emailed invitation.
+type CreatorForm = { fullName: string; email: string; role: string; topicIds: number[] };
+const emptyCreatorForm: CreatorForm = { fullName: '', email: '', role: 'creator', topicIds: [] };
 
 // A guest's data is read before the first render. Loading it later in an effect
 // let the "save" effects write the empty defaults over it first.
@@ -262,9 +263,12 @@ const appSlice = createSlice({
       state.questions = [action.payload, ...state.questions];
       state.questionForm = { topic: 'Umuvuduko w\'amaraso', question: '' };
     },
-    answerQuestionSuccess: (state, action: PayloadAction<{ id: number; answer: string }>) => {
+    // `status` is the question's new state: a writer's save leaves it Drafted,
+    // a specialist's approval makes it Answered.
+    answerQuestionSuccess: (state, action: PayloadAction<{ id: number; answer: string; status?: string }>) => {
+      const status = action.payload.status ?? 'Answered';
       state.questions = state.questions.map((item) =>
-        item.id === action.payload.id ? { ...item, status: 'Answered', answer: action.payload.answer } : item
+        item.id === action.payload.id ? { ...item, status, answer: action.payload.answer } : item
       );
       delete state.answerDrafts[action.payload.id];
     },

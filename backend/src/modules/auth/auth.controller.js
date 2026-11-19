@@ -44,8 +44,13 @@ export const getCreators = async (_req, res) => {
   }
 };
 
+// Staff accounts are created without a password. Nobody, the admin included,
+// ever knows the new member's password: the row is given a random hash that
+// cannot be guessed, and the member chooses their own through an invitation
+// link sent to their email address. That link is an ordinary reset token, so
+// it is single-use, expires, and is stored only as a hash.
 export const createCreator = async (req, res) => {
-  const { fullName, email, password, role = 'creator', topicIds = [] } = req.body || {};
+  const { fullName, email, role = 'creator', topicIds = [] } = req.body || {};
 
   if (!staffRoles.includes(role)) {
     return res.status(400).json({ message: 'Role must be creator, specialist or admin' });
@@ -54,9 +59,14 @@ export const createCreator = async (req, res) => {
     return res.status(400).json({ message: 'Choose at least one topic for the specialist' });
   }
 
-  if (!fullName?.trim() || !email?.trim() || !password || String(password).length < 8) {
-    return res.status(400).json({ message: 'Full name, email and a password of at least 8 characters are required' });
+  if (!fullName?.trim() || !email?.trim() || !String(email).includes('@')) {
+    return res.status(400).json({ message: 'A full name and an email address are required' });
   }
+
+  // Not a default password and not a placeholder anyone could type: 32 random
+  // bytes that are hashed and immediately forgotten, so the only way into the
+  // account is the invitation link.
+  const unusablePassword = crypto.randomBytes(32).toString('hex');
 
   const cleanEmail = normalizedEmail(email);
 
@@ -72,7 +82,7 @@ export const createCreator = async (req, res) => {
       await client.query('BEGIN');
       const result = await client.query(
         'INSERT INTO users (full_name, email, password_hash, preferred_language) VALUES ($1, $2, $3, $4) RETURNING id, full_name AS "fullName", email, preferred_language AS "preferredLanguage"',
-        [String(fullName).trim(), cleanEmail, hashPassword(password), 'Kinyarwanda']
+        [String(fullName).trim(), cleanEmail, hashPassword(unusablePassword), 'Kinyarwanda']
       );
       user = result.rows[0];
       await client.query('INSERT INTO staff (user_id, role) VALUES ($1, $2)', [user.id, role]);
@@ -85,8 +95,13 @@ export const createCreator = async (req, res) => {
       client.release();
     }
 
+    const invite = await sendStaffInvite({ id: user.id, email: user.email, fullName: user.fullName }, role);
+
     return res.status(201).json({
-      message: 'Creator created successfully',
+      message: invite.delivered
+        ? 'Staff account created. An invitation to choose a password has been emailed.'
+        : 'Staff account created. Email is not configured, so send them the invitation link below.',
+      invite,
       user: {
         id: user.id,
         fullName: user.fullName,
@@ -109,7 +124,7 @@ export const createCreator = async (req, res) => {
       id: Date.now(),
       fullName: String(fullName).trim(),
       email: cleanEmail,
-      passwordHash: hashPassword(password),
+      passwordHash: hashPassword(unusablePassword),
       preferredLanguage: 'Kinyarwanda'
     };
 
@@ -117,8 +132,13 @@ export const createCreator = async (req, res) => {
     inMemoryStore.staff.push({ id: Date.now() + 1, userId: user.id, role });
     if (role === 'specialist') await setSpecialistTopics(user.id, topicIds);
 
+    const invite = await sendStaffInvite(user, role);
+
     return res.status(201).json({
-      message: 'Creator created successfully',
+      message: invite.delivered
+        ? 'Staff account created. An invitation to choose a password has been emailed.'
+        : 'Staff account created. Email is not configured, so send them the invitation link below.',
+      invite,
       user: {
         id: user.id,
         fullName: user.fullName,
@@ -250,6 +270,52 @@ const resetEmail = (name, link) => ({
       <p style="color:#5b6b7a">Baho — baho.filito.rw</p>
     </div>`
 });
+
+const roleLabel = { creator: 'writer', specialist: 'specialist', admin: 'administrator' };
+
+const inviteEmail = (name, link, role) => ({
+  subject: 'Your Baho staff account: choose your password',
+  text: [
+    `Hello ${name || 'there'},`,
+    '',
+    `An administrator has created a Baho staff account for you as a ${roleLabel[role] || role}.`,
+    'The account has no password yet, and nobody else can sign in to it.',
+    `Open the link below within ${tokenTtlMinutes} minutes to choose your own password:`,
+    '',
+    link,
+    '',
+    'The link can be used once. If it expires, open Baho, choose "Forgot password" and enter this email address to get a new one.',
+    '',
+    'Baho \u2014 baho.filito.rw'
+  ].join('\n'),
+  html: `
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
+      <p>Hello ${name || 'there'},</p>
+      <p>An administrator has created a Baho staff account for you as a ${roleLabel[role] || role}. The account has no password yet, and nobody else can sign in to it.</p>
+      <p>
+        <a href="${link}" style="display:inline-block;background:#0b5845;color:#ffffff;padding:12px 20px;border-radius:4px;text-decoration:none">
+          Choose your password
+        </a>
+      </p>
+      <p>The link works for ${tokenTtlMinutes} minutes and can be used once. If the button does not open, copy this address into your browser:</p>
+      <p style="word-break:break-all"><a href="${link}">${link}</a></p>
+      <p>If the link has expired, open Baho, choose &ldquo;Forgot password&rdquo; and enter this email address to get a new one.</p>
+      <p style="color:#5b6b7a">Baho \u2014 baho.filito.rw</p>
+    </div>`
+});
+
+// Issues the invitation that lets a new staff member set their first password.
+// The link is returned to the caller only when email is not configured and the
+// server is not in production, which is what makes local setup possible
+// without an SMTP account. In production it is sent and never returned.
+const sendStaffInvite = async (user, role) => {
+  const { token } = await createResetToken(user.id);
+  const link = resetLink(token);
+  const sent = await sendMail({ to: user.email, ...inviteEmail(user.fullName, link, role) });
+  const invite = { delivered: Boolean(sent.delivered), expiresInMinutes: tokenTtlMinutes };
+  if (!sent.delivered && process.env.NODE_ENV !== 'production') invite.link = link;
+  return invite;
+};
 
 // The answer is the same whether or not the address belongs to an account, so
 // this endpoint cannot be used to find out who has one.

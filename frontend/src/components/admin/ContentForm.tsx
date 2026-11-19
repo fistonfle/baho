@@ -11,13 +11,14 @@ import { imageChoices } from './shared';
 import { AudioUpload } from './AudioUpload';
 import { QuizEditor } from './QuizEditor';
 
-export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator: boolean; needsSpecialist: (categoryId: number) => boolean; onSave: (status: string) => void }) {
+// Only writers reach this form, and every lesson now goes to the specialist for
+// its disease, so there is one path through it and one thing to say about it.
+export function ContentForm({ onSave }: { onSave: (status: string) => void }) {
   const dispatch = useAppDispatch();
   const contentForm = useAppSelector((state) => state.app.contentForm);
   const editingContentId = useAppSelector((state) => state.app.editingContentId);
   const curricula = useAppSelector((state) => state.app.curricula);
   const categories = useAppSelector((state) => state.app.categories);
-  const reviewed = needsSpecialist(Number(contentForm.categoryId));
 
   const togglePath = (id: number) => dispatch(updateContentForm({
     curriculumIds: contentForm.curriculumIds.includes(id)
@@ -30,7 +31,10 @@ export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator:
       <div className="panel-head">
         <div>
           <h2>{editingContentId ? 'Edit lesson' : 'New lesson'}</h2>
-          <p>{reviewed ? 'This topic has a specialist: the lesson must be approved by them before it is published.' : 'This topic has no specialist: an admin publishes the lesson after reading it.'}</p>
+          <p>
+            The specialist for this disease has to approve the lesson, and their approval
+            publishes it. Until a specialist is assigned to the disease, the lesson waits.
+          </p>
         </div>
         {editingContentId && <StatusBadge label="Editing" tone="info" />}
       </div>
@@ -95,14 +99,7 @@ export function ContentForm({ isCreator, needsSpecialist, onSave }: { isCreator:
       </div>
       <div className="panel-foot form-actions creator-form-actions">
         <button type="button" className="btn btn-secondary" onClick={() => onSave('draft')}>Save as draft</button>
-        {isCreator
-          ? <button type="submit" className="btn btn-primary">Submit for review</button>
-          : reviewed
-            ? <button type="submit" className="btn btn-primary">Send to specialist</button>
-            : <>
-              <button type="submit" className="btn btn-secondary">Move to review</button>
-              <button type="button" className="btn btn-primary" onClick={() => onSave('published')}>Publish</button>
-            </>}
+        <button type="submit" className="btn btn-primary">Send to specialist</button>
         {editingContentId && (
           <button type="button" className="btn btn-link" onClick={() => { dispatch(setEditingContentId(null)); dispatch(updateContentForm(emptyContentForm)); }}>
             Cancel editing

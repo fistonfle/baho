@@ -57,10 +57,16 @@ export type IssueReport = {
   status: string;
 };
 
+// Pending: nobody has drafted an answer. Drafted: a writer has, and the
+// specialist for the disease has still to approve it. Answered: the learner
+// can see it. `contentId` is set when the question was asked from a lesson.
+export type QuestionStatus = 'Pending' | 'Drafted' | 'Answered';
+
 export type QuestionItem = {
   id: number;
   topic: string;
   question: string;
-  status: 'Pending' | 'Answered';
+  status: QuestionStatus;
   answer?: string;
+  contentId?: number;
 };

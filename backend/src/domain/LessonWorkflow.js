@@ -1,6 +1,11 @@
-// The life of a lesson: draft → review → approved (by a specialist) → published,
-// with "rejected" meaning changes were requested. One class owns these rules so the
-// content and review modules cannot drift apart.
+// The life of a lesson: draft → review → published, with the specialist assigned
+// to the disease being the one who publishes it, and "rejected" meaning changes
+// were requested. One class owns these rules so the content and review modules
+// cannot drift apart.
+//
+// "approved" remains a valid status because lessons approved under the earlier
+// workflow still carry it, but nothing sets it any more: a specialist's approval
+// publishes the lesson in one step.
 export class LessonWorkflow {
   static statuses = Object.freeze(['draft', 'review', 'approved', 'published', 'rejected']);
 
@@ -15,21 +20,20 @@ export class LessonWorkflow {
     return LessonWorkflow.#roleStatuses[role] ?? LessonWorkflow.statuses;
   }
 
-  // A specialist's decision on a lesson in review.
+  // A specialist's decision on a lesson in review. Approval publishes it: the
+  // specialist is the clinical authority, so no further step adds anything.
   static reviewOutcome(decision) {
-    return decision === 'approve' ? 'approved' : 'rejected';
+    return decision === 'approve' ? 'published' : 'rejected';
   }
 
-  // hasSpecialist: whether the lesson's topic (disease) has an assigned specialist.
-  constructor({ hasSpecialist }) {
-    this.hasSpecialist = Boolean(hasSpecialist);
-  }
-
-  // The status a lesson really gets when someone asks for `requested`. Publishing a
-  // lesson on a topic with a specialist is held in review until it is approved.
+  // The status a lesson really gets when someone asks for `requested`. Every
+  // request to publish is held in review until the specialist for that disease
+  // approves it. A disease with no specialist therefore has no route to
+  // publication, which is deliberate: nothing reaches a learner without a named
+  // clinical reviewer behind it.
   resolve(requested, current = null) {
     if (requested !== 'published' || ['approved', 'published'].includes(current)) return requested;
-    return this.hasSpecialist ? 'review' : requested;
+    return 'review';
   }
 
   // True when the request was held back, so the API can explain why.

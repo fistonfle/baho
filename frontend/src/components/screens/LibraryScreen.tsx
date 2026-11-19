@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ALL, filterLessons, MINE, type RankedLesson } from '../../lib/personalization';
 import type { Lesson, QuizScore } from '../../types';
@@ -26,6 +26,8 @@ export function LibraryScreen({
   setSelectedLesson,
   markLessonComplete,
   submitQuiz,
+  onAskAboutLesson,
+  isSignedIn,
   onHome
 }: {
   lessons: Lesson[];
@@ -41,6 +43,8 @@ export function LibraryScreen({
   setSelectedLesson: (value: Lesson) => void;
   markLessonComplete: (lessonId: number) => void;
   submitQuiz: (lessonId: number, answers: number[]) => Promise<{ score: number; total: number; correct: boolean[] }>;
+  onAskAboutLesson: (lessonId: number, question: string) => Promise<boolean>;
+  isSignedIn: boolean;
   onHome: () => void;
 }) {
   // "Ibyo wahisemo" (the learner's topics) when they chose any, then every topic, then
@@ -132,10 +136,69 @@ export function LibraryScreen({
                 <button className="btn btn-primary btn-sm" onClick={() => { setSelectedLesson(nextInPath); window.scrollTo({ top: 0, behavior: 'smooth' }); scrollToPlayer(); }}>Komeza</button>
               </div>
             )}
+            <LessonQuestion lessonId={selectedLesson.id} isSignedIn={isSignedIn} onAsk={onAskAboutLesson} />
             <div style={{ marginTop: 16 }}><Disclaimer /></div>
           </div>
         </article>
       </div>
     </div>
+  );
+}
+
+/**
+ * Kubaza ikibazo kuri iri somo.
+ *
+ * The lesson is carried with the question, so the learner never has to say which
+ * disease it is about and the question reaches the specialist for that disease.
+ */
+function LessonQuestion({
+  lessonId,
+  isSignedIn,
+  onAsk
+}: {
+  lessonId: number;
+  isSignedIn: boolean;
+  onAsk: (lessonId: number, question: string) => Promise<boolean>;
+}) {
+  const [question, setQuestion] = useState('');
+  const [sent, setSent] = useState(false);
+
+  if (!isSignedIn) return null;
+
+  const send = async () => {
+    if (!question.trim()) return;
+    if (await onAsk(lessonId, question.trim())) {
+      setQuestion('');
+      setSent(true);
+    }
+  };
+
+  return (
+    <section className="lesson-question" style={{ marginTop: 20 }}>
+      <h3 style={{ fontSize: '1.05rem' }}>Ufite ikibazo kuri iri somo?</h3>
+      {sent ? (
+        <p role="status" className="alert alert-success">
+          Ikibazo cyawe cyoherejwe. Inzobere y'iyi ndwara ni yo izagisubiza.
+        </p>
+      ) : (
+        <>
+          <label className="visually-hidden" htmlFor={`ask-${lessonId}`}>Ikibazo cyawe</label>
+          <textarea
+            id={`ask-${lessonId}`}
+            className="input"
+            rows={3}
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="Andika ikibazo cyawe mu Kinyarwanda."
+          />
+          <button type="button" className="btn btn-secondary" style={{ marginTop: 8 }} onClick={() => void send()}>
+            Ohereza ikibazo
+          </button>
+        </>
+      )}
+      <p className="small muted">
+        Igisubizo kiza nyuma yo kwemezwa n'inzobere. Niba ufite ikibazo cyihutirwa, jya ku kigo nderabuzima.
+      </p>
+    </section>
   );
 }
