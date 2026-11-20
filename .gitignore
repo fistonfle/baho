@@ -17,3 +17,12 @@ demo/*.zip
 # Python bytecode from the report build scripts
 __pycache__/
 *.pyc
+
+# Coursework kept outside the code repository (proposal, slides, other reports)
+*.docx
+*.pptx
+*.xlsx
+docs/report/*
+!docs/report/report.html
+docs/assets/
+.claude/
