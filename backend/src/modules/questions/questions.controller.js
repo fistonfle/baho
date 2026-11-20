@@ -5,13 +5,7 @@ import { getSpecialistTopics } from '../review/review.service.js';
 import { appBaseUrl, sendMail } from '../mail/mailer.js';
 import { sendPush } from '../push/push.service.js';
 
-// A learner's question follows the same path as a lesson. A writer drafts the
-// answer, and the specialist assigned to that disease approves it, which is what
-// sends it to the learner. Nothing written by one person alone reaches anybody.
-//
-// Pending  -> a learner has asked, nobody has drafted an answer
-// Drafted  -> a writer has written one; it is waiting for the specialist
-// Answered -> the specialist approved it, and the learner can see it
+// Question flow: Pending -> Drafted (writer) -> Answered (specialist approved).
 export const QuestionStatus = Object.freeze({
   pending: 'Pending',
   drafted: 'Drafted',
@@ -35,10 +29,7 @@ const isMySpecialty = async (userId, topic) => {
   return (await getSpecialistTopics(userId)).includes(Number(categoryId));
 };
 
-// What a writer is shown. Drafting an answer needs the question, not the person
-// who asked it, so the writer never receives the learner's id. The link between
-// the learner and the answer exists only where it has to: in the database, and
-// on the learner's own screen.
+// Writers don't get the learner's id.
 const withoutTheAsker = (question) => {
   const { user_id: _dbOwner, userId: _owner, ...rest } = question;
   return rest;
@@ -54,10 +45,7 @@ const keepMyDiseases = async (userId, questions) => {
   return kept;
 };
 
-// A learner sees their own questions. A specialist sees the ones about their own
-// diseases. A writer sees every question still waiting for an answer, with the
-// asker removed. No other role sees learner questions at all, because what a
-// learner asks about their health is as sensitive as the lesson it came from.
+// Learners see their own questions, specialists their diseases, writers the pending ones.
 export const getQuestions = async (req, res) => {
   const role = req.user?.role;
   try {
@@ -90,8 +78,6 @@ export const getQuestions = async (req, res) => {
   }
 };
 
-// The disease a lesson belongs to, so a question asked from inside a lesson
-// reaches the right specialist without the learner choosing from a list.
 const lessonTopic = async (contentId) => {
   try {
     const result = await pool.query(
@@ -115,8 +101,7 @@ export const createQuestion = async (req, res) => {
     return res.status(400).json({ message: 'A valid lesson id is required' });
   }
 
-  // A question asked from a lesson takes that lesson's disease as its topic, so
-  // the learner is never asked to classify their own question.
+  // Asked from a lesson: use the lesson's disease as topic.
   let resolvedTopic = topic;
   if (lessonId !== null) {
     const lesson = await lessonTopic(lessonId);
@@ -152,14 +137,7 @@ export const createQuestion = async (req, res) => {
   }
 };
 
-// Telling a learner that a reply is waiting.
-//
-// Until SMS is available, a learner who has chosen to give an email address is
-// told by email. The message carries no health information at all: not the
-// disease, not the question, not the answer. It says a reply is waiting and
-// points at the app, where the learner reads it behind their own PIN. An email
-// passes through servers nobody here controls, so nothing that would say
-// something about this person's health is put into one.
+// Tell the learner a reply is waiting (no health info in the message).
 const answerReadyEmail = (name) => ({
   subject: 'Baho: hari igisubizo kugutegereje',
   text: [
@@ -193,15 +171,11 @@ const answerReadyEmail = (name) => ({
   `
 });
 
-// The learner is found by the id stored on the question, which is the one place
-// the link between a person and what they asked is kept.
 const notifyAsker = async (question) => {
   const ownerId = question.user_id ?? question.userId;
   if (!ownerId) return { delivered: false, reason: 'no-owner' };
   try {
-    // The phone first, where a learner will actually see it. The push payload
-    // is encrypted to that device, so it may name what it is about; it still
-    // carries no answer, because the answer is read in the app behind the PIN.
+    // Push first; it still doesn't include the answer.
     const pushed = await sendPush(ownerId, {
       title: 'Baho',
       body: 'Ikibazo wabajije cyarasubijwe. Fungura Baho wisome igisubizo.',
@@ -219,8 +193,7 @@ const notifyAsker = async (question) => {
     const mailed = await sendMail({ to: learner.email, ...answerReadyEmail(learner.full_name) });
     return { ...mailed, delivered: Boolean(mailed.delivered || pushed.sent), pushed: pushed.sent };
   } catch (error) {
-    // A reply that reached the learner's screen must not fail because a mail
-    // server was unreachable.
+    // Email failure shouldn't break the reply.
     console.error(`[mail] Could not tell the learner their answer is ready: ${error.message}`);
     return { delivered: false, reason: error.message };
   }
@@ -234,8 +207,7 @@ const readQuestion = async (id) => {
   }
 };
 
-// A writer drafts the answer. It goes nowhere until a specialist approves it,
-// and the writer is not told who asked.
+// Writer saves a draft, the specialist still has to approve it.
 export const draftAnswer = async (req, res) => {
   const id = Number(req.params.id);
   const { answer } = req.body || {};
@@ -265,8 +237,7 @@ export const draftAnswer = async (req, res) => {
   }
 };
 
-// The specialist for that disease approves the draft, which sends it to the
-// learner. They may edit it first by sending their own text.
+// Specialist approves (and can edit) the draft, which sends it to the learner.
 export const answerQuestion = async (req, res) => {
   const id = Number(req.params.id);
   const { answer } = req.body || {};

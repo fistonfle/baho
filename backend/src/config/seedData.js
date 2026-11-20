@@ -1,6 +1,4 @@
-// Demo content shared by the PostgreSQL seed and the in-memory demo store.
-// Lessons have no audio until a person records them: staff upload the recording
-// in the lesson editor, and lessons without one show no audio player.
+// Demo content used by the database seed and the in-memory store.
 
 export const seedCategories = [
   { id: 1, name: 'Imirire', slug: 'nutrition' },
@@ -182,10 +180,7 @@ export const seedLessons = [
   }
 ];
 
-// Learning paths: an ordered list of lesson titles for each diagnosed condition.
-// A path with a condition is also a disease in the NCD module: it has a lesson
-// category and its own risk factors, warning signs and prevention advice.
-// "prevention" is the default path for learners without a diagnosis.
+// Learning paths: ordered lesson titles for each condition ('prevention' is the default).
 export const seedCurricula = [
   {
     slug: 'prevention',

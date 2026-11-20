@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Attempt 2 ZIP: the committed repository (source, README, report PDF,
-# designs, evidence) plus the walkthrough video, even if the video is too large to
-# commit. Usage: scripts/package-submission.sh [output.zip]
+# Builds the submission ZIP. Usage: scripts/package-submission.sh [output.zip]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${1:-../Baho-Final-Submission.zip}"

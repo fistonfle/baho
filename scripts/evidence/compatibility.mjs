@@ -1,5 +1,5 @@
-// Compatibility, offline and resource checks against a running Baho site.
-//   node --experimental-websocket scripts/evidence/compatibility.mjs <app-url> <out.json>
+// Compatibility and offline checks.
+// Usage: node --experimental-websocket scripts/evidence/compatibility.mjs <app-url> <out.json>
 import { writeFileSync } from 'node:fs';
 
 import { openPage, sleep } from './cdp.mjs';
@@ -34,8 +34,7 @@ results.resources = {
   ...timing
 };
 
-// 2. Offline: right after the first visit, the service worker must serve the app with no network.
-// The browser's HTTP cache is cleared first, so only the service worker can serve the app.
+// 2. Offline: clear the HTTP cache, then load with no network.
 const swReady = await page.evaluate(`navigator.serviceWorker.ready.then(() => true)`);
 await sleep(1500);
 await page.send('Network.clearBrowserCache');

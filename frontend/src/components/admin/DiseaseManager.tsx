@@ -14,10 +14,7 @@ const emptyForm: DiseaseForm = { name: '', icon: '', about: '', description: '',
 const toLines = (items: string[]) => items.join('\n');
 const fromLines = (text: string) => text.split('\n').map((line) => line.trim()).filter(Boolean);
 
-// Admin tool to add a disease (it gets a lesson category and a learning path)
-// and to edit the information learners see in the NCD module.
-// `onWriteLesson` is omitted for roles that do not write lessons, and the
-// button then does not appear at all.
+// Add a disease and edit its info. onWriteLesson is optional.
 export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Curriculum) => void }) {
   const dispatch = useAppDispatch();
   const curricula = useAppSelector((state) => state.app.curricula);

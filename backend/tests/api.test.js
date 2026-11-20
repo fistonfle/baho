@@ -26,9 +26,7 @@ const postJson = (url, body, token) => fetch(url, {
   body: JSON.stringify(body)
 });
 
-// Staff accounts are created without a password: the server issues a one-time
-// invitation link, which it returns in the response while SMTP is unconfigured.
-// This walks that link the way a new staff member would, and returns a token.
+// Creates a staff member and finishes the invitation, returns a token.
 const acceptInvite = async (baseUrl, createResponse, password) => {
   const payload = await createResponse.json();
   assert.ok(payload.invite?.link, `no invitation link in ${JSON.stringify(payload)}`);
@@ -378,8 +376,7 @@ test('Only the specialist for a disease answers its questions, and only the aske
     const question = (await asked.json()).question;
     assert.equal(question.status, 'Pending');
 
-    // Neither a learner, an administrator nor a writer may answer: a health
-    // answer goes straight to the learner, so it is the specialist's to give.
+    // Only the specialist can answer.
     const byLearner = await postJson(`${baseUrl}/api/v1/questions/${question.id}/answer`, { answer: 'Ntakibazo.' }, learnerToken);
     assert.equal(byLearner.status, 403);
     const byAdmin = await postJson(`${baseUrl}/api/v1/questions/${question.id}/answer`, { answer: 'Ntakibazo.' }, adminToken);
@@ -783,8 +780,7 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
     const queue = (await (await fetch(`${baseUrl}/api/v1/review/queue`, { headers: { Authorization: `Bearer ${diabetesToken}` } })).json()).lessons;
     assert.ok(queue.some((item) => item.id === lesson.id && item.status === 'review'));
 
-    // A specialist decides whether this is safe to teach, so they are sent the
-    // whole lesson: the recording, and the quiz with the answer it marks correct.
+    // Specialist gets the audio and the quiz answers too.
     const forReview = queue.find((item) => item.id === lesson.id);
     assert.equal(forReview.audioUrl, '/api/v1/media/isukari.mp3', 'the specialist cannot hear the lesson');
     assert.equal(forReview.quiz.length, 1, 'the specialist cannot see the quiz');
@@ -1037,8 +1033,7 @@ test('A learner changes their own PIN, and staff their own password', async () =
   }
 });
 
-// A learner may add an email address so Baho can tell them a reply has arrived
-// and send the reminders they set. It is optional, unique, and theirs to remove.
+// Optional learner email.
 test('A learner can add and remove an optional email address', async () => {
   const { server, baseUrl } = await startServer();
   const patchJson = (url, body, token) => fetch(url, {
@@ -1081,9 +1076,7 @@ test('A learner can add and remove an optional email address', async () => {
   }
 });
 
-// Web push. Demo mode is the offline mode, so notifications are off in it and
-// these check that the endpoints say so plainly instead of half working, and
-// that nothing about a device can be registered without signing in.
+// Web push is off in demo mode.
 test('Push notifications are declared off when the server is not set up for them', async () => {
   const { server, baseUrl } = await startServer();
   try {
@@ -1113,9 +1106,7 @@ test('Push notifications are declared off when the server is not set up for them
   }
 });
 
-// A specialist answers for what is taught about their diseases, so they see
-// every lesson on those diseases whoever wrote it, may correct one or replace
-// its recording, and may publish it. They see nothing outside their specialty.
+// Specialists see and edit lessons on their diseases only.
 test('A specialist owns the lessons on their own diseases, and only those', async () => {
   const { server, baseUrl } = await startServer();
   const patchJson = (url, body, token) => fetch(url, {

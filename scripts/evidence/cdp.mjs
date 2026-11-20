@@ -1,6 +1,4 @@
-// Minimal Chrome DevTools Protocol client used by the evidence scripts
-// (screenshots, performance and compatibility runs). Needs Chrome started with
-// --remote-debugging-port=9333 and Node 20+ run with --experimental-websocket.
+// Small Chrome DevTools client. Needs Chrome with --remote-debugging-port=9333.
 export async function openPage({ port = 9333 } = {}) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: 'PUT' })).json();
   const ws = new WebSocket(target.webSocketDebuggerUrl);

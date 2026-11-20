@@ -1,18 +1,12 @@
-// Baho service worker: keeps the app shell and audio lessons available offline.
-// Lesson text and FAQs come from the API (under /api/ on the same site when
-// deployed, or another origin in development); the app keeps its own copy of
-// those in localStorage (see src/lib/offline.ts), so the worker leaves API
-// requests alone and they always reach the server.
-// Bump the version when the caching rules change so old caches are removed.
+// Service worker: caches the app and lesson audio for offline use. API calls are not cached.
+// Bump VERSION when caching changes.
 const VERSION = 'baho-v7';
 const SHELL_CACHE = `${VERSION}-shell`;
 const AUDIO_CACHE = `${VERSION}-audio`;
 
 const SHELL_FILES = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
-// The built JS and CSS have hashed names that change with every build, so they are
-// read from index.html at install time. Caching them here means the app opens
-// offline even right after the first visit, not only once the browser cache has them.
+// Hashed JS/CSS names are read from index.html so the app works offline after the first visit.
 const builtAssets = async () => {
   const html = await (await fetch('/index.html', { cache: 'no-store' })).text();
   return [...new Set(html.match(/\/assets\/[^"'\s>]+/g) ?? [])];
@@ -43,9 +37,7 @@ const cacheFirst = async (request, cacheName) => {
   return response;
 };
 
-// Audio players ask for byte ranges. The whole recording is fetched and cached
-// once, and each range request is answered with the matching slice, so seeking
-// works online and offline.
+// Cache the whole recording, then answer range requests with a slice.
 const cachedRecording = async (request) => {
   const cache = await caches.open(AUDIO_CACHE);
   let response = await cache.match(request.url);
@@ -93,11 +85,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(cacheFirst(request, SHELL_CACHE));
 });
 
-// Notifications.
-//
-// The server encrypts each message to this device's own keys, so the push
-// service that carries it cannot read it. The text says what happened and never
-// what was said: a learner reads the answer, or their reminder, inside the app.
+// Push notifications.
 self.addEventListener('push', (event) => {
   let message = {};
   try {
@@ -112,16 +100,14 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     lang: 'rw',
-    // Replaces an earlier notification about the same thing rather than
-    // stacking a second one on a phone the learner has not picked up.
+    // Same tag replaces the old notification.
     tag: message.tag || 'baho',
     renotify: Boolean(message.tag),
     data: { url: message.url || '/' }
   }));
 });
 
-// Tapping it opens Baho. A tab that is already open is brought forward instead
-// of a second one being started, so the learner lands where they left off.
+// Focus an open tab if there is one.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const target = new URL(event.notification.data?.url || '/', self.location.origin);

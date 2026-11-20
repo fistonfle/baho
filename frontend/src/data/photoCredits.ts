@@ -1,5 +1,4 @@
-// Photographs used for lessons and diseases, from Wikimedia Commons. The licences
-// require credit to the author (CC BY / CC BY-SA); the photos were cropped and resized.
+// Lesson photos from Wikimedia Commons (CC BY / CC BY-SA), credits required.
 export type PhotoCredit = { file: string; subject: string; author: string; license: string; licenseUrl: string; source: string };
 
 export const photoCredits: PhotoCredit[] = [

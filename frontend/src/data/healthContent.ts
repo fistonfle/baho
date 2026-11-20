@@ -1,7 +1,4 @@
-// Static Kinyarwanda health content used by the learner screens.
-// It ships with the app so exercises, checks and a basic NCD module work offline;
-// diseases added by staff come from the API.
-// Wording should be reviewed by a health professional before field testing.
+// Built-in Kinyarwanda content so the app works offline.
 
 import type { Category, Curriculum, Interest, Lesson } from '../types';
 

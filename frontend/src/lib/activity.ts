@@ -1,5 +1,4 @@
-// Learning streak: the number of consecutive days (ending today or yesterday)
-// on which the learner finished a lesson or a knowledge check.
+// Streak = consecutive days with a finished lesson or check.
 
 const ACTIVITY_KEY = 'baho-activity-days';
 
@@ -19,8 +18,6 @@ export const recordActivity = () => {
   localStorage.setItem(ACTIVITY_KEY, JSON.stringify([...days].slice(-60)));
 };
 
-// Walks back one day at a time from today (or yesterday, if today has no activity
-// yet) while each day is in the set: O(streak length) lookups in a Set.
 export const countStreak = (days: Set<string>, today: Date) => {
   const cursor = new Date(today);
   if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);

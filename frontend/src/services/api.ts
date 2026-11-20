@@ -26,8 +26,7 @@ export type ContentPayload = {
   curriculumIds?: number[];
 };
 
-// Recordings are stored by the API as /api/v1/media/<file>. In development the API
-// runs on another port, so the path is resolved against the API's address.
+// In development the API is on another port.
 export const mediaUrl = (path: string) =>
   path.startsWith('/api/v1/') ? `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${path}` : path;
 
@@ -149,8 +148,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  // Staff password reset by email. `resetLink` comes back only in development,
-  // when no SMTP server is configured, so the flow can still be finished.
+  // resetLink is only returned in development.
   forgotPassword: (payload: { email: string }) =>
     request<{ message: string; resetLink?: string }>('/auth/forgot-password', {
       method: 'POST',
@@ -161,8 +159,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  // Learner accounts and PIN recovery (admins only). Learners have no email
-  // address, so an admin gives them a new PIN instead of sending a link.
+  // Admin: learners and PIN reset.
   getLearners: (search = '') =>
     request<{ learners: Learner[] }>(`/admin/learners${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   resetLearnerPin: (id: number, pin?: string) =>
@@ -176,9 +173,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  // A learner's optional email address, used only to say a reply is waiting.
-  // Passing an empty string removes it.
-  // Notifications on the device itself.
+  // Learner email ('' removes it) and push.
   getPushKey: () => request<{ key: string | null; enabled: boolean }>('/push/key'),
   getPushStatus: () => request<{ enabled: boolean; devices: boolean }>('/push/status'),
   subscribePush: (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) =>

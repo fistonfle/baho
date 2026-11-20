@@ -56,10 +56,7 @@ export function AdminScreen() {
   const categoryName = (id?: number) => categories.find((category) => category.id === id)?.name ?? '';
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
 
-  // The server sends a specialist only the lessons on the diseases they are
-  // assigned to, so everything in their list is theirs to act on, and it checks
-  // again on every write. Reading the assignment here as well would mean asking
-  // for the staff list, which only an administrator may see.
+  // The server already filters lessons for specialists.
   const canAct = isSpecialist;
 
   const awaitingSpecialist = adminContent.filter((item) => item.status === 'review').length;
@@ -142,8 +139,7 @@ export function AdminScreen() {
     }
   };
 
-  // A writer saves a draft, which goes to the specialist. A specialist sends the
-  // answer to the learner, using their own text when they edited the draft.
+  // Writer saves a draft; specialist sends the answer.
   const saveDraftAnswer = async (id: number) => {
     const answer = (answerDrafts[id] || '').trim();
     if (!answer) {

@@ -1,9 +1,5 @@
-# Test, build and deploy Baho to the VM on every push to main (or by hand).
-#
-# Repository secrets (Settings → Secrets and variables → Actions):
-#   VM_HOST, VM_SSH_PORT, VM_USER, VM_SSH_KEY   SSH access to the VM
-# The VM needs /app/baho/.env (see deploy/.env.production.example) and the
-# Caddy block from deploy/Caddyfile.snippet before the first deploy.
+# Runs the tests, builds the images and deploys to the VM on every push to main.
+# Needs the VM_HOST, VM_SSH_PORT, VM_USER and VM_SSH_KEY secrets.
 name: Test and Deploy
 
 on:
@@ -11,8 +7,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# One deploy at a time: two pushes in quick succession otherwise restart the
-# containers at the same moment and the second run fails on a name conflict.
+# Only one deploy at a time, otherwise two quick pushes clash on container names.
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -115,8 +110,7 @@ jobs:
               exit 1
             fi
 
-            # A registry login of Baho's own, so the VM's saved login used by the
-            # other stacks is not replaced by this short-lived token.
+            # Separate docker login so the other stacks on the VM keep theirs.
             export DOCKER_CONFIG="$APP_DIR/.docker"
             mkdir -p "$DOCKER_CONFIG"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin

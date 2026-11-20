@@ -69,7 +69,7 @@ export function StatusBadge({ label, tone = 'neutral' }: { label: string; tone?:
   return <span className={`badge ${tone === 'neutral' ? '' : `badge-${tone}`}`.trim()}>{label}</span>;
 }
 
-// Lesson workflow: draft -> review -> approved (specialist) -> published; rejected = changes requested.
+// Lesson status labels.
 export const lessonStatus: Record<string, { label: string; tone: Tone }> = {
   draft: { label: 'Draft', tone: 'neutral' },
   review: { label: 'In review', tone: 'warning' },
@@ -95,9 +95,7 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
-// Lesson photos come in two sizes (name.jpg 1000 px, name-sm.jpg 480 px); the
-// browser picks the smaller one on phones. Photos below the first screen load
-// only when scrolled to.
+// Photos have a large and a small (-sm) version; lazy loaded.
 const photoSizes = (path: string) => (/^\/images\/[a-z-]+\.jpg$/.test(path) ? `${path.replace(/\.jpg$/, '-sm.jpg')} 480w, ${path} 1000w` : undefined);
 
 export const smallPhoto = (path: string) => (/^\/images\/[a-z-]+\.jpg$/.test(path) ? path.replace(/\.jpg$/, '-sm.jpg') : path);

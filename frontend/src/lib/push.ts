@@ -1,14 +1,4 @@
-// Notifications on the phone itself (web push).
-//
-// The browser keeps a subscription naming its own maker's push service and two
-// keys; the server encrypts every message to those keys, so the service that
-// carries it cannot read it. Baho uses it to say a reply has arrived and to
-// deliver the reminders a learner set.
-//
-// Where it works: Chrome and Firefox on Android, and the major desktop
-// browsers. On an iPhone only once Baho has been added to the Home Screen,
-// which is Apple's rule for web push. Anywhere else the learner is simply never
-// offered it, and the email path still covers them.
+// Web push notifications on the phone.
 
 import { api } from '../services/api';
 
@@ -36,12 +26,7 @@ const registration = async () => {
 const asPayload = (subscription: PushSubscription) =>
   subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
 
-// Reading the state also repairs it. The browser keeps its subscription even
-// when the server has lost the matching row, after a database restore or a
-// sign-in on a device that subscribed while signed in as somebody else. Left
-// alone, the screen would say notifications are on while nothing could ever
-// arrive, so an existing subscription is handed to the server again here. The
-// server stores it against the endpoint, so repeating it changes nothing.
+// If the browser is subscribed, send it to the server again in case it was lost.
 export const pushState = async (): Promise<PushState> => {
   if (!pushSupported()) return 'unsupported';
   if (Notification.permission === 'denied') return 'blocked';
@@ -69,8 +54,7 @@ export const enablePush = async (): Promise<string | null> => {
 
   const existing = await worker.pushManager.getSubscription();
   const subscription = existing ?? await worker.pushManager.subscribe({
-    // Every push must show a notification; a silent one is not allowed, and
-    // Baho has no reason to want one.
+    // userVisibleOnly is required.
     userVisibleOnly: true,
     applicationServerKey: toBytes(key)
   });
@@ -79,8 +63,6 @@ export const enablePush = async (): Promise<string | null> => {
   return null;
 };
 
-// Dropped on the device and on the server, so nothing is left pointing at a
-// phone that has asked to be left alone.
 export const disablePush = async (): Promise<void> => {
   const worker = await registration();
   if (!worker) return;

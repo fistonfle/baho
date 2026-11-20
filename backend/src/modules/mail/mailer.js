@@ -1,10 +1,4 @@
-// Outgoing email, used for staff password resets.
-//
-// Configured for an SMTP server through the environment; Gmail is the default
-// host, so setting SMTP_USER to a Gmail address and SMTP_PASS to a Google
-// "app password" (not the account password) is enough. With nothing configured
-// the message is written to the server log instead of being sent, so a
-// developer can still copy the reset link and finish the flow locally.
+// Sends email through SMTP (Gmail by default). Without config it just logs the message.
 
 const host = process.env.SMTP_HOST || 'smtp.gmail.com';
 const port = Number(process.env.SMTP_PORT || 465);
@@ -14,20 +8,14 @@ const pass = process.env.SMTP_PASS || '';
 const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465;
 const from = process.env.MAIL_FROM || (user ? `Baho <${user}>` : 'Baho <no-reply@baho.local>');
 
-// Demo mode is the offline/test mode: the database is switched off and nothing
-// may leave the machine, so no message is ever sent from it however the SMTP
-// settings are filled in. Without this a test run would post real email to the
-// made-up addresses the tests use.
+// Never send real email in demo/test mode.
 export const isMailConfigured = () => Boolean(user && pass) && process.env.BAHO_DEMO_MODE !== 'true';
 
-// Where the app itself lives, for links inside a message. Kept here so every
-// module that writes an email uses the same address.
 export const appBaseUrl = () => (process.env.APP_BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 let transport = null;
 
-// nodemailer is loaded only when a message is actually sent, so the API still
-// starts if the dependency has not been installed.
+// Loaded lazily so the API still starts without nodemailer.
 const getTransport = async () => {
   if (transport) return transport;
   const { default: nodemailer } = await import('nodemailer');
@@ -47,8 +35,7 @@ export const sendMail = async ({ to, subject, text, html }) => {
     const info = await mailer.sendMail({ from, to, subject, text, html });
     return { delivered: true, messageId: info.messageId };
   } catch (error) {
-    // A failure to send must never reveal whether the address exists, so the
-    // caller still answers with the same message; the reason is logged here.
+    // Don't reveal if the address exists, just log the error.
     console.error(`[mail] Could not send to ${to}: ${error.message}`);
     return { delivered: false, reason: error.message };
   }

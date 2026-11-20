@@ -1,6 +1,4 @@
-// Medical review by specialists. Each specialist is assigned one or more
-// topics (lesson categories, e.g. a disease). A lesson in a topic that has a
-// specialist must be approved by one of them before an admin can publish it.
+// Specialists are assigned topics and review lessons in them.
 
 import { pool } from '../../config/db.js';
 import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
@@ -68,11 +66,7 @@ export const topicHasSpecialist = (categoryId) => withFallback(
   () => inMemoryStore.specialistTopics.some((entry) => entry.categoryId === Number(categoryId))
 );
 
-// A specialist decides whether health content is safe to put in front of a
-// learner, so they are sent the whole lesson: the recording as well as the
-// text, because for a learner who does not read comfortably the recording is
-// the lesson, and the quiz with its marked answers, because a wrong answer
-// marked correct teaches the wrong thing as surely as a wrong paragraph.
+// Specialists get the full lesson: text, audio and quiz answers.
 const mapLesson = (row) => ({
   id: row.id,
   categoryId: row.category_id ?? row.categoryId,

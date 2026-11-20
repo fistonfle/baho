@@ -1,5 +1,4 @@
-// Transparent rules-based ranking for the "for you" feed (proposal section 3.3.2).
-// Everything here runs on the device; risk answers are never sent to the server.
+// Lesson ranking for the 'for you' list. Runs only on the device.
 
 import { riskQuestions } from '../data/healthContent';
 import type { Category, Curriculum, Interest, Lesson } from '../types';
@@ -34,8 +33,7 @@ export type RankedLesson = {
   reasons: string[];
 };
 
-// Topic tags used by the "for you" ranking: the lesson category of each
-// diagnosed condition (looked up through its disease) plus the risk answers.
+// Tags from diagnosed conditions and risk answers.
 export const profileTags = (profile: HealthProfile, diseases: Curriculum[], categories: Category[]): Interest[] => {
   const fromConditions = profile.conditions
     .map((condition) => diseases.find((disease) => disease.condition === condition)?.categoryId)
@@ -55,8 +53,7 @@ export const riskTagsFromAnswers = (answers: RiskAnswers): Interest[] => {
   return [...tags];
 };
 
-// score = 2 per topic match + 3 per risk tag match - 4 if already completed,
-// with newer lessons (higher id) breaking ties.
+// score = 2 per topic + 3 per risk tag - 4 if done; newer first on ties.
 export const rankLessons = (
   lessons: Lesson[],
   interests: Interest[],
@@ -88,8 +85,7 @@ export const rankLessons = (
 // The learner's own topics: those chosen at sign-up plus those from the health profile.
 export const learnerTopics = (interests: Interest[], riskTags: Interest[]): Interest[] => [...new Set([...interests, ...riskTags])];
 
-// Diseases the learner chose (a diagnosed condition, or a disease whose topic they
-// follow) come first, in their original order; the rest follow.
+// Chosen diseases first.
 export const orderDiseases = (diseases: Curriculum[], conditions: string[], topics: Interest[], categories: Category[]) => {
   const topicOf = (disease: Curriculum) => categories.find((category) => category.id === disease.categoryId)?.name;
   const isChosen = (disease: Curriculum) => conditions.includes(disease.condition ?? '') || topics.includes(topicOf(disease) ?? '');
@@ -97,8 +93,7 @@ export const orderDiseases = (diseases: Curriculum[], conditions: string[], topi
   return { ordered: [...chosen, ...diseases.filter((disease) => !isChosen(disease))], chosenIds: chosen.map((disease) => disease.id) };
 };
 
-// MINE shows the learner's topics, most relevant first; ALL every lesson; any other
-// value one topic. Learners who chose nothing see every lesson under MINE too.
+// MINE = my topics (or all if none chosen), ALL = everything, else one topic.
 export const MINE = 'Mine';
 export const ALL = 'All';
 export const filterLessons = (ranked: RankedLesson[], lessons: Lesson[], filter: string, topics: Interest[]) => {

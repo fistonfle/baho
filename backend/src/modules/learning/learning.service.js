@@ -1,6 +1,4 @@
-// Data access for learning paths (curricula) and lesson quizzes.
-// Each function uses PostgreSQL and falls back to the in-memory demo store
-// when the database is unavailable, like the rest of the API.
+// Learning paths and quizzes (PostgreSQL, or the in-memory store as fallback).
 
 import { pool } from '../../config/db.js';
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';

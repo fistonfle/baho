@@ -1,11 +1,5 @@
-# Baho on a shared VM, next to other stacks behind one Caddy.
-# Every name Docker treats as global starts with "baho" so nothing clashes:
-#
-#   project      baho
-#   containers   baho-postgres, baho-backend, baho-frontend
-#   volumes      baho_baho_pg_data (database), baho_baho_media (recordings)
-#
-# Only the backend and frontend join the Caddy network; PostgreSQL stays private.
+# Baho on the shared VM behind Caddy. All names start with baho to avoid clashes.
+# Only backend and frontend join the Caddy network.
 name: baho
 
 services:

@@ -11,11 +11,7 @@ import { imageChoices } from './shared';
 import { AudioUpload } from './AudioUpload';
 import { QuizEditor } from './QuizEditor';
 
-// Two people reach this form. A writer drafts a lesson and sends it to the
-// specialist for its disease. That specialist opens the same form to correct a
-// lesson on one of their own diseases, or to replace its recording, and their
-// save can publish it, because for their diseases they are the authority there
-// is no step after.
+// Used by writers (draft) and specialists (edit and publish their diseases).
 export function ContentForm({ onSave, asSpecialist = false }: { onSave: (status: string) => void; asSpecialist?: boolean }) {
   const dispatch = useAppDispatch();
   const contentForm = useAppSelector((state) => state.app.contentForm);

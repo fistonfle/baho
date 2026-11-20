@@ -3,12 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { api } from '../../services/api';
 import { PageHeader } from '../ui';
 
-// Staff sign in with an email address, so a forgotten password is recovered by
-// email. The screen has two steps: asking for the link, and choosing the new
-// password after the link is opened. Learners sign in with a phone number and
-// a PIN and have no address on file, so this screen does not apply to them;
-// recovering a forgotten PIN is not built yet. In English, like the rest of
-// the staff portal.
+// Staff password reset by email: request a link, then set the new password.
 
 export function PasswordResetScreen({
   token,
@@ -100,7 +95,7 @@ export function PasswordResetScreen({
                 />
               </div>
               <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-                {busy ? 'Sending…' : 'Send the reset link'}
+                {busy ? 'Sending...' : 'Send the reset link'}
               </button>
             </>
           )}
@@ -148,7 +143,7 @@ export function PasswordResetScreen({
                 />
               </div>
               <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-                {busy ? 'Saving…' : 'Save the new password'}
+                {busy ? 'Saving...' : 'Save the new password'}
               </button>
             </>
           )}

@@ -1,9 +1,5 @@
-// Creates (or removes) demo staff accounts and lessons so the staff screens have
-// something to show, and writes their sign-in tokens to a file.
-//   node scripts/evidence/staging.mjs <api-url> setup <sessions.json>
-//   node scripts/evidence/staging.mjs <api-url> cleanup
-// The admin signs in with BAHO_ADMIN_* from backend/.env; the cleanup deletes only
-// the accounts below (and their lessons) from the database in DATABASE_URL.
+// Creates or removes demo staff and lessons for screenshots.
+// Usage: node scripts/evidence/staging.mjs <api-url> setup <sessions.json> | cleanup
 import { randomBytes } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

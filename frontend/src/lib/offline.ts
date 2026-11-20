@@ -1,5 +1,4 @@
-// Offline helpers: service worker registration, a local copy of downloaded
-// content, and an outbox for issue reports written while offline (FR06, FR19).
+// Offline: service worker, local content cache, outbox for reports.
 
 import { api } from '../services/api';
 

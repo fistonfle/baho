@@ -44,11 +44,7 @@ export const getCreators = async (_req, res) => {
   }
 };
 
-// Staff accounts are created without a password. Nobody, the admin included,
-// ever knows the new member's password: the row is given a random hash that
-// cannot be guessed, and the member chooses their own through an invitation
-// link sent to their email address. That link is an ordinary reset token, so
-// it is single-use, expires, and is stored only as a hash.
+// New staff get no password; they set one through an emailed invitation link.
 export const createCreator = async (req, res) => {
   const { fullName, email, role = 'creator', topicIds = [] } = req.body || {};
 
@@ -63,9 +59,7 @@ export const createCreator = async (req, res) => {
     return res.status(400).json({ message: 'A full name and an email address are required' });
   }
 
-  // Not a default password and not a placeholder anyone could type: 32 random
-  // bytes that are hashed and immediately forgotten, so the only way into the
-  // account is the invitation link.
+  // Random hash nobody knows, so the invitation link is the only way in.
   const unusablePassword = crypto.randomBytes(32).toString('hex');
 
   const cleanEmail = normalizedEmail(email);
@@ -150,8 +144,7 @@ export const createCreator = async (req, res) => {
   }
 };
 
-// Body: { identifier, password }. The identifier is a phone number (learners)
-// or an email address (staff); `email` and `phone` are accepted too.
+// identifier is a phone number (learners) or an email (staff).
 export const login = async (req, res) => {
   const { identifier = req.body?.phone ?? req.body?.email, password } = req.body || {};
   if (!identifier || !password) {
@@ -219,12 +212,7 @@ export const register = async (req, res) => {
   }
 };
 
-// --- Password reset -------------------------------------------------------
-// Staff sign in with an email address, so a forgotten password is recovered by
-// email. Learners sign in with a phone number and have no address on file, so
-// these endpoints only ever match a staff account; recovering a forgotten PIN
-// is not built yet.
-
+// Password reset (staff only, learners have no email)
 const resetLink = (token) => `${appBaseUrl()}/?reset=${token}`;
 
 const findUserByEmail = async (email) => {
@@ -251,7 +239,7 @@ const resetEmail = (name, link) => ({
     '',
     'The link can be used once. If you did not ask for this, ignore this message: your password stays as it is.',
     '',
-    'Baho — baho.filito.rw'
+    'Baho - baho.filito.rw'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -265,7 +253,7 @@ const resetEmail = (name, link) => ({
       <p>The link works for ${tokenTtlMinutes} minutes and can be used once. If the button does not open, copy this address into your browser:</p>
       <p style="word-break:break-all"><a href="${link}">${link}</a></p>
       <p>If you did not ask for this, ignore this message: your password stays as it is.</p>
-      <p style="color:#5b6b7a">Baho — baho.filito.rw</p>
+      <p style="color:#5b6b7a">Baho - baho.filito.rw</p>
     </div>`
 });
 
@@ -302,10 +290,7 @@ const inviteEmail = (name, link, role) => ({
     </div>`
 });
 
-// Issues the invitation that lets a new staff member set their first password.
-// The link is returned to the caller only when email is not configured and the
-// server is not in production, which is what makes local setup possible
-// without an SMTP account. In production it is sent and never returned.
+// The link is only returned when there is no SMTP and we are not in production.
 const sendStaffInvite = async (user, role) => {
   const { token } = await createResetToken(user.id);
   const link = resetLink(token);
@@ -315,8 +300,7 @@ const sendStaffInvite = async (user, role) => {
   return invite;
 };
 
-// The answer is the same whether or not the address belongs to an account, so
-// this endpoint cannot be used to find out who has one.
+// Same answer whether the email exists or not.
 export const requestPasswordReset = async (req, res) => {
   const email = normalizedEmail(req.body?.email);
   const answer = { message: 'If that email address belongs to a staff account, a reset link is on its way.' };
@@ -333,8 +317,7 @@ export const requestPasswordReset = async (req, res) => {
   const message = resetEmail(user.fullName ?? user.full_name, link);
   const result = await sendMail({ to: email, ...message });
 
-  // In development, with no SMTP server configured, the link is returned so the
-  // flow can be finished without email. Never in production.
+  // Dev only: return the link when no SMTP is set up.
   if (!result.delivered && process.env.NODE_ENV !== 'production') {
     return res.json({ ...answer, resetLink: link, delivered: false });
   }
@@ -371,21 +354,14 @@ export const resetPassword = async (req, res) => {
     email = user.email;
   }
 
-  // Any other link that was sent stops working, and a lockout from the failed
-  // attempts that led here is lifted so the new password can be used at once.
+  // Old links stop working and the lockout is cleared.
   await clearResetTokens(userId);
   if (email) loginGuard.clear(email);
 
   return res.json({ message: 'Your password has been changed. Sign in with the new one.' });
 };
 
-// --- Learner PIN recovery -------------------------------------------------
-// A learner signs in with a phone number and a PIN and has no email address,
-// so there is nowhere to send a reset link. Instead an administrator finds the
-// account by phone number and sets a new PIN, which is shown once so it can be
-// read out to the learner. Nothing else about the account changes, and the
-// health profile is encrypted on the learner's own device either way.
-
+// Learner PIN recovery: an admin sets a new PIN and reads it to the learner
 const publicLearner = (user) => ({
   id: user.id,
   fullName: user.fullName ?? user.full_name,
@@ -393,8 +369,7 @@ const publicLearner = (user) => ({
   createdAt: user.createdAt ?? user.created_at ?? null
 });
 
-// A PIN an administrator can read out over the phone: 5 digits, never starting
-// with a zero so it cannot be written down wrongly.
+// 5 digits, never starting with 0.
 const generatePin = () => String(crypto.randomInt(10000, 100000));
 
 export const getLearners = async (req, res) => {
@@ -475,11 +450,7 @@ export const resetLearnerPin = async (req, res) => {
   });
 };
 
-// --- Changing your own PIN or password ------------------------------------
-// A learner given a temporary PIN by an administrator should be able to pick
-// their own, so the administrator does not keep knowing it. The same endpoint
-// serves staff, who send a password instead; what counts as valid follows the
-// kind of account, not what the caller claims to be.
+// Change your own PIN (learners) or password (staff)
 export const changePassword = async (req, res) => {
   const { current, next } = req.body || {};
   if (!current || !next) {
@@ -530,11 +501,7 @@ export const changePassword = async (req, res) => {
   return res.json({ message: usesPin ? 'Your PIN has been changed' : 'Your password has been changed' });
 };
 
-// A learner may add an email address so Baho can tell them a reply to their
-// question has arrived. It is optional, it can be removed at any time, and the
-// message it carries says only that a reply is waiting: the disease, the
-// question and the answer never leave the app. This is a stand-in until SMS is
-// available, which is the channel a rural learner actually reads.
+// Optional learner email, only used to say a reply is waiting.
 export const updateMyEmail = async (req, res) => {
   const raw = req.body?.email;
   const clearing = raw === null || String(raw ?? '').trim() === '';

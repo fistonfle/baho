@@ -31,19 +31,14 @@ const outsideSpecialty = async (userId, categoryId) => {
   return !topics.includes(Number(categoryId));
 };
 
-// Who may put a lesson in front of learners: the specialist assigned to that
-// disease, and never for a lesson they wrote themselves. The second half is the
-// part that matters. A specialist may write, edit and re-record lessons on their
-// own diseases, which is why they must not also be the one who approves their
-// own writing: the safeguard is two people, not two job titles.
+// Only the specialist of the disease can publish, and never their own lesson.
 const mayPublish = async (user, categoryId, creatorId) => {
   if (user?.role !== 'specialist') return false;
   if (await outsideSpecialty(user.id, categoryId)) return false;
   return Number(creatorId) !== Number(user.id);
 };
 
-// A lesson can only be published by the specialist for its disease; any other
-// request to publish is sent to review instead.
+// Anyone else asking to publish gets the lesson sent to review.
 const allowedStatus = async (categoryId, requested, current, user = null, creatorId = null) => {
   if (requested === 'published' && await mayPublish(user, categoryId, creatorId)) return 'published';
   return new LessonWorkflow().resolve(requested, current);
@@ -171,10 +166,7 @@ const adminContentQuery = `
   LEFT JOIN users w ON w.id = c.creator_id
   LEFT JOIN users r ON r.id = c.reviewed_by`;
 
-// A writer sees their own work. A specialist sees every lesson on the diseases
-// they are responsible for, whoever wrote it and whoever published it, because
-// they answer for what is taught about those diseases. An administrator sees
-// all of it, because they answer for the platform.
+// Writers see their own lessons, specialists their diseases, admins everything.
 export const getAdminContent = async (req, res) => {
   const role = req.user?.role;
   try {
@@ -273,9 +265,7 @@ export const updateContent = async (req, res) => {
     if (req.user?.role === 'creator' && !['draft', 'review', 'rejected'].includes(existing.status)) {
       return res.status(403).json({ message: 'Published content cannot be edited by creators' });
     }
-    // A specialist is responsible for what is taught about their diseases, so
-    // they may correct a lesson or replace its recording, published or not, and
-    // only on those diseases.
+    // Specialists can edit any lesson on their own diseases.
     if (req.user?.role === 'specialist' && await outsideSpecialty(req.user.id, Number(categoryId))) {
       return res.status(403).json({ message: 'This lesson is outside your specialty' });
     }
@@ -343,9 +333,7 @@ export const deleteContent = async (req, res) => {
   }
 };
 
-// Only the specialist assigned to a lesson's disease may change its status, and
-// only for that disease: publishing it, or taking a published lesson back off
-// the platform.
+// Only the disease's specialist can publish or unpublish.
 
 export const updateContentStatus = async (req, res) => {
   const id = Number(req.params.id);

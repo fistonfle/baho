@@ -31,9 +31,7 @@ router.patch('/admin/faqs/:id', authenticate, requireRole('admin'), updateFaq);
 router.delete('/admin/faqs/:id', authenticate, requireRole('admin'), deleteFaq);
 router.get('/questions', authenticate, getQuestions);
 router.post('/questions', authenticate, createQuestion);
-// A learner's health question takes the same path as a lesson: a writer drafts
-// the answer, and the specialist for that disease approves it, which is what
-// sends it to the learner.
+// Learner questions: writer drafts, specialist approves.
 router.post('/questions/:id/draft', authenticate, requireRole('creator'), draftAnswer);
 router.post('/questions/:id/answer', authenticate, requireRole('specialist'), answerQuestion);
 router.post('/issues', createIssue);
@@ -47,12 +45,10 @@ router.post('/auth/register', register);
 router.post('/auth/forgot-password', requestPasswordReset);
 router.post('/auth/reset-password', resetPassword);
 router.post('/auth/change-password', authenticate, changePassword);
-// Optional, and the learner's own to remove. Baho uses it only to say that a
-// reply to their question is waiting, never to send anything about their health.
+// Optional learner email.
 router.patch('/profile/email', authenticate, requireRole('learner'), updateMyEmail);
 
-// Notifications on the phone itself. The key is public; everything else needs
-// the learner to be signed in, and a device can be unsubscribed at any time.
+// Push notifications.
 router.get('/push/key', getPushKey);
 router.get('/push/status', authenticate, getPushStatus);
 router.post('/push/subscribe', authenticate, subscribeToPush);
@@ -64,14 +60,7 @@ router.post('/admin/learners/:id/pin', authenticate, requireRole('admin'), reset
 router.put('/admin/staff/:id/topics', authenticate, requireRole('admin'), putSpecialistTopics);
 router.get('/review/queue', authenticate, requireRole('specialist'), getReviewQueue);
 router.post('/review/lessons/:id', authenticate, requireRole('specialist'), reviewLesson);
-// Lessons belong to writers and specialists. Writers draft them and send them
-// for review; the specialist for the disease approves, which publishes, or sends
-// the lesson back. That specialist may also edit a lesson on their own diseases
-// and replace its recording, published or not, and may publish one directly,
-// with the one exception that nobody publishes a lesson they wrote themselves.
-// An administrator can see every lesson, because they answer for the platform,
-// and can delete one as housekeeping, but takes no part in deciding what
-// learners are taught.
+// Lessons: writers draft, specialists review and publish, admins can view and delete.
 router.post('/admin/content', authenticate, requireRole('creator'), createContent);
 router.patch('/admin/content/:id', authenticate, requireRole('creator', 'specialist'), updateContent);
 router.patch('/admin/content/:id/status', authenticate, requireRole('specialist'), updateContentStatus);

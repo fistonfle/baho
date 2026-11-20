@@ -47,8 +47,7 @@ export function LibraryScreen({
   isSignedIn: boolean;
   onHome: () => void;
 }) {
-  // "Ibyo wahisemo" (the learner's topics) when they chose any, then every topic, then
-  // single topics that actually have lessons.
+  // Filter options: my topics, all, then each topic with lessons.
   const hasChoices = myTopics.length > 0;
   const filter = activeCategory === MINE && !hasChoices ? ALL : activeCategory;
   const categories = [...(hasChoices ? [MINE] : []), ALL, ...topics.filter((topic) => lessons.some((lesson) => lesson.category === topic))];
@@ -148,12 +147,7 @@ export function LibraryScreen({
   );
 }
 
-/**
- * Kubaza ikibazo kuri iri somo.
- *
- * The lesson is carried with the question, so the learner never has to say which
- * disease it is about and the question reaches the specialist for that disease.
- */
+/** Ask a question about this lesson. */
 function LessonQuestion({
   lessonId,
   isSignedIn,

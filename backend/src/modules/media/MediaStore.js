@@ -1,6 +1,4 @@
-// Stores uploaded lesson recordings on disk (a Docker volume in production) and
-// recognises the audio format from the file's first bytes, not from the name or
-// the type the browser claims.
+// Saves uploaded recordings and checks the audio format from the first bytes.
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';

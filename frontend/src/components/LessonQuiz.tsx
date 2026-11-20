@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { QuizQuestion, QuizScore } from '../types';
 
-// Short comprehension quiz at the end of a lesson. The parent decides how the
-// attempt is graded and saved (server for signed-in learners, device for guests).
+// Quiz at the end of a lesson. The parent saves the result.
 export function LessonQuiz({
   lessonId,
   questions,
@@ -86,7 +85,7 @@ export function LessonQuiz({
           </div>
         ) : (
           <button className="btn btn-primary" onClick={() => void submit()} disabled={!allAnswered || saving}>
-            {saving ? 'Biri kubikwa…' : allAnswered ? 'Ohereza ibisubizo' : `Subiza ibibazo byose (${answers.filter((answer) => answer !== undefined).length}/${questions.length})`}
+            {saving ? 'Biri kubikwa...' : allAnswered ? 'Ohereza ibisubizo' : `Subiza ibibazo byose (${answers.filter((answer) => answer !== undefined).length}/${questions.length})`}
           </button>
         )}
       </div>

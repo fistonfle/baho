@@ -1,8 +1,5 @@
-// Small encrypted store for sensitive answers (NFR05).
-// A non-extractable AES-GCM key is generated once and kept in IndexedDB, and
-// each record is encrypted with a fresh IV before it is written.
-// Web Crypto needs a secure context (https or localhost); elsewhere we fall
-// back to plain localStorage so the demo still works.
+// Encrypted storage (AES-GCM, key kept in IndexedDB).
+// Falls back to localStorage without a secure context.
 
 const DB_NAME = 'baho-secure';
 const STORE = 'items';

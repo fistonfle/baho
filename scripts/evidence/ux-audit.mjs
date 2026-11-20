@@ -1,6 +1,5 @@
-// Phone-size audit of the learner screens: full-page screenshots plus a list of
-// tap targets smaller than 40 px and visible English words, per screen.
-//   node --experimental-websocket scripts/evidence/ux-audit.mjs <app-url> <out-dir>
+// Phone-size check of learner screens (small buttons, English words).
+// Usage: node --experimental-websocket scripts/evidence/ux-audit.mjs <app-url> <out-dir>
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

@@ -23,8 +23,7 @@ export function NavIcon({ name }: { name: string }) {
 
 const learnerItems: NavItem[] = [
   { screen: 'dashboard', label: 'Ahabanza', icon: 'home' },
-  // Diseases come before lessons: a learner arrives with a condition in mind,
-  // their own or a relative's, and the lessons follow from it.
+  // Diseases before lessons.
   { screen: 'ncd', label: 'Indwara', icon: 'heart' },
   { screen: 'library', label: 'Amasomo', icon: 'book' },
   { screen: 'exercise', label: 'Imyitozo', icon: 'run' },
@@ -41,8 +40,7 @@ const roleNames: Record<string, string> = {
   learner: 'Umunyeshuri'
 };
 
-// Utility bar + masthead + main navigation. Public pages (landing, sign-in,
-// onboarding) use it without the navigation.
+// Top bar + header + navigation. Public pages skip the navigation.
 export function SiteHeader({
   currentScreen,
   userName,
@@ -125,8 +123,7 @@ export function SiteHeader({
   );
 }
 
-// Header of the staff portal: a separate, English mode for writers, specialists
-// and admins, with a switch to see the site as learners do.
+// Staff portal header (English) with a switch to the learner view.
 export function StaffHeader({
   userName,
   role,

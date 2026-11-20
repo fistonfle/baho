@@ -1,5 +1,4 @@
-// Finds the Kinyarwanda text shown to users in the frontend and the seed data,
-// so it can be reviewed in a spreadsheet and written back (see export.mjs, apply.mjs).
+// Finds the Kinyarwanda texts in the frontend and seed data.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
@@ -67,8 +66,7 @@ const wanted = (node, isContent) => {
   return true;
 };
 
-// Every translatable piece of text with its exact position in the file.
-// `text` is what users see; for template strings it keeps the ${...} parts as written.
+// Every text with its position in the file.
 export const extract = (file) => {
   const code = readFileSync(join(root, file), 'utf8');
   const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);

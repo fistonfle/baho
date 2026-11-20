@@ -2,14 +2,7 @@ import { useState } from 'react';
 
 import { Panel, PageHeader } from '../ui';
 
-/**
- * Amabwiriza yo gukoresha Baho n'uko tubungabunga amakuru.
- *
- * Buri nteruro iri hano igomba kuba ari ukuri ku byo sisitemu ikora koko.  The
- * page is deliberately a statement of what the running system does, not a
- * template: every claim here is one the code can be held to, and the button at
- * the bottom is the mechanism rather than a promise.
- */
+/** Privacy and terms page. */
 export function PrivacyScreen({
   isSignedIn,
   onHome,

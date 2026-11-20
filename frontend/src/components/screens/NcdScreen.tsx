@@ -1,8 +1,7 @@
 import type { Curriculum, Lesson } from '../../types';
 import { Disclaimer, PageHeader, Photo } from '../ui';
 
-// NCD module. Diseases come from the API, so a disease added by staff appears
-// here with its information and the lessons written for it.
+// NCD module, diseases come from the API.
 export function NcdScreen({
   diseases,
   chosenIds,

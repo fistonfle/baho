@@ -1,8 +1,7 @@
 // Learners sign in with a Rwandan mobile number and a short PIN, like mobile money.
 
 export class PhoneNumber {
-  // 078 123 4567, 0781234567, 250781234567 and +250 78 123 4567 all become +250781234567.
-  // Rwandan mobile numbers start with 072, 073 (Airtel) or 078, 079 (MTN).
+  // Accepts 078 123 4567, 0781234567, +250781234567... and returns +250781234567.
   static normalize(input) {
     const compact = String(input || '').replace(/[\s().-]/g, '');
     const match = compact.match(/^(?:\+?250|0)(7[2389]\d{7})$/);
@@ -14,8 +13,7 @@ export class PhoneNumber {
   }
 }
 
-// A PIN is short, so an account is locked for a while after repeated wrong PINs.
-// The clock is injectable so the lockout can be tested without waiting.
+// Locks a number after too many wrong PINs. Clock is injectable for tests.
 export class LoginGuard {
   #failures = new Map();
 

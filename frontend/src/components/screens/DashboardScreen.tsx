@@ -160,8 +160,6 @@ export function DashboardScreen({
                         <span className="meta-item">{lesson.duration}</span>
                       </span>
                       {reasons.length > 0 && (
-                        // Why this lesson was chosen reads as a sentence, so it
-                        // keeps its own line rather than trailing the minutes.
                         <span className="meta"><span className="meta-item">{reasons.join(', ')}</span></span>
                       )}
                     </span>

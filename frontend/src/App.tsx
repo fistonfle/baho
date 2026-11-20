@@ -71,10 +71,7 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import type { Category, Curriculum, Lesson, QuestionItem, QuestionStatus } from './types';
 
 const PROFILE_KEY = 'baho-profile';
-// The learner's name and chosen topics are held on this device only; the
-// server never sees them. A guest and every account that signs in on the same
-// phone therefore need a copy each, or an account opens on the guest's topics
-// and then saves its own over them.
+// Profile is stored per account on the device.
 const profileKey = (userId?: number | null) => (userId ? `${PROFILE_KEY}-${userId}` : PROFILE_KEY);
 const PATH_KEY = 'baho-active-path';
 const learnerScreens: Screen[] = ['dashboard', 'paths', 'profile', 'library', 'ncd', 'checkup', 'exercise', 'reminders', 'faq', 'privacy', 'risk'];
@@ -129,14 +126,7 @@ function App() {
   const [activePathSlug, setActivePathSlug] = useState<string | null>(() => localStorage.getItem(PATH_KEY));
   const [riskFromOnboarding, setRiskFromOnboarding] = useState(false);
   const [staffSignIn, setStaffSignIn] = useState(false);
-  // A staff member who opens the link from a password-reset email arrives at
-  // /?reset=<token>; the token is taken out of the address so it is not left in
-  // the history or shared by accident.
-  //
-  // This is read while the first render is being set up, not in an effect,
-  // because restoring a saved session also decides which screen to open. Read
-  // later, the address has already been cleaned and the session would send the
-  // visitor to the dashboard, closing the reset form in front of them.
+  // Read the reset token before the session restore, otherwise we jump to the dashboard.
   const linkToken = useRef<string | null>(new URLSearchParams(window.location.search).get('reset'));
   const [resetToken, setResetToken] = useState<string | null>(linkToken.current);
   const [showPasswordReset, setShowPasswordReset] = useState(Boolean(linkToken.current));
@@ -164,10 +154,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('baho-token');
     const savedUser = localStorage.getItem('baho-user');
-    // Somebody following a reset link is choosing a password, which may well be
-    // for a different account than the one this device last signed in as. The
-    // saved session is left where it is and the form stays in front of them;
-    // the next ordinary visit restores it as usual.
+    // Don't restore the session while resetting a password.
     let session: AuthUser | null = null;
     if (!linkToken.current && token && savedUser) {
       try {
@@ -177,11 +164,8 @@ function App() {
         localStorage.removeItem('baho-user');
       }
     }
-    // Staff have no learner profile, and must not be shown the one belonging to
-    // whoever uses this phone as a learner.
+    // Staff have no learner profile.
     const staffSession = ['admin', 'creator', 'specialist'].includes(session?.role ?? '');
-    // An account reads only its own copy. The guest's topics stay the guest's,
-    // even on a device where the two used to share one.
     const profile = staffSession
       ? null
       : loadCache<{ name: string; interests: typeof selectedInterests }>(profileKey(session?.id));
@@ -203,8 +187,7 @@ function App() {
     });
   }, [dispatch]);
 
-  // Lessons and FAQs: network first, then the last downloaded copy, then built-in lessons.
-  // Categories load first because staff can add new ones (a new disease) and lessons use their names.
+  // Load categories first, then lessons (network, then cache, then built-in).
   useEffect(() => {
     const loadLessons = async () => {
       const loadedCategories = await api.getCategories()
@@ -262,8 +245,7 @@ function App() {
   // Staff data is only loaded when the staff area is opened.
   useEffect(() => {
     if (currentScreen !== 'admin' || !isStaff) return;
-    // Every staff role has a lesson list now: a writer's own, a specialist's
-    // diseases, and all of them for an administrator. The server decides which.
+    // The server decides which lessons each staff role gets.
     api.getAdminContent().then((response) => dispatch(setAdminContent(response.content))).catch(() => notify('Could not load the lessons.'));
     api.getQuestions().then((response) => dispatch(setQuestions(response.questions.map(toQuestionItem)))).catch(() => undefined);
     if (authUser?.role === 'admin') {
@@ -404,22 +386,18 @@ function App() {
     navigate('dashboard');
   };
 
-  // Everything this device holds, removed from the device.  The privacy page
-  // offers it so the promise it makes is a control the learner can use, not a
-  // sentence they have to trust.
+  // Privacy page: delete everything this app stored on the device.
   const clearDeviceData = async () => {
     // The encrypted health profile first, since that is what the page promises.
     await removeSecure('health-profile');
     await removeSecure('risk-answers');
-    // Then every other key this app owns.  The signed-in session is deliberately
-    // left alone: this button clears the device, it does not sign anybody out.
+    // Keep the session, this doesn't sign out.
     try {
       Object.keys(localStorage)
         .filter((key) => key.startsWith('baho-') && key !== 'baho-token' && key !== 'baho-user')
         .forEach((key) => localStorage.removeItem(key));
     } catch { /* storage blocked: nothing was written in the first place */ }
-    // Finally the state held in memory, or the effects that persist it would
-    // write the same values straight back.
+    // Reset memory too, or the save effects write it back.
     setHealthProfile(emptyHealthProfile);
     setActivePathSlug(null);
     dispatch(setUserName(''));
@@ -519,15 +497,10 @@ function App() {
       setAuthToken(response.token);
       localStorage.setItem('baho-token', response.token);
       localStorage.setItem('baho-user', JSON.stringify(response.user));
-      // A guest may have been using this phone a minute ago. Their progress,
-      // reminders and quiz answers stay in storage, but none of it belongs to
-      // the account now opening, so the screen starts from the account's own
-      // data, which loads from the server a moment later.
+      // Start the account from its own data, not the guest's.
       dispatch(clearSessionData());
       dispatch(clearLearnerData());
       dispatch(setAuthenticatedUser({ token: response.token, user: response.user }));
-      // The account's own topics, if it has chosen any on this device before.
-      // Progress, reminders and questions arrive from the server a moment later.
       const mine = loadCache<{ name: string; interests: typeof selectedInterests }>(profileKey(response.user.id));
       if (mine && !['admin', 'creator', 'specialist'].includes(response.user.role)) {
         dispatch(setSelectedInterests(mine.interests));
@@ -538,8 +511,7 @@ function App() {
     }
   };
 
-  // A learner's optional email address. Returns null when it saved, or the
-  // message to show when it did not.
+  // Returns null on success, or an error message.
   const saveMyEmail = async (email: string): Promise<string | null> => {
     try {
       const response = await api.setMyEmail(email);
@@ -559,12 +531,10 @@ function App() {
     localStorage.removeItem('baho-token');
     localStorage.removeItem('baho-user');
     dispatch(clearAuthenticatedUser());
-    // Everything that account could see goes first: lessons, the staff list,
-    // reports, and the learner questions it was holding.
+    // Clear what the account could see.
     dispatch(clearSessionData());
     dispatch(clearLearnerData());
-    // Then this device's own guest data comes back. It was never written over
-    // while somebody was signed in, so it is exactly as the guest left it.
+    // Bring back the guest's data.
     const guest = readGuestData<{ name: string; interests: typeof selectedInterests } | null>(`baho-cache-${profileKey()}`, null);
     dispatch(setUserName(guest?.name ?? ''));
     dispatch(setSelectedInterests(guest?.interests ?? []));
@@ -592,8 +562,6 @@ function App() {
     }
   };
 
-  // A question asked from inside a lesson carries the lesson, so the server sets
-  // the disease and the right specialist sees it.
   const askAboutLesson = async (lessonId: number, question: string) => {
     try {
       const data = await api.createQuestion({ question, contentId: lessonId });

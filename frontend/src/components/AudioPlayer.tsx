@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { mediaUrl } from '../services/api';
 
-// Plays a lesson recorded by a person (FR02). Lessons without a recording, or
-// whose file cannot be loaded, show no player at all: Baho does not read text
-// aloud with a computer voice.
+// Plays the human recording of a lesson. No recording, no player.
 
 const formatTime = (seconds: number) => {
   if (!Number.isFinite(seconds)) return '0:00';
@@ -64,8 +62,7 @@ export function AudioPlayer({ audioUrl, onFinished }: { audioUrl?: string; onFin
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
-  // The service worker keeps every recording it serves, so fetching the whole
-  // file once is enough to have it offline.
+  // Fetch the whole file once so the service worker caches it.
   const saveForOffline = async () => {
     try {
       const response = await fetch(mediaUrl(audioUrl));

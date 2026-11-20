@@ -3,19 +3,7 @@ import { generateVAPIDKeys, sendNotification, setVapidDetails, WebPushError } fr
 import { pool } from '../../config/db.js';
 import { appBaseUrl } from '../mail/mailer.js';
 
-// Web push: the notification a learner gets on their phone when Baho is closed.
-//
-// The browser holds a subscription that names the push service of its own maker
-// (Google, Mozilla, Apple) and two keys. The payload is encrypted to those keys
-// before it leaves this server, so the push service forwards a message it cannot
-// read. That is a better guarantee than email, where the provider reads
-// everything, which is why the notification text here can be a little more
-// useful than the one Baho sends by email.
-//
-// On a phone this works in Chrome and Firefox on Android, and on iPhone only
-// once the learner has added Baho to the Home Screen, which is the iOS rule for
-// web push. A learner on an older phone simply never sees the prompt, and the
-// email path still covers them.
+// Web push notifications. Messages are encrypted for the device.
 
 const publicKey = process.env.VAPID_PUBLIC_KEY || '';
 const privateKey = process.env.VAPID_PRIVATE_KEY || '';
@@ -27,8 +15,7 @@ if (isPushConfigured()) setVapidDetails(subject, publicKey, privateKey);
 
 export const pushPublicKey = () => (isPushConfigured() ? publicKey : null);
 
-// Offered by the API so an administrator setting up a new server has a pair to
-// paste into the environment without hunting for a tool.
+// Helper to generate VAPID keys for a new server.
 export const newVapidKeys = () => generateVAPIDKeys();
 
 export const saveSubscription = async (userId, subscription) => {
@@ -56,10 +43,7 @@ export const hasSubscription = async (userId) => {
   return Boolean(result.rows[0]);
 };
 
-// A subscription dies when the learner uninstalls the app, clears the browser or
-// simply turns notifications off in the operating system. The push service says
-// so with 404 or 410, and the row is dropped: keeping it would mean trying
-// forever and would leave a record of a device that no longer exists.
+// 404/410 means the subscription is gone, so delete it.
 const forget = async (endpoint) => {
   try {
     await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
@@ -68,8 +52,7 @@ const forget = async (endpoint) => {
   }
 };
 
-// Sends to every device the learner has signed in on. Returns how many accepted
-// it; zero means nothing was delivered, which is why email runs alongside.
+// Sends to all the learner's devices, returns how many accepted it.
 export const sendPush = async (userId, payload) => {
   if (!isPushConfigured()) return { sent: 0, reason: 'push-not-configured' };
   let rows = [];

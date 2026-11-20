@@ -4,9 +4,7 @@ import type { AuthForm } from '../../store/appSlice';
 import { isPin, isRwandanPhone } from '../../lib/phone';
 import { PageHeader } from '../ui';
 
-// Learners register and sign in with a phone number and a PIN, because most
-// people have a phone but not an email address. Staff accounts are created by
-// an admin and sign in with their email and password.
+// Learners use phone + PIN, staff use email + password.
 type AuthMode = 'login' | 'register';
 
 const headings: Record<AuthMode, { title: string; text: string; button: string }> = {

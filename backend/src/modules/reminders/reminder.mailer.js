@@ -2,18 +2,8 @@ import { pool } from '../../config/db.js';
 import { appBaseUrl, isMailConfigured, sendMail } from '../mail/mailer.js';
 import { isPushConfigured, sendPush } from '../push/push.service.js';
 
-// Reminders by email.
-//
-// A learner sets a reminder as a time of day and a label they write themselves.
-// Until SMS is available, a learner who has given Baho an email address is sent
-// that reminder by email at the time they chose. The label is their own wording,
-// and the profile screen says plainly that it is what gets sent, so nobody is
-// surprised by their own words arriving in an inbox. Nothing else about them
-// goes into the message.
-//
-// Reminders repeat daily, so last_sent_on records the day each one last went
-// out. That is what stops a second copy if the ticker runs twice in the same
-// minute, or the server restarts.
+// Sends reminders by email at the time the learner chose.
+// last_sent_on stops duplicates on the same day.
 
 const KIGALI = 'Africa/Kigali';
 
@@ -43,7 +33,7 @@ const reminderEmail = (name, label, time) => ({
     '',
     'Ushobora guhagarika ubu butumwa ukuraho imeyili yawe mu mwirondoro wawe.',
     '',
-    'Baho — baho.filito.rw'
+    'Baho - baho.filito.rw'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -61,9 +51,7 @@ const reminderEmail = (name, label, time) => ({
   `
 });
 
-// Reminders whose time has come and that have not gone out today. The ten
-// minute window covers a restart or a slow tick; a reminder set just before
-// midnight is not carried into the next day, which keeps the day stamp honest.
+// Due reminders (10 minute window) not sent yet today.
 const dueReminders = async (now) => {
   const result = await pool.query(
     `SELECT r.id, r.user_id, r.title, to_char(r.reminder_time, 'HH24:MI') AS at, u.full_name, u.email
@@ -78,17 +66,14 @@ const dueReminders = async (now) => {
   return result.rows;
 };
 
-// Marked as sent whether or not the mail server accepted it, so a mail server
-// that is down costs a learner one reminder rather than a hundred retries.
+// Marked as sent even if the mail fails, to avoid endless retries.
 export const sendDueReminders = async (at = new Date()) => {
   const now = kigaliNow(at);
   let sent = 0;
   let pushed = 0;
   const due = await dueReminders(now);
   for (const reminder of due) {
-    // The phone first. A learner with the app installed gets it there and needs
-    // no email at all; the email is the fallback for a phone that cannot take
-    // notifications, which is most older handsets.
+    // Push first, email as fallback.
     const push = await sendPush(reminder.user_id, {
       title: 'Baho',
       body: reminder.title,

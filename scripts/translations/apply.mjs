@@ -1,8 +1,5 @@
-// Writes the corrections from the translation spreadsheet back into the code.
-//   node scripts/translations/apply.mjs [file.csv] [--dry-run] [--db]
-// --dry-run  only lists what would change
-// --db       also corrects lessons, diseases and FAQs already saved in PostgreSQL
-//            (the seed data only fills an empty database)
+// Applies the translation spreadsheet to the code.
+// Usage: node scripts/translations/apply.mjs [file.csv] [--dry-run] [--db]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
@@ -100,8 +97,7 @@ if (updateDb && !dryRun) {
     if (before.includes('${')) continue;
     for (const [table, columns] of Object.entries(textColumns)) {
       for (const name of columns) {
-        // Only touch columns that hold this text: PostgreSQL checks the new value's
-        // length against the column even when no row would change.
+        // Only update columns that contain the text (varchar length check).
         const found = await pool.query(`SELECT 1 FROM ${table} WHERE ${name} = $1::text LIMIT 1`, [before]);
         if (!found.rowCount) continue;
         try {

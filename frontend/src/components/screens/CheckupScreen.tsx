@@ -20,8 +20,7 @@ const saveKnowledgeResult = (result: KnowledgeResult) => {
 };
 
 
-// Five-item NCD knowledge check (same items as Appendix A). Taking it before
-// and after the NCD module shows the learner, and the researcher, the change.
+// Five-question knowledge check, before and after the NCD module.
 export function CheckupScreen({ onFinished, onOpenNcd, onHome }: { onFinished: () => void; onOpenNcd: () => void; onHome: () => void }) {
   const [index, setIndex] = useState(0);
   const [choices, setChoices] = useState<number[]>([]);

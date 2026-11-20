@@ -1,8 +1,4 @@
-// Learner accounts and PIN recovery (admins only).
-//
-// Learners sign in with a phone number and a PIN and have no email address, so
-// they cannot be sent a reset link. An administrator finds the account here and
-// sets a new PIN, which is shown once so it can be read out to the learner.
+// Admin: find learners and reset their PIN.
 import { useEffect, useState } from 'react';
 
 import { api, type Learner } from '../../services/api';
@@ -16,7 +12,7 @@ const formatPhone = (phone: string) => {
 };
 
 const formatDate = (value: string | null) =>
-  value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
 export function LearnerPanel() {
   const dispatch = useAppDispatch();
@@ -92,7 +88,7 @@ export function LearnerPanel() {
       )}
 
       {loading ? (
-        <Empty>Loading learner accounts…</Empty>
+        <Empty>Loading learner accounts...</Empty>
       ) : learners.length === 0 ? (
         <Empty>{search ? 'No learner matches that name or number.' : 'No learner has created an account yet.'}</Empty>
       ) : (
@@ -119,7 +115,7 @@ export function LearnerPanel() {
                       disabled={busyId === learner.id}
                       onClick={() => void resetPin(learner)}
                     >
-                      {busyId === learner.id ? 'Changing…' : 'Give a new PIN'}
+                      {busyId === learner.id ? 'Changing...' : 'Give a new PIN'}
                     </button>
                   </td>
                 </tr>

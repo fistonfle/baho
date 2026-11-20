@@ -5,9 +5,7 @@ import { profileTags, type HealthProfile } from '../../lib/personalization';
 import type { Category, Curriculum } from '../../types';
 import { Disclaimer, PageHeader } from '../ui';
 
-// Optional health profile (FR08): diagnosed conditions choose the learning
-// path, the six questions refine the "for you" ranking. Everything is
-// encrypted and kept on this device only.
+// Optional health profile, encrypted and kept on the device.
 export function HealthProfileScreen({
   initialProfile,
   curricula,

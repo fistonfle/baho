@@ -25,8 +25,7 @@ test('LessonWorkflow knows the valid statuses, and approval publishes', () => {
   assert.equal(LessonWorkflow.isValid('approved'), true);
   assert.equal(LessonWorkflow.isValid('archived'), false);
   assert.deepEqual(LessonWorkflow.allowedFor('creator'), ['draft', 'review']);
-  // A specialist's approval publishes the lesson in one step: no separate
-  // administrative publish stands between the clinical decision and the learner.
+  // Approval publishes in one step.
   assert.equal(LessonWorkflow.reviewOutcome('approve'), 'published');
   assert.equal(LessonWorkflow.reviewOutcome('changes'), 'rejected');
 });

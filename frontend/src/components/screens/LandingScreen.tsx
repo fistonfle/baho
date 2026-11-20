@@ -1,8 +1,7 @@
 import type { Curriculum, Lesson } from '../../types';
 import { Photo } from '../ui';
 
-// Public home page. The diseases and newest lessons come from the API (or the
-// copy kept on the phone), so the page shows what is actually published.
+// Home page, with diseases and newest lessons from the API.
 export function LandingScreen({
   returning,
   diseases,

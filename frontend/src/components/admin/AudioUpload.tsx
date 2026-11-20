@@ -1,5 +1,4 @@
-// Uploads a lesson recorded by a person. Phones can record straight from the
-// microphone through the file picker. Without a recording, learners see no player.
+// Upload a recorded lesson (phones can record from the file picker).
 import { useState } from 'react';
 
 import { api } from '../../services/api';
@@ -46,7 +45,7 @@ export function AudioUpload({ value, onChange, onError }: { value: string; onCha
         />
       )}
       <span className="form-hint">
-        {uploading ? 'Uploading…' : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). Lessons without a recording show no audio player.'}
+        {uploading ? 'Uploading...' : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). Lessons without a recording show no audio player.'}
       </span>
     </div>
   );

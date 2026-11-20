@@ -1,6 +1,5 @@
-// Takes the README / report screenshots by driving the real app in headless Chrome.
-//   node --experimental-websocket scripts/evidence/screenshots.mjs <app-url> <out-dir> <sessions.json>
-// sessions.json holds sign-in tokens for { admin, specialist, learner } (see staging.mjs).
+// Screenshots for the README and report.
+// Usage: node --experimental-websocket scripts/evidence/screenshots.mjs <app-url> <out-dir> <sessions.json>
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -64,7 +63,7 @@ const shotAt = async (name, selector) => {
 };
 const session = (key) => ({ 'baho-token': sessions[key].token, 'baho-user': JSON.stringify(sessions[key].user) });
 
-// Learner, as a guest: landing → onboarding → health profile → dashboard → lesson.
+// Learner flow as a guest.
 await setViewport(desktop);
 await load();
 await shot('01-landing');

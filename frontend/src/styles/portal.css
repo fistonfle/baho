@@ -1,6 +1,4 @@
-/* Baho portal stylesheet.
-   A plain institutional look: flat panels with thin borders, small radii,
-   one brand colour, system fonts, tables for staff data. */
+/* Baho portal styles. */
 
 :root {
   --brand: #0b5845;
@@ -55,7 +53,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .small { font-size: 0.85rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-/* ---------- Page frame ---------- */
+/* Page frame */
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
 .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
 .page { flex: 1; padding: 24px 0 48px; }
@@ -99,7 +97,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .footer-base { border-top: 1px solid #33424c; }
 .footer-base .container { display: flex; justify-content: space-between; gap: 16px; padding-top: 12px; padding-bottom: 12px; font-size: 0.8rem; }
 
-/* ---------- Page header ---------- */
+/* Page header */
 .page-header { margin-bottom: 20px; }
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; padding: 0; list-style: none; color: var(--muted); font-size: 0.85rem; }
 .breadcrumb li + li::before { margin-right: 6px; content: '/'; color: var(--line-strong); }
@@ -109,7 +107,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .page-header .lead { max-width: 760px; margin: 4px 0 0; color: var(--muted); }
 .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ---------- Layout helpers ---------- */
+/* Layout helpers */
 .layout-main-aside { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
 .layout-aside-main { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -121,7 +119,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .narrow { max-width: 720px; margin: 0 auto; }
 
-/* ---------- Panels ---------- */
+/* Panels */
 .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
 .panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
@@ -129,7 +127,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .panel-body.flush { padding: 0; }
 .panel-foot { padding: 12px 20px; border-top: 1px solid var(--line); background: var(--surface-alt); }
 
-/* ---------- Buttons ---------- */
+/* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; line-height: 1.2; text-decoration: none; white-space: nowrap; }
 .btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .btn-primary { background: var(--brand); color: #fff; }
@@ -143,7 +141,7 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .btn-link { padding: 0; border: 0; background: none; color: var(--info); font-weight: 500; }
 .btn-link:hover { text-decoration: underline; }
 
-/* ---------- Forms ---------- */
+/* Forms */
 .form-group { display: grid; gap: 4px; margin-bottom: 14px; }
 .form-group > label, .form-label { color: var(--ink); font-size: 0.88rem; font-weight: 600; }
 .form-hint { color: var(--muted); font-size: 0.8rem; }
@@ -162,24 +160,20 @@ textarea.input { min-height: 110px; resize: vertical; }
 .option.selected { border-color: var(--brand); background: var(--brand-tint); }
 .option input { accent-color: var(--brand); }
 
-/* ---------- Status ---------- */
+/* Status */
 .badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface-alt); color: var(--text); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 .badge-success { border-color: #b7dcc6; background: var(--success-tint); color: var(--success); }
 .badge-warning { border-color: #ecd3a4; background: var(--warning-tint); color: var(--warning); }
 .badge-danger { border-color: #e9beb7; background: var(--danger-tint); color: var(--danger); }
 .badge-info { border-color: #bcd2ea; background: var(--info-tint); color: var(--info); }
 
-/* Tags: a list of topics or diseases is a list of separate things, and a line
-   of commas does not read that way on a phone. Same shape as a badge, quieter,
-   so the two never compete in one panel. */
+/* Topic tags */
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface-alt); color: var(--text); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 .tag-brand { border-color: #b9d2c9; background: var(--brand-tint); color: var(--brand); }
 .tag-muted { background: var(--surface); color: var(--muted); font-weight: 500; }
 
-/* The line under a title: what the thing is, then how long it takes. The
-   stylesheet draws the separator, so no screen has to spell out a dot and a
-   missing piece never leaves one stranded. */
+/* Subtitle line: separator added by CSS */
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
 .meta-item { color: var(--muted); font-size: 0.78rem; }
 .meta-item + .meta-item::before { content: '\00b7'; margin-right: 6px; color: var(--line-strong); }
@@ -192,7 +186,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .progress { height: 8px; overflow: hidden; border-radius: 2px; background: #dfe5e9; }
 .progress span { display: block; height: 100%; background: var(--brand); }
 
-/* ---------- Tabs ---------- */
+/* Tabs */
 .tabs { display: flex; gap: 4px; margin-bottom: 20px; overflow-x: auto; border-bottom: 1px solid var(--line); }
 .tabs button { display: inline-flex; align-items: center; gap: 6px; margin-bottom: -1px; padding: 10px 14px; border: 1px solid transparent; border-radius: var(--radius) var(--radius) 0 0; background: none; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .tabs button:hover { color: var(--ink); }
@@ -200,7 +194,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .panel .tabs button.active { border-bottom-color: var(--surface); background: var(--surface); }
 .count { min-width: 20px; padding: 0 6px; border-radius: 10px; background: #c47f0e; color: #fff; font-size: 0.72rem; line-height: 18px; text-align: center; }
 
-/* ---------- Tables ---------- */
+/* Tables */
 .table-wrap { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .table th { padding: 10px 12px; border-bottom: 1px solid var(--line-strong); background: var(--surface-alt); color: var(--muted); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; text-align: left; text-transform: uppercase; white-space: nowrap; }
@@ -210,7 +204,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .table td.right, .table th.right { text-align: right; }
 .empty { padding: 28px 20px; color: var(--muted); text-align: center; }
 
-/* ---------- Lists ---------- */
+/* Lists */
 .list { margin: 0; padding: 0; list-style: none; }
 .list > li { border-bottom: 1px solid var(--line); }
 .list > li:last-child { border-bottom: 0; }
@@ -228,21 +222,21 @@ textarea.input { min-height: 110px; resize: vertical; }
 .definition dt { color: var(--muted); }
 .definition dd { margin: 0; color: var(--ink); font-weight: 600; text-align: right; }
 
-/* ---------- Stats ---------- */
+/* Stats */
 .stat { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .stat-label { color: var(--muted); font-size: 0.82rem; }
 .stat-value { margin-top: 2px; color: var(--ink); font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
 .stat-value small { color: var(--muted); font-size: 0.9rem; font-weight: 500; }
 .stat .progress { margin-top: 10px; }
 
-/* ---------- Article (lesson) ---------- */
+/* Article (lesson) */
 .article-figure { margin: 0 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .article-figure img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: cover; }
 .article-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 16px; color: var(--muted); font-size: 0.85rem; }
 .article-body p { color: var(--text); font-size: 1rem; line-height: 1.75; }
 .section-title { margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 1rem; }
 
-/* ---------- Audio player ---------- */
+/* Audio player */
 .audio-player { display: flex; align-items: center; gap: 14px; margin: 16px 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .audio-toggle { display: grid; width: 44px; height: 44px; flex: none; place-items: center; border: 0; border-radius: 50%; background: var(--brand); color: #fff; }
 .audio-toggle svg { width: 18px; height: 18px; }
@@ -253,7 +247,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .audio-seek { width: 100%; accent-color: var(--brand); }
 .audio-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
-/* ---------- Quiz ---------- */
+/* Quiz */
 .quiz-question { margin: 0 0 16px; padding: 0; border: 0; }
 .quiz-question legend { margin-bottom: 8px; color: var(--ink); font-weight: 600; }
 .quiz-option { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 6px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); text-align: left; }
@@ -270,7 +264,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .quiz-result { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .quiz-score { color: var(--ink); font-size: 1.6rem; font-weight: 700; }
 
-/* ---------- Learner-specific ---------- */
+/* Learner-specific */
 .landing-banner { padding: 48px 0; border-bottom: 1px solid var(--line); background: var(--surface); }
 .landing-banner .container { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: center; }
 .landing-banner h1 { font-size: 2.1rem; }
@@ -286,8 +280,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .section-head h2 { margin-bottom: 4px; }
 .disease-link { display: grid; gap: 6px; align-content: start; padding: 16px 18px; border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: var(--radius); background: var(--surface); color: var(--ink); text-align: left; }
 .disease-link:hover { background: var(--surface-alt); }
-/* Fixed text heights: the cards keep their size when cached content is replaced
-   by the server's, so the page does not jump (Lighthouse layout shift). */
+/* Fixed heights so cards don't jump (layout shift) */
 .disease-link span { display: -webkit-box; min-height: 4.5em; overflow: hidden; color: var(--muted); font-size: 0.88rem; line-height: 1.5; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .disease-link small { color: var(--brand); font-weight: 600; }
 .lesson-teaser { overflow: hidden; }
@@ -336,7 +329,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .preview-box { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .preview-box img { width: 180px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
 
-/* ---------- Toast and phone tab bar ---------- */
+/* Toast and phone tab bar */
 .toast { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: flex; align-items: flex-start; gap: 12px; max-width: 420px; padding: 12px 14px; border: 1px solid var(--line-strong); border-left: 4px solid var(--brand); border-radius: var(--radius); background: var(--surface); box-shadow: 0 6px 18px rgba(20, 40, 50, 0.15); font-size: 0.9rem; }
 .toast p { margin: 0; color: var(--ink); }
 .toast button { padding: 0 4px; border: 0; background: none; color: var(--muted); font-size: 1.1rem; line-height: 1; }
@@ -344,7 +337,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .tab-bar { display: none; }
 .nav-icon { width: 20px; height: 20px; }
 
-/* ---------- Responsive ---------- */
+/* Responsive */
 @media (max-width: 1000px) {
   .layout-main-aside, .layout-aside-main { grid-template-columns: minmax(0, 1fr); }
   .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }

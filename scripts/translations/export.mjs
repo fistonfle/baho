@@ -1,6 +1,5 @@
-// Writes every piece of user-facing Kinyarwanda text to a spreadsheet (CSV).
-// Fill in "Corrected text" for the lines that are wrong, then run apply.mjs.
-//   node scripts/translations/export.mjs [output.csv]
+// Exports the Kinyarwanda texts to a CSV for review.
+// Usage: node scripts/translations/export.mjs [output.csv]
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

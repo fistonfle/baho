@@ -1,8 +1,7 @@
 import { isDatabaseUnavailable } from '../../config/dbErrors.js';
 import { hasSubscription, isPushConfigured, pushPublicKey, removeSubscription, saveSubscription } from './push.service.js';
 
-// The key the browser needs before it can subscribe. It is public by design:
-// it only lets a device address this server, never read anything.
+// Public VAPID key the browser needs to subscribe.
 export const getPushKey = (_req, res) => res.json({ key: pushPublicKey(), enabled: isPushConfigured() });
 
 export const subscribeToPush = async (req, res) => {
@@ -33,8 +32,7 @@ export const unsubscribeFromPush = async (req, res) => {
   }
 };
 
-// Whether this account has any device signed up, so the profile screen can say
-// so even on a phone the learner has just picked up.
+// Does this account have at least one subscribed device?
 export const getPushStatus = async (req, res) => {
   if (!isPushConfigured()) return res.json({ enabled: false, devices: false });
   try {

@@ -51,8 +51,7 @@ export type AdminContentItem = {
   reviewNote?: string;
 };
 
-// Learners sign in with a phone number and PIN, staff with an email and password.
-// `identifier` holds whichever one is typed on the sign-in screen.
+// identifier is a phone number or an email.
 export type AuthForm = { name: string; identifier: string; password: string };
 export type AuthUser = { id: number; name: string; email: string | null; phone?: string | null; role: string };
 const emptyAuthForm: AuthForm = { name: '', identifier: '', password: '' };
@@ -63,8 +62,7 @@ export type StaffMember = { id: number; fullName: string; email: string; role: s
 type CreatorForm = { fullName: string; email: string; role: string; topicIds: number[] };
 const emptyCreatorForm: CreatorForm = { fullName: '', email: '', role: 'creator', topicIds: [] };
 
-// A guest's data is read before the first render. Loading it later in an effect
-// let the "save" effects write the empty defaults over it first.
+// Load guest data before the first render so the save effects don't overwrite it.
 export const readGuestData = <T,>(key: string, fallback: T): T => {
   try {
     if (typeof localStorage === 'undefined' || localStorage.getItem('baho-token')) return fallback;
@@ -75,8 +73,7 @@ export const readGuestData = <T,>(key: string, fallback: T): T => {
   }
 };
 
-// The saved session is also read up front, so the first render already knows
-// someone is signed in and never saves guest data over it.
+// Same for the saved session.
 const readSession = (): { token: string; user: AppState['authUser'] } | null => {
   try {
     const token = typeof localStorage === 'undefined' ? null : localStorage.getItem('baho-token');
@@ -263,8 +260,6 @@ const appSlice = createSlice({
       state.questions = [action.payload, ...state.questions];
       state.questionForm = { topic: 'Umuvuduko w\'amaraso', question: '' };
     },
-    // `status` is the question's new state: a writer's save leaves it Drafted,
-    // a specialist's approval makes it Answered.
     answerQuestionSuccess: (state, action: PayloadAction<{ id: number; answer: string; status?: QuestionStatus }>) => {
       const status: QuestionStatus = action.payload.status ?? 'Answered';
       state.questions = state.questions.map((item) =>
@@ -311,8 +306,6 @@ const appSlice = createSlice({
       state.feedbackMessage = '';
       state.currentScreen = isStaff ? 'admin' : 'dashboard';
     },
-    // A learner adding or removing their optional email address. Only that field
-    // changes, so the screen they are on does not move under them.
     setAccountEmail: (state, action: PayloadAction<string | null>) => {
       if (state.authUser) state.authUser = { ...state.authUser, email: action.payload };
     },
@@ -321,11 +314,7 @@ const appSlice = createSlice({
       state.authUser = null;
       state.currentScreen = 'landing';
     },
-    // Everything the person who just signed out was able to see, emptied in one
-    // step. A borrowed or shared phone is the ordinary case for Baho, so what
-    // one account loaded must not still be sitting in memory for whoever picks
-    // the phone up next: a staff list carries colleagues' names and email
-    // addresses, and a learner's questions are about their own health.
+    // Clear everything the previous account loaded (shared phones).
     clearSessionData: (state) => {
       state.adminContent = [];
       state.adminCreators = [];
@@ -340,9 +329,7 @@ const appSlice = createSlice({
       state.issueForm = { title: '', description: '' };
       state.feedbackMessage = '';
     },
-    // The learner data held in memory, so an account never opens on top of
-    // whatever a guest on this phone had been doing. The guest's own copy stays
-    // in storage untouched and comes back when the account signs out.
+    // Clear learner data in memory; the guest copy stays in storage.
     clearLearnerData: (state) => {
       state.userName = '';
       state.selectedInterests = [];

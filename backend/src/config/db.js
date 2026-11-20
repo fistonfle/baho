@@ -192,8 +192,7 @@ const createSchemaSql = `
 `;
 
 const seedTables = async () => {
-  // Categories, lessons and FAQs are added only when missing, so this is safe
-  // to run on every start and never overwrites content written by staff.
+  // Only inserts missing rows, so it is safe to run on every start.
   for (const category of seedCategories) {
     await pool.query(
       'INSERT INTO categories (id, name, slug) VALUES ($1, $2, $3) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name',

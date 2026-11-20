@@ -77,8 +77,7 @@ export function ProfileScreen({
     setEditingName(false);
   };
 
-  // Changing your own PIN, so a learner who was given a temporary one by an
-  // administrator can pick their own.
+  // Change own PIN.
   const [changingPin, setChangingPin] = useState(false);
   const [pins, setPins] = useState({ current: '', next: '', repeat: '' });
   const [pinBusy, setPinBusy] = useState(false);
@@ -122,10 +121,7 @@ export function ProfileScreen({
     }
   };
 
-  // An optional email address. Baho uses it to say that a reply to a question is
-  // waiting, and to send the reminders the learner set. It can be removed at any
-  // time. SMS is the channel most learners would actually read; this stands in
-  // until that is available.
+  // Optional email for reply notices and reminders.
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(account?.email ?? '');
   const [emailBusy, setEmailBusy] = useState(false);
@@ -145,9 +141,7 @@ export function ProfileScreen({
     setEditingEmail(false);
   };
 
-  // Notifications on this device. The answer depends on the phone and on what
-  // the learner has already allowed, so it is read when the screen opens rather
-  // than assumed.
+  // Check notification status when the screen opens.
   const [notifications, setNotifications] = useState<PushState>('unsupported');
   const [notifyBusy, setNotifyBusy] = useState(false);
   const [notifyError, setNotifyError] = useState('');
@@ -297,7 +291,7 @@ export function ProfileScreen({
                     {pinField('pin-next', 'PIN nshya', 'next')}
                     {pinField('pin-repeat', 'Ongera wandike PIN nshya', 'repeat')}
                     <div className="row">
-                      <button className="btn btn-primary btn-sm" type="submit" disabled={pinBusy}>{pinBusy ? 'Birabikwa…' : 'Bika PIN nshya'}</button>
+                      <button className="btn btn-primary btn-sm" type="submit" disabled={pinBusy}>{pinBusy ? 'Birabikwa...' : 'Bika PIN nshya'}</button>
                       <button className="btn btn-secondary btn-sm" type="button" onClick={closePinForm}>Reka</button>
                     </div>
                   </form>
@@ -315,7 +309,7 @@ export function ProfileScreen({
                 <tr><td>Amasomo warangije</td><td className="right"><strong>{completedCount} / {totalLessons}</strong></td></tr>
                 <tr><td>Iminsi wiga ukurikiranya</td><td className="right"><strong>{streak}</strong></td></tr>
                 <tr><td>Impuzandengo y'amasuzuma</td><td className="right"><strong>{quizAverage === null ? '–' : `${quizAverage}%`}</strong></td></tr>
-                <tr><td>Isuzuma ry'ubumenyi (ubwa mbere → ubu)</td><td className="right"><strong>{knowledgeScore ? `${knowledgeScore.first}/${knowledgeScore.total} → ${knowledgeScore.latest}/${knowledgeScore.total}` : '–'}</strong></td></tr>
+                <tr><td>Isuzuma ry'ubumenyi (ubwa mbere / ubu)</td><td className="right"><strong>{knowledgeScore ? `${knowledgeScore.first}/${knowledgeScore.total} -> ${knowledgeScore.latest}/${knowledgeScore.total}` : '–'}</strong></td></tr>
               </tbody>
             </table>
           </Panel>

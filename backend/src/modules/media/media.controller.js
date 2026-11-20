@@ -20,8 +20,7 @@ export const uploadAudio = async (req, res) => {
 // Reads the raw upload, up to the size limit, whatever type the browser sends.
 export const readAudioBody = express.raw({ type: () => true, limit: MediaStore.maxBytes });
 
-// Serves recordings. Names are random, so files can be cached for a year;
-// byte ranges are supported, so the player can seek.
+// Serves recordings with long caching and byte ranges (for seeking).
 export const serveMedia = express.static(mediaStore.directory, {
   fallthrough: false,
   immutable: true,
