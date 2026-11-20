@@ -1,4 +1,5 @@
 import type { Category, Curriculum, QuizQuestion, QuizScore } from '../types';
+import { showLoading } from '../lib/buttonLoader';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
 let authToken: string | null = null;
@@ -41,7 +42,11 @@ export type Learner = {
   createdAt: string | null;
 };
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return showLoading(send<T>(path, options));
+}
+
+async function send<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   // Files (recordings) are sent as they are; everything else is JSON.
   if (!(options.body instanceof Blob)) headers.set('Content-Type', 'application/json');

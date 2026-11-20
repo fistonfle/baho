@@ -45,7 +45,7 @@ export function AudioUpload({ value, onChange, onError }: { value: string; onCha
         />
       )}
       <span className="form-hint">
-        {uploading ? 'Uploading...' : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). Lessons without a recording show no audio player.'}
+        {uploading ? <><span className="spinner" /> Uploading...</> : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). Lessons without a recording show no audio player.'}
       </span>
     </div>
   );

@@ -6,6 +6,7 @@ import App from './App';
 import './styles/portal.css';
 import { store } from './store/store';
 import { registerServiceWorker } from './lib/offline';
+import { watchButtons } from './lib/buttonLoader';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -15,4 +16,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   </React.StrictMode>
 );
 
+watchButtons();
 registerServiceWorker();

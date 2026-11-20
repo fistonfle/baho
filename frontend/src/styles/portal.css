@@ -140,6 +140,11 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .btn-block { width: 100%; }
 .btn-link { padding: 0; border: 0; background: none; color: var(--info); font-weight: 500; }
 .btn-link:hover { text-decoration: underline; }
+.btn.is-loading { pointer-events: none; opacity: 0.8; }
+.spinner { display: inline-block; vertical-align: -2px; }
+.btn.is-loading::before, .spinner { content: ''; width: 14px; height: 14px; flex-shrink: 0; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .btn.is-loading::before, .spinner { animation-duration: 2s; } }
 
 /* Forms */
 .form-group { display: grid; gap: 4px; margin-bottom: 14px; }
