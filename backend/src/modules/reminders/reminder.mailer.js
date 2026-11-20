@@ -7,7 +7,7 @@ import { isPushConfigured, sendPush } from '../push/push.service.js';
 
 const KIGALI = 'Africa/Kigali';
 
-// The wall clock a learner in Rwanda is reading, whatever zone the server keeps.
+// Rwanda local time, whatever the server timezone is.
 export const kigaliNow = (at = new Date()) => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: KIGALI,
@@ -101,7 +101,7 @@ export const startReminderMailer = () => {
   ticker = setInterval(() => {
     sendDueReminders().catch((error) => console.error(`[reminders] ${error.message}`));
   }, 60_000);
-  // The ticker must never be the reason the process stays alive.
+  // Don't keep the process alive just for this timer.
   ticker.unref?.();
   console.log(`[reminders] Reminders will be sent${isPushConfigured() ? ' to subscribed devices' : ''}${isPushConfigured() && isMailConfigured() ? ' and' : ''}${isMailConfigured() ? ' by email' : ''}.`);
   return ticker;

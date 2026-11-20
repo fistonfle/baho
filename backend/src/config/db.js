@@ -168,16 +168,12 @@ const createSchemaSql = `
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
-  -- A learner's question may come from a lesson, and its answer is drafted by a
-  -- writer and approved by the specialist for the disease, exactly as a lesson is.
-  -- Both hands are recorded, so an answer always has a named person behind it.
+  -- Questions: a writer drafts the answer and the specialist approves it.
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS content_id INTEGER REFERENCES content(id) ON DELETE SET NULL;
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS drafted_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
   ALTER TABLE questions ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
 
-  -- A device signed up for notifications. The endpoint is the push service's
-  -- own address for that device, which is why it, and not the user, is unique:
-  -- one learner may use Baho on a phone and on a shared computer.
+  -- Push subscriptions. The endpoint is unique; one user can have several devices.
   CREATE TABLE IF NOT EXISTS push_subscriptions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

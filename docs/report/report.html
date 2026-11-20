@@ -40,7 +40,7 @@
 
 <h2>1. Overview</h2>
 <p>Baho is a progressive web app that teaches people with little health information in their own language how to prevent and live with hypertension, diabetes, heart disease and cancer. Learners pick topics, may fill a private health profile, and then follow a <em>study programme</em> of short lessons, each with an illustration, plain-Kinyarwanda text, audio and a quiz. Health workers write lessons, a specialist for each disease approves them, and an administrator publishes them. The app works offline after the first visit and runs on low-cost phones.</p>
-<p><strong>Architecture.</strong> React 18 + TypeScript (Vite) PWA with Redux Toolkit → REST API on Node 20 + Express (<code>/api/v1</code>) → PostgreSQL 16 (14 tables). In production the three parts run as a Docker stack behind Caddy (HTTPS); GitHub Actions tests, builds and deploys every push to <code>main</code>. The health profile is encrypted on the device and never sent to the server.</p>
+<p><strong>Architecture.</strong> React 18 + TypeScript (Vite) PWA with Redux Toolkit -> REST API on Node 20 + Express (<code>/api/v1</code>) -> PostgreSQL 16 (14 tables). In production the three parts run as a Docker stack behind Caddy (HTTPS); GitHub Actions tests, builds and deploys every push to <code>main</code>. The health profile is encrypted on the device and never sent to the server.</p>
 <figure class="arch"><img src="../../designs/architecture.svg" alt="Baho architecture"><figcaption>Figure 1. Architecture: web app, API and database in a Docker stack behind Caddy (source: <code>designs/architecture.mmd</code>)</figcaption></figure>
 
 <h2>2. Scope alignment and feature validation</h2>
@@ -98,16 +98,16 @@
   <tr><td>Unit</td><td>Rules must hold in every case; Node test runner and Vitest</td><td>45 tests pass (workflow, phone/PIN, lockout, audio format, ranking, learner choices, risk tags, streaks, store)</td><td>Streak split into a pure function; lockout made a class with an injectable clock</td></tr>
   <tr><td>Integration (API)</td><td>Real Express app called over HTTP</td><td>18 tests pass: roles, phone sign-up, review/publish, audio upload, quizzes, progress</td><td>Covers the whole specialist workflow end to end, so later changes cannot break it unnoticed</td></tr>
   <tr><td>Different inputs</td><td>Valid, invalid and edge values (phone formats, PIN length, 5 wrong PINs, early publish)</td><td>Correct 400 / 403 / 409 / 429 responses with readable messages</td><td>Client-side checks mirror the server so mistakes show before sending</td></tr>
-  <tr><td>Performance</td><td>Lighthouse on the live site: mid-range phone, low-end phone (6× CPU, 3G), desktop</td><td>Final: 99 / 82 / 100; accessibility, best practices, SEO 100</td><td>Fixed layout shift (0.109 → 0), heading order, robots.txt; photos: 480 px copies and lazy loading; a photo preload was removed because it delayed text on 3G</td></tr>
+  <tr><td>Performance</td><td>Lighthouse on the live site: mid-range phone, low-end phone (6× CPU, 3G), desktop</td><td>Final: 99 / 82 / 100; accessibility, best practices, SEO 100</td><td>Fixed layout shift (0.109 -> 0), heading order, robots.txt; photos: 480 px copies and lazy loading; a photo preload was removed because it delayed text on 3G</td></tr>
   <tr><td>Compatibility and offline</td><td>Chrome 156 at 6 widths, Safari iOS 26.5 on two iPhones, offline with cache cleared</td><td>No overflow 320–1920 px; renders in Safari; first text in 2.9 s at 400 kbit/s</td><td>Found the app blank offline after a first visit; the service worker now caches the built files at install</td></tr>
   <tr><td>Usability (phone)</td><td>Audit script over 12 learner screens at 390 px: tap sizes, jargon, reachability</td><td>Help unreachable on phones; 22–38 px controls; empty stats first; 3 preselected topics; jargon</td><td>Help tab; 40–44 px controls; programme first; no preselection; plain Kinyarwanda</td></tr>
   <tr><td>Load</td><td>autocannon, 50 concurrent users, 15 s (local, not the shared server)</td><td>5,379–20,967 req/s; p99 ≤ 11 ms; 0 errors</td><td>Confirms the stateless API design for NFR09</td></tr>
 </table>
 <table>
-  <tr><th>Lighthouse (live)<br>first → fixed → photos</th><th>Performance</th><th>Accessibility</th><th>Best practices</th><th>SEO</th><th>Largest paint</th><th>Layout shift</th><th>Blocking time</th></tr>
-  <tr><td>Mid-range phone</td><td>97 → 100 → 99</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>2.03 s</td><td>0.000</td><td>27 ms</td></tr>
-  <tr><td>Low-end phone</td><td>90 → 92 → 82</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>4.21 s</td><td>0.084 → 0.000</td><td>0 ms</td></tr>
-  <tr><td>Desktop</td><td>97 → 100 → 100</td><td>98 → 100</td><td>100</td><td>92 → 100</td><td>0.43 s</td><td>0.109 → 0.000</td><td>0 ms</td></tr>
+  <tr><th>Lighthouse (live)<br>first -> fixed -> photos</th><th>Performance</th><th>Accessibility</th><th>Best practices</th><th>SEO</th><th>Largest paint</th><th>Layout shift</th><th>Blocking time</th></tr>
+  <tr><td>Mid-range phone</td><td>97 -> 100 -> 99</td><td>98 -> 100</td><td>100</td><td>92 -> 100</td><td>2.03 s</td><td>0.000</td><td>27 ms</td></tr>
+  <tr><td>Low-end phone</td><td>90 -> 92 -> 82</td><td>98 -> 100</td><td>100</td><td>92 -> 100</td><td>4.21 s</td><td>0.084 -> 0.000</td><td>0 ms</td></tr>
+  <tr><td>Desktop</td><td>97 -> 100 -> 100</td><td>98 -> 100</td><td>100</td><td>92 -> 100</td><td>0.43 s</td><td>0.109 -> 0.000</td><td>0 ms</td></tr>
 </table>
 
 <h2>5. Code quality, OOP and algorithms</h2>
@@ -115,7 +115,7 @@
 <div>
 <h3>Structure and principles</h3>
 <ul>
-  <li><strong>Separation of concerns:</strong> backend modules follow routes → controller (HTTP only) → service (data); the frontend separates screens, reusable components (<code>ui.tsx</code>, <code>components/admin</code>), the store, the API client and pure logic (<code>lib/</code>).</li>
+  <li><strong>Separation of concerns:</strong> backend modules follow routes -> controller (HTTP only) -> service (data); the frontend separates screens, reusable components (<code>ui.tsx</code>, <code>components/admin</code>), the store, the API client and pure logic (<code>lib/</code>).</li>
   <li><strong>Encapsulation:</strong> <code>LessonWorkflow</code> owns all lesson-status rules, used by the content and review modules; <code>LoginGuard</code> keeps its failure map private (<code>#failures</code>).</li>
   <li><strong>Abstraction and polymorphism:</strong> every service has a PostgreSQL and an in-memory implementation behind one contract (<code>withFallback</code>), so callers do not know which store answers and tests need no database.</li>
   <li><strong>Dependency injection:</strong> <code>LoginGuard</code> takes its clock as a parameter, making time-based rules testable.</li>

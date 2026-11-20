@@ -25,4 +25,3 @@ __pycache__/
 docs/report/*
 !docs/report/report.html
 docs/assets/
-.claude/

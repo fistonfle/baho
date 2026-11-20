@@ -5,7 +5,7 @@ import { attachLearningData, saveCurriculumLinks, saveQuiz, validateQuiz } from 
 import { LessonWorkflow } from '../../domain/LessonWorkflow.js';
 import { getSpecialistTopics } from '../review/review.service.js';
 
-// draft -> review -> approved (by a specialist) -> published; rejected = changes requested.
+// Status rules are in LessonWorkflow.
 const isConnectionFailure = isDatabaseUnavailable;
 const mapContent = (row) => ({
   id: row.id,

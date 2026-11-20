@@ -45,7 +45,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 | Input | Expected behaviour | Result |
 |---|---|---|
 | Phone `078 123 4567`, `+250 78 123 4567`, `250781234567` | same account | sign-in succeeds with any form |
-| Phone `0712345678` (not MTN/Airtel) or too short | rejected before sending, and by the API (400) | message "Andika nimero ya telefoni yo mu Rwanda…" |
+| Phone `0712345678` (not MTN/Airtel) or too short | rejected before sending, and by the API (400) | message "Andika nimero ya telefoni yo mu Rwanda..." |
 | PIN `12`, `1234567`, `12a4` | rejected; letters cannot be typed in the PIN field | 400 from the API |
 | 5 wrong PINs | number locked for 15 minutes, even with the right PIN | 429 "Too many wrong attempts" |
 | Writer sends `status: published` | saved as `review` | writer cannot publish |
@@ -110,7 +110,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 
 **Weak network:** at about 400 kbit/s with 400 ms latency (a poor 3G signal) the first text appears after **2.9 s** on a first visit (final version).
 
-**Offline — a bug found and fixed.** The first offline run passed only because the browser's HTTP cache still held the app's JavaScript and CSS. With that cache cleared, a learner who lost signal right after a first visit got a blank page: the service worker had cached the page but not the hashed build files. The worker now reads them from `index.html` when it installs and caches them. Re-tested with the browser cache cleared: the app, the four diseases and the three newest lessons appear offline, with the offline notice shown.
+**Offline: a bug found and fixed.** The first offline run passed only because the browser's HTTP cache still held the app's JavaScript and CSS. With that cache cleared, a learner who lost signal right after a first visit got a blank page: the service worker had cached the page but not the hashed build files. The worker now reads them from `index.html` when it installs and caches them. Re-tested with the browser cache cleared: the app, the four diseases and the three newest lessons appear offline, with the offline notice shown.
 
 ## 6. Load testing
 

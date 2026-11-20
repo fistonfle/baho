@@ -10,6 +10,6 @@ const page = await openPage();
 await page.send('Page.enable');
 await page.send('Page.navigate', { url: `file://${resolve(input)}` });
 await sleep(1500);
-const { data } = await page.send('Page.printToPDF', { printBackground: true, preferCSSPageSize: true, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: '<div style="width:100%;font-size:8px;color:#888;text-align:center">Baho - Technical Report · page <span class="pageNumber"></span> of <span class="totalPages"></span></div>' });
+const { data } = await page.send('Page.printToPDF', { printBackground: true, preferCSSPageSize: true, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: '<div style="width:100%;font-size:8px;color:#888;text-align:center">Baho: Technical Report · page <span class="pageNumber"></span> of <span class="totalPages"></span></div>' });
 writeFileSync(output, Buffer.from(data, 'base64'));
 await page.close();

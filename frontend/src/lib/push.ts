@@ -19,7 +19,7 @@ const toBytes = (base64url: string) => {
 
 const registration = async () => {
   if (!pushSupported()) return null;
-  // The worker is registered on load; this waits for it rather than assuming.
+  // Wait for the worker registered on load.
   return navigator.serviceWorker.ready.catch(() => null);
 };
 

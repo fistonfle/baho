@@ -2,7 +2,7 @@
 -- The backend creates and migrates these tables automatically on start-up
 -- (backend/src/config/db.js); this file is the readable reference.
 
--- People ------------------------------------------------------------------
+-- People
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS staff (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Content -----------------------------------------------------------------
+-- Content
 
 -- Lesson topics. Adding a disease also adds a category.
 CREATE TABLE IF NOT EXISTS categories (
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS faqs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Learner activity (no health details are stored on the server) ----------
+-- Learner activity (no health details are stored on the server)
 
 CREATE TABLE IF NOT EXISTS progress (
     id SERIAL PRIMARY KEY,

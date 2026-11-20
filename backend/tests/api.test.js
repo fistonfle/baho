@@ -297,7 +297,7 @@ test('Draft/review content stays private until the specialist approves it', asyn
     const publicContent = await publicResponse.json();
     assert.ok(!publicContent.content.some((item) => item.id === createdContentId));
 
-    // An administrator cannot publish: lessons are not theirs to decide on.
+    // An admin cannot publish.
     const adminAttempt = await fetch(`${baseUrl}/api/v1/admin/content/${createdContentId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
@@ -436,7 +436,7 @@ test('Only the specialist for a disease answers its questions, and only the aske
 test('A question asked from a lesson is drafted by a writer and approved by the specialist', async () => {
   const { server, baseUrl } = await startServer();
   try {
-    // A learner asks from inside a lesson, and never picks a topic.
+    // Asked from inside a lesson, no topic picked.
     const lessons = (await (await fetch(`${baseUrl}/api/v1/content`)).json()).content;
     const lesson = lessons[0];
     const asked = await postJson(`${baseUrl}/api/v1/questions`, {
@@ -452,7 +452,7 @@ test('A question asked from a lesson is drafted by a writer and approved by the 
     const unknownLesson = await postJson(`${baseUrl}/api/v1/questions`, { question: 'Hmm?', contentId: 987654 }, learnerToken);
     assert.equal(unknownLesson.status, 404);
 
-    // The writer sees it waiting, and is not told who asked.
+    // The writer sees it but not who asked.
     const writerView = (await (await fetch(`${baseUrl}/api/v1/questions`, {
       headers: { Authorization: `Bearer ${creatorToken}` }
     })).json()).questions;
@@ -755,7 +755,7 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
     const { staff } = await (await fetch(`${baseUrl}/api/v1/admin/creators`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
     assert.deepEqual(staff.find((member) => member.email === 'dr.diabetes@example.test').topicIds, [3]);
 
-    // A creator submits a diabetes lesson; the admin has no say in publishing it.
+    // A writer submits a diabetes lesson; the admin cannot publish it.
     const submitted = await postJson(`${baseUrl}/api/v1/admin/content`, {
       categoryId: 3,
       title: 'Isukari n\'imbuto',
@@ -800,7 +800,7 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
     }, creatorToken);
     assert.equal((await resubmitted.json()).content.status, 'review');
 
-    // Approval is the publication: no administrative step follows it.
+    // Approval publishes the lesson.
     const approved = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'approve' }, diabetesToken);
     assert.equal((await approved.json()).lesson.status, 'published');
     const twice = await postJson(`${baseUrl}/api/v1/review/lessons/${lesson.id}`, { decision: 'approve' }, diabetesToken);
@@ -819,7 +819,7 @@ test('Only the specialist for a disease can publish its lessons, and an admin ca
     }, adminToken);
     assert.equal(adminLesson.status, 403);
 
-    // A disease with no specialist has no route to publication either.
+    // Without a specialist for the disease it cannot be published.
     const nutrition = await postJson(`${baseUrl}/api/v1/admin/content`, {
       categoryId: 2, title: 'Amazi', body: 'Nywa amazi.', status: 'published'
     }, creatorToken);
@@ -1051,10 +1051,10 @@ test('A learner can add and remove an optional email address', async () => {
 
     const saved = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'Learner.One@Example.Test' }, learner);
     assert.equal(saved.status, 200, await saved.clone().text());
-    // Stored in one case, so it cannot be taken twice by a difference of capitals.
+    // Stored in lowercase, so the same address can't be added twice.
     assert.equal((await saved.json()).user.email, 'learner.one@example.test');
 
-    // It is a real sign-in identity, which is why it has to stay unique.
+    // It has to stay unique.
     const byEmail = await postJson(`${baseUrl}/api/v1/auth/login`, { identifier: 'learner.one@example.test', password: '2468' });
     assert.equal(byEmail.status, 200, await byEmail.clone().text());
 
@@ -1063,7 +1063,7 @@ test('A learner can add and remove an optional email address', async () => {
     const taken = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'learner.one@example.test' }, (await second.json()).token);
     assert.equal(taken.status, 409);
 
-    // Staff sign in with their email address, so this is not the way to change it.
+    // Staff can't change their sign-in email here.
     assert.equal((await patchJson(`${baseUrl}/api/v1/profile/email`, { email: 'elsewhere@example.test' }, adminToken)).status, 403);
 
     const removed = await patchJson(`${baseUrl}/api/v1/profile/email`, { email: '' }, learner);
@@ -1097,7 +1097,7 @@ test('Push notifications are declared off when the server is not set up for them
     const offered = await postJson(`${baseUrl}/api/v1/push/subscribe`, { subscription: device }, learner);
     assert.equal(offered.status, 503, await offered.clone().text());
 
-    // A device can never be attached to an account that is not signed in.
+    // Needs a signed-in user.
     assert.equal((await postJson(`${baseUrl}/api/v1/push/subscribe`, { subscription: device })).status, 401);
     assert.equal((await fetch(`${baseUrl}/api/v1/push/status`)).status, 401);
     assert.equal((await postJson(`${baseUrl}/api/v1/push/unsubscribe`, { endpoint: device.endpoint })).status, 401);
@@ -1124,12 +1124,12 @@ test('A specialist owns the lessons on their own diseases, and only those', asyn
     assert.ok(mine.length > 0, 'the specialist sees nothing at all');
     assert.ok(mine.every((lesson) => lesson.categoryId === 3), 'the specialist sees lessons outside their specialty');
 
-    // A writer's lesson on that disease, which the specialist did not write.
+    // A writer's lesson on that disease.
     const written = (await (await postJson(`${baseUrl}/api/v1/admin/content`, {
       categoryId: 3, title: 'Kugenzura isukari', body: 'Ibanze ku kugenzura isukari buri munsi.', status: 'draft'
     }, creatorToken)).json()).content;
 
-    // Correcting it, and giving it a recording, is the specialist's to do.
+    // The specialist can edit it and add a recording.
     const corrected = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
       categoryId: 3,
       title: 'Kugenzura isukari',
@@ -1139,25 +1139,25 @@ test('A specialist owns the lessons on their own diseases, and only those', asyn
     assert.equal(corrected.status, 200, await corrected.clone().text());
     assert.equal((await corrected.json()).content.audioUrl, '/api/v1/media/isukari-nshya.mp3');
 
-    // And publishing it, without a second step from anybody.
+    // and publish it directly.
     const published = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'published' }, diabetes);
     assert.equal(published.status, 200, await published.clone().text());
     assert.equal((await published.json()).content.status, 'published');
 
-    // A published lesson on their disease stays theirs to correct.
+    // Published lessons can still be edited by them.
     const again = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
       categoryId: 3, title: 'Kugenzura isukari', body: 'Ibanze ku kugenzura isukari buri munsi.'
     }, diabetes);
     assert.equal(again.status, 200, await again.clone().text());
 
-    // The specialist for another disease is shut out of all of it.
+    // A specialist for another disease can't do any of this.
     const notTheirs = await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}`, {
       categoryId: 3, title: 'Kugenzura isukari', body: 'Nta cyo mbivugaho.'
     }, cancer);
     assert.equal(notTheirs.status, 403);
     assert.equal((await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'draft' }, cancer)).status, 403);
 
-    // And an administrator still cannot publish anything at all.
+    // The admin still can't publish.
     assert.equal((await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'published' }, adminToken)).status, 403);
   } finally {
     server.close();

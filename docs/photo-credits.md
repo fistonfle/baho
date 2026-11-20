@@ -18,4 +18,4 @@ The lesson and disease photographs come from [Wikimedia Commons](https://commons
 | `frontend/public/images/foot-care.jpg` | Inkweto | Otuo-Akyampong Boakye | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [Commons](https://commons.wikimedia.org/wiki/File:Local_sandals_001.jpg) |
 | `frontend/public/images/no-smoking.jpg` | Itabi | Ben Schumin from Montgomery Village, Maryland, USA | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [Commons](https://commons.wikimedia.org/wiki/File:Discarded_cigarettes_in_ashtray_(50008136396).jpg) |
 
-The same list is shown in the app under **Ubufasha → Inkomoko y'amafoto**.
+The same list is shown in the app under **Ubufasha > Inkomoko y'amafoto**.

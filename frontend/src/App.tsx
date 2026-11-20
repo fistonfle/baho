@@ -388,7 +388,7 @@ function App() {
 
   // Privacy page: delete everything this app stored on the device.
   const clearDeviceData = async () => {
-    // The encrypted health profile first, since that is what the page promises.
+    // Encrypted health profile first.
     await removeSecure('health-profile');
     await removeSecure('risk-answers');
     // Keep the session, this doesn't sign out.
