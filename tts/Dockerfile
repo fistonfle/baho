@@ -1,5 +1,5 @@
 # The Kinyarwanda voice, kept out of the API image because torch is heavy.
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 HF_HOME=/models TTS_MODEL=facebook/mms-tts-kin
