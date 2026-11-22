@@ -37,12 +37,31 @@ services:
       PORT: 4000
       MEDIA_DIR: /app/uploads
       DATABASE_URL: postgresql://${POSTGRES_USER:-baho}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-baho}
+      # Named here, not in .env: the voice is part of this stack or it is absent.
+      TTS_URL: ${TTS_URL-http://baho-tts:8080/speak}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - default
       - caddy
+
+  # Reads a lesson aloud when nobody can record it; nothing else depends on it.
+  baho-tts:
+    image: ghcr.io/fistonfle/baho-tts:${IMAGE_TAG:-latest}
+    container_name: baho-tts
+    restart: unless-stopped
+    mem_limit: 768m
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - default
 
   baho-frontend:
     image: ghcr.io/fistonfle/baho-frontend:${IMAGE_TAG:-latest}

@@ -1,4 +1,4 @@
-// Speaks lesson text when no recording exists; TTS_COMMAND takes text in, returns audio.
+// Speaks lesson text when no recording exists, through TTS_URL or TTS_COMMAND.
 import { spawn } from 'node:child_process';
 
 export class TtsEngine {
@@ -7,8 +7,9 @@ export class TtsEngine {
   static maxChars = 6000;
   static maxBytes = 20 * 1024 * 1024;
 
-  constructor(command = null) {
+  constructor(command = null, url = null) {
     this.configured = command;
+    this.configuredUrl = url;
   }
 
   // Read at the moment of use, so the environment alone decides.
@@ -16,17 +17,52 @@ export class TtsEngine {
     return String(this.configured ?? process.env.TTS_COMMAND ?? '').trim();
   }
 
-  // False when the deployment has named no voice command, which is the default.
-  isConfigured() {
-    return this.command.length > 0;
+  // A voice running as its own service, which is how the server is set up.
+  get url() {
+    return String(this.configuredUrl ?? process.env.TTS_URL ?? '').trim();
   }
 
-  // Audio bytes for the text, in whatever format the command writes.
+  // False when the deployment has named no voice at all, which is the default.
+  isConfigured() {
+    return this.url.length > 0 || this.command.length > 0;
+  }
+
+  // Audio bytes for the text, in whatever format the voice returns.
   async speak(text) {
     if (!this.isConfigured()) throw new Error('not-configured');
     const script = String(text || '').trim();
     if (!script) throw new Error('empty');
     if (script.length > TtsEngine.maxChars) throw new Error('too-long');
+    if (this.url) return this.#ask(script);
+    return this.#run(script);
+  }
+
+  // The voice service speaks; a slow or dead one fails this request and no other.
+  async #ask(script) {
+    const stop = AbortSignal.timeout(TtsEngine.timeoutMs);
+    let response;
+    try {
+      response = await fetch(this.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        body: script,
+        signal: stop
+      });
+    } catch (error) {
+      console.error('TTS service unreachable:', error.message);
+      throw new Error(stop.aborted ? 'timeout' : 'failed');
+    }
+    if (!response.ok) {
+      console.error('TTS service refused:', response.status, (await response.text()).slice(0, 200));
+      throw new Error('failed');
+    }
+    const audio = Buffer.from(await response.arrayBuffer());
+    if (!audio.length) throw new Error('failed');
+    if (audio.length > TtsEngine.maxBytes) throw new Error('too-large');
+    return audio;
+  }
+
+  async #run(script) {
 
     return new Promise((resolve, reject) => {
       const child = spawn(this.command, { shell: true });

@@ -921,6 +921,58 @@ test('A lesson with no recording can be voiced by the server, and learners are t
   }
 });
 
+test('The voice can run as its own service, and a bad one fails only that request', async () => {
+  const { server, baseUrl } = await startServer();
+  const { createServer } = await import('node:http');
+  const wav = () => {
+    const samples = 512;
+    const b = Buffer.alloc(44 + samples * 2);
+    b.write('RIFF'); b.writeUInt32LE(36 + samples * 2, 4); b.write('WAVE', 8);
+    b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+    b.writeUInt32LE(16000, 24); b.writeUInt32LE(32000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
+    b.write('data', 36); b.writeUInt32LE(samples * 2, 40);
+    return b;
+  };
+
+  let heard = '';
+  let answer = 'audio';
+  const voice = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      heard = body;
+      if (answer === 'audio') { res.writeHead(200, { 'Content-Type': 'audio/wav' }); return res.end(wav()); }
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('synthesis failed');
+    });
+  });
+  await new Promise((resolve) => voice.listen(0, '127.0.0.1', resolve));
+  process.env.TTS_URL = `http://127.0.0.1:${voice.address().port}/speak`;
+
+  const generate = (body, token) => postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, body, token);
+  const lesson = { title: 'Umunyu', body: 'Gabanya umunyu mu mirire yawe.' };
+
+  try {
+    const made = await generate(lesson, creatorToken);
+    assert.equal(made.status, 201);
+    assert.match((await made.json()).url, /\.wav$/);
+    assert.equal(heard, 'Umunyu. Gabanya umunyu mu mirire yawe.', 'the service is sent the spoken text, not the markup');
+
+    answer = 'error';
+    assert.equal((await generate(lesson, creatorToken)).status, 503, 'a broken voice is not a broken site');
+
+    voice.close();
+    assert.equal((await generate(lesson, creatorToken)).status, 503, 'nor is an absent one');
+
+    // Lessons, learners and the rest of the API carry on regardless.
+    assert.equal((await fetch(`${baseUrl}/api/v1/content`)).status, 200);
+  } finally {
+    delete process.env.TTS_URL;
+    voice.close();
+    server.close();
+  }
+});
+
 test('A forgotten staff password is reset through a one-time emailed link', async () => {
   const { server, baseUrl } = await startServer();
   try {

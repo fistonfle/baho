@@ -41,7 +41,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        part: [backend, frontend]
+        part: [backend, frontend, tts]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
