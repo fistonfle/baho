@@ -1,7 +1,8 @@
 # Deployment
 
-Baho runs as one Docker stack (`deploy/docker-compose.production.yml`) on a Linux VM
-that already serves other sites through Caddy:
+Baho runs as one Docker stack (`deploy/docker-compose.production.yml`) on an Ubuntu VM
+at Strettch Cloud in Kigali, served at **https://bahoapp.site**. Caddy runs as its own
+small stack beside it (`/app/caddy`) and terminates HTTPS:
 
 | Container | Image | Role |
 |---|---|---|
@@ -11,7 +12,13 @@ that already serves other sites through Caddy:
 
 Caddy serves one hostname with HTTPS: `/api/*` goes to the API, everything else to the
 web app (`deploy/Caddyfile.snippet`). The app calls the API at `/api/v1` on the same
-site, so no API address is built into the frontend and CORS is not involved.
+site, so no API address is built into the frontend and CORS is not involved. Caddy and
+the two app containers meet on an external Docker network, `caddy-net`, named by
+`CADDY_NETWORK` in `/app/baho/.env`; PostgreSQL stays off it.
+
+The VM has 1 GB of RAM, which is enough for the four containers but leaves nothing
+spare, so it is given a 2 GB swap file. Without it a pull or a restart can be killed
+by the kernel rather than failing with an error that says so.
 
 ## Continuous deployment
 
@@ -26,7 +33,10 @@ Repository secrets: `VM_HOST`, `VM_SSH_PORT`, `VM_USER`, `VM_SSH_KEY`.
 
 ## One-time server setup
 
-1. Point a DNS A record (for example `baho.example.rw`) at the VM.
+0. Create the compute **with an SSH key attached**. A machine created with the panel's
+   Authentication field left empty has no key and no password, and answers SSH with a
+   timeout during banner exchange, which reads like a firewall and is not one.
+1. Point DNS A records (`@` and `www`) at the VM.
 2. Create `/app/baho/.env` from `deploy/.env.production.example` with new random secrets.
 3. Add the block from `deploy/Caddyfile.snippet` to the Caddyfile with the real hostname,
    validate it and reload Caddy.

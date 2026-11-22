@@ -239,7 +239,7 @@ const resetEmail = (name, link) => ({
     '',
     'The link can be used once. If you did not ask for this, ignore this message: your password stays as it is.',
     '',
-    'Baho - baho.filito.rw'
+    'Baho - bahoapp.site'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -253,7 +253,7 @@ const resetEmail = (name, link) => ({
       <p>The link works for ${tokenTtlMinutes} minutes and can be used once. If the button does not open, copy this address into your browser:</p>
       <p style="word-break:break-all"><a href="${link}">${link}</a></p>
       <p>If you did not ask for this, ignore this message: your password stays as it is.</p>
-      <p style="color:#5b6b7a">Baho - baho.filito.rw</p>
+      <p style="color:#5b6b7a">Baho - bahoapp.site</p>
     </div>`
 });
 
@@ -272,7 +272,7 @@ const inviteEmail = (name, link, role) => ({
     '',
     'The link can be used once. If it expires, open Baho, choose "Forgot password" and enter this email address to get a new one.',
     '',
-    'Baho \u2014 baho.filito.rw'
+    'Baho \u2014 bahoapp.site'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -286,7 +286,7 @@ const inviteEmail = (name, link, role) => ({
       <p>The link works for ${tokenTtlMinutes} minutes and can be used once. If the button does not open, copy this address into your browser:</p>
       <p style="word-break:break-all"><a href="${link}">${link}</a></p>
       <p>If the link has expired, open Baho, choose &ldquo;Forgot password&rdquo; and enter this email address to get a new one.</p>
-      <p style="color:#5b6b7a">Baho \u2014 baho.filito.rw</p>
+      <p style="color:#5b6b7a">Baho \u2014 bahoapp.site</p>
     </div>`
 });
 

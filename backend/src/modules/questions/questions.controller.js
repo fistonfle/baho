@@ -153,7 +153,7 @@ const answerReadyEmail = (name) => ({
     'Your question on Baho has been answered. Open Baho to read the reply.',
     'This message carries nothing about your health.',
     '',
-    'Baho \u2014 baho.filito.rw'
+    'Baho \u2014 bahoapp.site'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -166,7 +166,7 @@ const answerReadyEmail = (name) => ({
       </p>
       <p style="color:#5b7083;font-size:13px">Ubu butumwa ntibukubiyemo amakuru y&rsquo;ubuzima bwawe.</p>
       <p style="color:#5b7083;font-size:13px">Your question on Baho has been answered. This message carries nothing about your health.</p>
-      <p style="color:#5b7083;font-size:13px">Baho &mdash; baho.filito.rw</p>
+      <p style="color:#5b7083;font-size:13px">Baho &mdash; bahoapp.site</p>
     </div>
   `
 });

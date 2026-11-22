@@ -33,7 +33,7 @@ const reminderEmail = (name, label, time) => ({
     '',
     'Ushobora guhagarika ubu butumwa ukuraho imeyili yawe mu mwirondoro wawe.',
     '',
-    'Baho - baho.filito.rw'
+    'Baho - bahoapp.site'
   ].join('\n'),
   html: `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#14304d;line-height:1.6">
@@ -46,7 +46,7 @@ const reminderEmail = (name, label, time) => ({
         </a>
       </p>
       <p style="color:#5b7083;font-size:13px">Ushobora guhagarika ubu butumwa ukuraho imeyili yawe mu mwirondoro wawe.</p>
-      <p style="color:#5b7083;font-size:13px">Baho &mdash; baho.filito.rw</p>
+      <p style="color:#5b7083;font-size:13px">Baho &mdash; bahoapp.site</p>
     </div>
   `
 });

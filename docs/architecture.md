@@ -30,7 +30,7 @@ Source of the diagram: [`designs/architecture.mmd`](../designs/architecture.mmd)
 
 ## Deployment
 
-One Docker stack (`deploy/docker-compose.production.yml`: PostgreSQL, API, nginx web app) behind Caddy at https://baho.filito.rw. Every push to `main` runs the tests, builds the images and deploys them over SSH (`.github/workflows/deploy.yml`). Details: [deployment.md](deployment.md).
+One Docker stack (`deploy/docker-compose.production.yml`: PostgreSQL, API, nginx web app) behind Caddy at https://bahoapp.site. Every push to `main` runs the tests, builds the images and deploys them over SSH (`.github/workflows/deploy.yml`). Details: [deployment.md](deployment.md).
 
 ## Design principles
 

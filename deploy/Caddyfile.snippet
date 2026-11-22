@@ -1,7 +1,7 @@
-# Add to the VM's Caddyfile (replace baho.example.rw with the real hostname,
-# whose DNS A record must already point at the VM so Caddy can get a certificate).
+# Add to the VM's Caddyfile. The DNS A record must already point at the VM, or
+# Caddy cannot answer the certificate challenge and the site stays on HTTP.
 # One hostname: /api goes to the API, everything else to the web app.
-baho.example.rw {
+bahoapp.site, www.bahoapp.site {
 	encode gzip
 	handle /api/* {
 		reverse_proxy baho-backend:4000

@@ -7,7 +7,7 @@ import { appBaseUrl } from '../mail/mailer.js';
 
 const publicKey = process.env.VAPID_PUBLIC_KEY || '';
 const privateKey = process.env.VAPID_PRIVATE_KEY || '';
-const subject = process.env.VAPID_SUBJECT || 'mailto:no-reply@baho.filito.rw';
+const subject = process.env.VAPID_SUBJECT || 'mailto:no-reply@bahoapp.site';
 
 export const isPushConfigured = () => Boolean(publicKey && privateKey) && process.env.BAHO_DEMO_MODE !== 'true';
 

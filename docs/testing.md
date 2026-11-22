@@ -68,7 +68,7 @@ Seven testing approaches were used. Each section says why it was chosen, how it 
 
 **Why.** Learners are on low-cost phones and weak rural connections; NFR01 requires core content within 3 seconds on a mid-range Android phone.
 
-**How.** Lighthouse 12.6.1 against https://baho.filito.rw in three profiles: mid-range phone (Lighthouse default: 4× CPU slowdown, slow 4G), low-end phone (6× CPU slowdown, 700 kbit/s, 300 ms latency) and desktop. Reports: [`evidence/lighthouse/`](evidence/lighthouse).
+**How.** Lighthouse 12.6.1 against https://bahoapp.site in three profiles: mid-range phone (Lighthouse default: 4× CPU slowdown, slow 4G), low-end phone (6× CPU slowdown, 700 kbit/s, 300 ms latency) and desktop. Reports: [`evidence/lighthouse/`](evidence/lighthouse).
 
 | Profile | Run | Performance | Accessibility | Best practices | SEO | First / largest paint | Layout shift |
 |---|---|---|---|---|---|---|---|
