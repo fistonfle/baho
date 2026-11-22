@@ -27,6 +27,20 @@ export class TtsEngine {
     return this.url.length > 0 || this.command.length > 0;
   }
 
+  // Health in one word, so a dead voice is visible without opening the portal.
+  async probe() {
+    if (!this.isConfigured()) return 'absent';
+    if (!this.url) return 'command';
+    try {
+      const response = await fetch(this.url.replace(/\/[^/]*$/, '/health'), {
+        signal: AbortSignal.timeout(2000)
+      });
+      return response.ok ? 'ready' : 'unreachable';
+    } catch {
+      return 'unreachable';
+    }
+  }
+
   // Audio bytes for the text, in whatever format the voice returns.
   async speak(text) {
     if (!this.isConfigured()) throw new Error('not-configured');

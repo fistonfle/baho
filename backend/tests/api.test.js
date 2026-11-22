@@ -60,6 +60,7 @@ let createdContentId;
     const data = await response.json();
     assert.equal(data.status, 'ok');
     assert.equal(data.service, 'baho-backend');
+    assert.ok(['absent', 'command', 'ready', 'unreachable'].includes(data.voice));
   } finally {
     server.close();
   }
