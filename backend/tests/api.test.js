@@ -9,6 +9,7 @@ const { join } = await import('node:path');
 process.env.MEDIA_DIR = mkdtempSync(join(tmpdir(), 'baho-media-'));
 const { default: app } = await import('../src/app.js');
 const { seedInitialAdmin } = await import('../src/modules/auth/bootstrap.js');
+const { speakable } = await import('../src/modules/media/media.controller.js');
 
 const startServer = async () => {
   const server = app.listen(0);
@@ -52,6 +53,28 @@ let creatorToken;
 let learnerToken;
 let createdContentId;
 
+
+test('A voiced lesson reads its quiz, waits, then gives the answer', () => {
+  const quiz = [
+    { question: 'Ni iki kigabanya umuvuduko w\'amaraso?', options: ['Umunyu muke', 'Isukari nyinshi'], answerIndex: 0 },
+    { question: 'Siporo ni ngombwa?', options: ['Yego', 'Oya'], answerIndex: 0 },
+    { question: 'Ikibazo kitagira igisubizo', options: [], answerIndex: 0 }
+  ];
+  const lines = speakable('Umunyu', 'Gabanya umunyu mu mirire.', quiz).split('\n');
+
+  assert.equal(lines[0], 'Umunyu. Gabanya umunyu mu mirire.');
+  assert.equal(lines[1], 'Ikibazo cya mbere. Ni iki kigabanya umuvuduko w\'amaraso?');
+  assert.equal(lines[2], 'Icya mbere: Umunyu muke. Icya kabiri: Isukari nyinshi.');
+  assert.equal(lines[3], '...', 'the silence the learner answers in');
+  assert.equal(lines[4], 'Igisubizo nyacyo ni Umunyu muke.');
+  assert.equal(lines[5], 'Ikibazo cya kabiri. Siporo ni ngombwa?');
+
+  // A question with no options cannot be answered aloud, so it is left out.
+  assert.equal(lines.length, 9);
+  // A lesson without a quiz is read exactly as before.
+  assert.equal(speakable('Umunyu', 'Gabanya umunyu.'), 'Umunyu. Gabanya umunyu.');
+  assert.equal(speakable('', '   '), '');
+});
  test('GET /api/v1/health responds successfully', async () => {
   const { server, baseUrl } = await startServer();
   try {

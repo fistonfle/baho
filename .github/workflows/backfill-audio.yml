@@ -1,0 +1,43 @@
+# Run by hand to give every silent lesson on the VM a generated voice.
+# Uses the same VM secrets as the deploy workflow.
+name: Back fill lesson audio
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List the lessons without voicing them
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  APP_DIR: /app/baho
+
+jobs:
+  backfill:
+    name: Voice the silent lessons
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the lessons aloud
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ env.APP_DIR }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          port: ${{ secrets.VM_SSH_PORT }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          envs: APP_DIR,DRY_RUN
+          command_timeout: 40m
+          script: |
+            set -e
+            cd "$APP_DIR"
+            flag=""
+            if [ "$DRY_RUN" = "true" ]; then flag="--dry-run"; fi
+            docker compose -f docker-compose.production.yml exec -T baho-backend \
+              node scripts/backfill-audio.js $flag

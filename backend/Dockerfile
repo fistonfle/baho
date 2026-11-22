@@ -9,6 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY scripts ./scripts
 
 # Uploaded lesson recordings; a named volume is mounted here in production.
 ENV MEDIA_DIR=/app/uploads

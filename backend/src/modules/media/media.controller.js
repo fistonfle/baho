@@ -3,19 +3,43 @@ import express from 'express';
 import { MediaStore, mediaStore } from './MediaStore.js';
 import { ttsEngine } from './TtsEngine.js';
 
-// The lesson as a reader would hear it, without the on-screen markup.
-export const speakable = (title, body) => [title, body]
-  .map((part) => String(part || '').trim())
-  .filter(Boolean)
-  .join('. ')
+// Markup is for the eye. The voice is given words alone.
+const plain = (text) => String(text || '')
   .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
   .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
   .replace(/[*_`>#|]/g, ' ')
   .replace(/^\s*[-+]\s+/gm, ' ')
   .replace(/\s+/g, ' ')
-  .trim()
+  .trim();
+
+const ordinals = ['mbere', 'kabiri', 'gatatu', 'kane', 'gatanu', 'gatandatu'];
+const nth = (index) => ordinals[index] ?? String(index + 1);
+
+// A title that is already a question keeps its mark instead of collecting a stop.
+const sentence = (text) => (/[.!?]$/.test(text) ? text : `${text}.`);
+
+// A line of dots asks the voice for silence, which is where the learner answers.
+export const thinkingPause = '...';
+
+// The lesson as a listener hears it: the text, then each question, a silence, the answer.
+export const speakable = (title, body, quiz = []) => {
+  const lines = [[title, body].map(plain).filter(Boolean).map(sentence).join(' ')];
+
+  for (const [index, item] of (Array.isArray(quiz) ? quiz : []).entries()) {
+    const asked = plain(item?.question);
+    const options = (Array.isArray(item?.options) ? item.options : []).map(plain).filter(Boolean);
+    const answer = options[Number(item?.answerIndex)];
+    if (!asked || !answer) continue;
+    lines.push(sentence(`Ikibazo cya ${nth(index)}. ${asked}`));
+    lines.push(options.map((option, position) => sentence(`Icya ${nth(position)}: ${option}`)).join(' '));
+    lines.push(thinkingPause);
+    lines.push(sentence(`Igisubizo nyacyo ni ${answer}`));
+  }
+
+  const script = lines.filter(Boolean).join('\n');
   // Punctuation alone is not speech; a voice given it returns noise, not an error.
-  .replace(/^[^\p{L}\p{N}]*$/u, '');
+  return /[\p{L}\p{N}]/u.test(script) ? script : '';
+};
 
 // POST /admin/media/audio with the recording as the request body.
 export const uploadAudio = async (req, res) => {
@@ -34,8 +58,8 @@ export const uploadAudio = async (req, res) => {
 
 // POST /admin/media/audio/generate. Made once and stored like an upload, so it plays offline.
 export const generateAudio = async (req, res) => {
-  const { title = '', body = '' } = req.body || {};
-  const text = speakable(title, body);
+  const { title = '', body = '', quiz = [] } = req.body || {};
+  const text = speakable(title, body, quiz);
   if (!text) return res.status(400).json({ message: 'Write the lesson first, then generate its audio' });
   if (!ttsEngine.isConfigured()) {
     return res.status(503).json({ message: 'This server has no voice installed, so audio must be uploaded as a recording' });

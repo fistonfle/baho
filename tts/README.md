@@ -89,3 +89,24 @@ health lessons. Generated audio is not a shortcut past review:
   *"Ijwi ryakozwe na mudasobwa, si umuntu wasomye"* under the player, and the
   flag lives in `content.audio_is_synthetic`, not in the file name.
 - **Replace it when a recording exists.** Uploading a recording clears the flag.
+
+## The quiz, read aloud
+
+A generated lesson does not stop at the body. Each question is read with its
+options, then the voice leaves four seconds of silence for the learner to
+answer in, then it gives the right answer. The silence is asked for with a line
+of three dots in the text, so any voice that replaces this one has to honour the
+same marker; `TTS_THINK` changes its length.
+
+## Lessons recorded before the voice existed
+
+`backend/scripts/backfill-audio.js` finds every lesson with no audio, voices it
+with its quiz, and marks it synthetic. On the server it is one command:
+
+```
+docker compose -f docker-compose.production.yml exec -T baho-backend node scripts/backfill-audio.js
+```
+
+`--dry-run` lists what it would do. The "Back fill lesson audio" workflow runs
+the same command over SSH for anyone who would rather not open a terminal. It
+never touches a lesson that already has audio, so a human recording always wins.

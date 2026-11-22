@@ -64,6 +64,7 @@ export function ContentForm({ onSave, asSpecialist = false }: { onSave: (status:
             synthetic={contentForm.audioIsSynthetic}
             title={contentForm.title}
             body={contentForm.body}
+            quiz={contentForm.quiz}
             onChange={(audioUrl, audioIsSynthetic) => dispatch(updateContentForm({ audioUrl, audioIsSynthetic }))}
             onError={(message) => dispatch(setFeedbackMessage(message))}
           />

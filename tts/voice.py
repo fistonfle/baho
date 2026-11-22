@@ -9,6 +9,9 @@ MODEL = os.environ.get("TTS_MODEL", "facebook/mms-tts-kin")
 # The duration predictor is stochastic, so a fixed seed keeps audio reproducible.
 SEED = int(os.environ.get("TTS_SEED", "1"))
 PAUSE_SECONDS = float(os.environ.get("TTS_PAUSE", "0.35"))
+# A line of dots is the quiz's waiting room: the learner answers in this silence.
+THINK_SECONDS = float(os.environ.get("TTS_THINK", "4"))
+SILENCE = re.compile(r"^[.\u2026]{3,}$")
 MAX_CHARS = int(os.environ.get("TTS_MAX_CHARS", "6000"))
 # One lesson at a time: this box has no memory to spare for a second model pass.
 _lock = threading.Lock()
@@ -62,9 +65,13 @@ def speak(text):
         torch.manual_seed(SEED)
         rate = model.config.sampling_rate
         pause = np.zeros(int(rate * PAUSE_SECONDS), dtype=np.float32)
+        think = np.zeros(int(rate * THINK_SECONDS), dtype=np.float32)
 
         pieces = []
         for sentence in sentences(script):
+            if SILENCE.match(sentence):
+                pieces.append(think)
+                continue
             inputs = tokenizer(sentence, return_tensors="pt")
             with torch.no_grad():
                 wave_out = model(**inputs).waveform

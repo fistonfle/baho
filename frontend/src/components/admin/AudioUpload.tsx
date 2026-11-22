@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 import { api } from '../../services/api';
+import type { QuizQuestion } from '../../types';
 import { AudioPlayer } from '../AudioPlayer';
 
 const maxBytes = 20 * 1024 * 1024;
@@ -11,11 +12,12 @@ type Props = {
   synthetic: boolean;
   title: string;
   body: string;
+  quiz: QuizQuestion[];
   onChange: (url: string, synthetic: boolean) => void;
   onError: (message: string) => void;
 };
 
-export function AudioUpload({ value, synthetic, title, body, onChange, onError }: Props) {
+export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onError }: Props) {
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const busy = uploading || generating;
@@ -45,7 +47,7 @@ export function AudioUpload({ value, synthetic, title, body, onChange, onError }
     }
     setGenerating(true);
     try {
-      const { url } = await api.generateAudio(title, body);
+      const { url } = await api.generateAudio(title, body, quiz);
       onChange(url, true);
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Could not make the audio.');
@@ -87,7 +89,7 @@ export function AudioUpload({ value, synthetic, title, body, onChange, onError }
       <span className="form-hint">
         {uploading
           ? <><span className="spinner" /> Uploading...</>
-          : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server can read it aloud instead, and learners are told the voice is a computer. Lessons with neither show no audio player.'}
+          : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server can read it aloud instead, quiz and all: each question is read, then a silence to answer in, then the right answer. Learners are told the voice is a computer.'}
       </span>
     </div>
   );
