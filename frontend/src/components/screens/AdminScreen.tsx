@@ -1,5 +1,5 @@
 // Staff portal: tabs for admins, writers and specialists. Its parts are in components/admin.
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { api } from '../../services/api';
 import {
@@ -247,14 +247,14 @@ export function AdminScreen() {
           <thead><tr><th>Lesson</th><th>Writer</th><th>Status</th><th className="right">Actions</th></tr></thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id}>
+              <Fragment key={item.id}>
+              <tr>
                 <td>
                   <strong>{item.title}</strong>
                   <div className="small muted">{categoryName(item.categoryId)} · Questions {item.quiz?.length ?? 0}</div>
                   {item.status === 'rejected' && item.reviewNote && (
                     <p className="alert alert-danger small" style={{ marginTop: 8 }}><strong>Specialist's note:</strong> {item.reviewNote}</p>
                   )}
-                  {previewId === item.id && <div style={{ marginTop: 10 }}><LessonPreview lesson={item} /></div>}
                 </td>
                 <td>{item.creatorName || '–'}</td>
                 <td>{statusCell(item)}</td>
@@ -274,6 +274,12 @@ export function AdminScreen() {
                   </div>
                 </td>
               </tr>
+              {previewId === item.id && (
+                <tr className="preview-row">
+                  <td colSpan={4}><LessonPreview lesson={item} /></td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>

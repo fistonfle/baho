@@ -87,7 +87,7 @@ export function AudioPlayer({ audioUrl, synthetic = false, onFinished }: { audio
         onEnded={() => { setPlaying(false); onFinished?.(); }}
         onError={() => setFailed(true)}
       />
-      <button className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
+      <button type="button" className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
         {playing
           ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor" /></svg>
           : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>}
@@ -108,9 +108,9 @@ export function AudioPlayer({ audioUrl, synthetic = false, onFinished }: { audio
         />
         {synthetic && <p className="audio-note">Ijwi ryakozwe na mudasobwa, si umuntu wasomye.</p>}
         <div className="audio-actions">
-          <button className="btn btn-secondary btn-sm" onClick={restart}>Subiramo</button>
-          <button className="btn btn-secondary btn-sm" onClick={changeRate} aria-label="Umuvuduko w'ijwi">Umuvuduko: {rate}×</button>
-          <button className="btn btn-secondary btn-sm" onClick={() => void saveForOffline()} disabled={saved}>{saved ? 'Ryabitswe kuri telefoni' : 'Bika ku gikoresho'}</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={restart}>Subiramo</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={changeRate} aria-label="Umuvuduko w'ijwi">Umuvuduko: {rate}×</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void saveForOffline()} disabled={saved}>{saved ? 'Ryabitswe kuri telefoni' : 'Bika ku gikoresho'}</button>
         </div>
       </div>
     </div>

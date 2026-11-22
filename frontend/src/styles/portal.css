@@ -332,8 +332,11 @@ textarea.input { min-height: 110px; resize: vertical; }
 .image-picker button.active { border-color: var(--brand); }
 .image-picker img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
 .quiz-editor { padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface-alt); }
-.preview-box { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
+.preview-box { max-width: 60rem; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
 .preview-box img { width: 180px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+/* The lesson reads across the whole table, not squeezed into one cell. */
+.preview-row td { padding-top: 0; }
+.preview-box p { max-width: 62ch; }
 
 /* Toast and phone tab bar */
 .toast { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: flex; align-items: flex-start; gap: 12px; max-width: 420px; padding: 12px 14px; border: 1px solid var(--line-strong); border-left: 4px solid var(--brand); border-radius: var(--radius); background: var(--surface); box-shadow: 0 6px 18px rgba(20, 40, 50, 0.15); font-size: 0.9rem; }
