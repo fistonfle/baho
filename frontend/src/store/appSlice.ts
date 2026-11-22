@@ -29,6 +29,7 @@ export type ContentForm = {
   summary: string;
   body: string;
   audioUrl: string;
+  audioIsSynthetic: boolean;
   imageUrl: string;
   status: string;
   quiz: QuizQuestion[];
@@ -43,6 +44,7 @@ export type AdminContentItem = {
   summary?: string;
   body?: string;
   audioUrl?: string;
+  audioIsSynthetic?: boolean;
   imageUrl?: string;
   quiz?: QuizQuestion[];
   curriculumIds?: number[];
@@ -85,7 +87,7 @@ const readSession = (): { token: string; user: AppState['authUser'] } | null => 
 };
 const savedSession = readSession();
 
-export const emptyContentForm: ContentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', imageUrl: '', status: 'draft', quiz: [], curriculumIds: [] };
+export const emptyContentForm: ContentForm = { categoryId: 1, title: '', summary: '', body: '', audioUrl: '', audioIsSynthetic: false, imageUrl: '', status: 'draft', quiz: [], curriculumIds: [] };
 
 interface AppState {
   currentScreen: Screen;

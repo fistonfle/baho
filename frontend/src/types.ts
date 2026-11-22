@@ -20,6 +20,8 @@ export type Lesson = {
   body: string;
   duration: string;
   audioUrl: string;
+  // True when a machine read the lesson rather than a person.
+  audioIsSynthetic: boolean;
   imageUrl: string;
   quiz: QuizQuestion[];
 };

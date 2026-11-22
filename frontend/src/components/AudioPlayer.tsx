@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { mediaUrl } from '../services/api';
 
-// Plays the human recording of a lesson. No recording, no player.
+// Plays a lesson's audio. No audio, no player; a machine voice says so on screen.
 
 const formatTime = (seconds: number) => {
   if (!Number.isFinite(seconds)) return '0:00';
@@ -10,7 +10,7 @@ const formatTime = (seconds: number) => {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 };
 
-export function AudioPlayer({ audioUrl, onFinished }: { audioUrl?: string; onFinished?: () => void }) {
+export function AudioPlayer({ audioUrl, synthetic = false, onFinished }: { audioUrl?: string; synthetic?: boolean; onFinished?: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -106,6 +106,7 @@ export function AudioPlayer({ audioUrl, onFinished }: { audioUrl?: string; onFin
           onChange={(event) => seek(Number(event.target.value))}
           aria-label="Aho isomo rigeze"
         />
+        {synthetic && <p className="audio-note">Ijwi ryakozwe na mudasobwa, si umuntu wasomye.</p>}
         <div className="audio-actions">
           <button className="btn btn-secondary btn-sm" onClick={restart}>Subiramo</button>
           <button className="btn btn-secondary btn-sm" onClick={changeRate} aria-label="Umuvuduko w'ijwi">Umuvuduko: {rate}×</button>

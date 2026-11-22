@@ -118,6 +118,7 @@ export function LibraryScreen({
             </div>
             <AudioPlayer
               audioUrl={selectedLesson.audioUrl}
+              synthetic={selectedLesson.audioIsSynthetic}
               onFinished={hasQuiz ? undefined : () => markLessonComplete(selectedLesson.id)}
             />
             {hasQuiz ? (

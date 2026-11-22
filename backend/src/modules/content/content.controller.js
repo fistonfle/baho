@@ -15,6 +15,7 @@ const mapContent = (row) => ({
   summary: row.summary,
   body: row.body,
   audioUrl: row.audio_url ?? row.audioUrl ?? '',
+  audioIsSynthetic: Boolean(row.audio_is_synthetic ?? row.audioIsSynthetic ?? false),
   imageUrl: row.image_url ?? row.imageUrl ?? '',
   status: row.status,
   creatorName: row.creator_name ?? row.creatorName ?? '',
@@ -198,7 +199,7 @@ export const getAdminContent = async (req, res) => {
 };
 
 export const createContent = async (req, res) => {
-  const { categoryId, title, summary = '', body, audioUrl = '', imageUrl = '' } = req.body || {};
+  const { categoryId, title, summary = '', body, audioUrl = '', imageUrl = '', audioIsSynthetic = false } = req.body || {};
   const inputError = learningInputError(req.body);
   if (inputError) return res.status(400).json({ message: inputError });
   const requestedStatus = req.user?.role === 'admin'
@@ -219,14 +220,15 @@ export const createContent = async (req, res) => {
     summary: String(summary).trim(),
     body: String(body).trim(),
     audioUrl: String(audioUrl || '').trim(),
+    audioIsSynthetic: Boolean(audioIsSynthetic),
     imageUrl: String(imageUrl || '').trim(),
     status: String(status).trim() || 'draft'
   };
 
   try {
     const result = await pool.query(
-      'INSERT INTO content (category_id, creator_id, title, summary, body, audio_url, image_url, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [entry.categoryId, req.user?.id || null, entry.title, entry.summary, entry.body, entry.audioUrl || null, entry.imageUrl || null, entry.status]
+      'INSERT INTO content (category_id, creator_id, title, summary, body, audio_url, audio_is_synthetic, image_url, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [entry.categoryId, req.user?.id || null, entry.title, entry.summary, entry.body, entry.audioUrl || null, entry.audioIsSynthetic, entry.imageUrl || null, entry.status]
     );
 
     const content = mapContent(result.rows[0]);
@@ -245,7 +247,7 @@ export const createContent = async (req, res) => {
 
 export const updateContent = async (req, res) => {
   const id = Number(req.params.id);
-  const { title, summary = '', body, audioUrl = '', imageUrl = '', categoryId, status } = req.body || {};
+  const { title, summary = '', body, audioUrl = '', imageUrl = '', categoryId, status, audioIsSynthetic = false } = req.body || {};
   if (!Number.isInteger(id) || id <= 0 || !title?.trim() || !body?.trim()) {
     return res.status(400).json({ message: 'A valid content id, title and body are required' });
   }
@@ -270,8 +272,8 @@ export const updateContent = async (req, res) => {
       return res.status(403).json({ message: 'This lesson is outside your specialty' });
     }
     const result = await pool.query(
-      `UPDATE content SET category_id = $1, title = $2, summary = $3, body = $4, audio_url = $5, image_url = $6, status = COALESCE($7, status), updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *`,
-      [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, imageUrl.trim() || null,
+      `UPDATE content SET category_id = $1, title = $2, summary = $3, body = $4, audio_url = $5, audio_is_synthetic = $6, image_url = $7, status = COALESCE($8, status), updated_at = CURRENT_TIMESTAMP WHERE id = $9 RETURNING *`,
+      [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, Boolean(audioIsSynthetic), imageUrl.trim() || null,
         status ? await allowedStatus(Number(categoryId), status, existing.status, req.user, existing.creator_id) : null, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Content not found' });
@@ -304,6 +306,7 @@ export const updateContent = async (req, res) => {
         creatorId: existing.creatorId,
         categoryId: Number(categoryId),
         audioUrl: audioUrl.trim(),
+        audioIsSynthetic: Boolean(audioIsSynthetic),
         imageUrl: imageUrl.trim(),
         status: nextStatus
       }),

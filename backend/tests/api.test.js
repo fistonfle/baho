@@ -861,6 +861,66 @@ test('Staff upload a recorded lesson; only real audio is accepted and it is serv
   }
 });
 
+test('A lesson with no recording can be voiced by the server, and learners are told', async () => {
+  const { server, baseUrl } = await startServer();
+  const { writeFileSync } = await import('node:fs');
+  // A stand-in voice: ignores the text, writes a valid silent WAV.
+  const fakeVoice = join(process.env.MEDIA_DIR, '..', 'fake-voice.cjs');
+  writeFileSync(fakeVoice, [
+    "let said = '';",
+    "process.stdin.on('data', (c) => { said += c; });",
+    "process.stdin.on('end', () => {",
+    "  if (!said.trim()) { process.exit(2); }",
+    "  const samples = 1024;",
+    "  const b = Buffer.alloc(44 + samples * 2);",
+    "  b.write('RIFF'); b.writeUInt32LE(36 + samples * 2, 4); b.write('WAVE', 8);",
+    "  b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);",
+    "  b.writeUInt32LE(16000, 24); b.writeUInt32LE(32000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);",
+    "  b.write('data', 36); b.writeUInt32LE(samples * 2, 40);",
+    "  process.stdout.write(b);",
+    "});"
+  ].join('\n'));
+
+  const generate = (body, token) => postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, body, token);
+  const lesson = { title: 'Kugabanya umunyu', body: 'Gabanya umunyu mu mirire yawe. Nywa amazi ahagije.' };
+
+  try {
+    // Voicing a lesson is writing it, so the same people may do it.
+    assert.equal((await generate(lesson)).status, 401, 'anonymous');
+    assert.equal((await generate(lesson, learnerToken)).status, 403, 'learner');
+    assert.equal((await generate(lesson, adminToken)).status, 403, 'administrators take no part in lesson content');
+
+    // No voice installed is the default, and it is not an error the writer caused.
+    delete process.env.TTS_COMMAND;
+    const unavailable = await generate(lesson, creatorToken);
+    assert.equal(unavailable.status, 503);
+    assert.match((await unavailable.json()).message, /recording/);
+
+    process.env.TTS_COMMAND = `node ${fakeVoice}`;
+    assert.equal((await generate({ title: '', body: '   ' }, creatorToken)).status, 400, 'nothing to say');
+
+    const made = await generate(lesson, creatorToken);
+    assert.equal(made.status, 201);
+    const { url, synthetic } = await made.json();
+    assert.equal(synthetic, true);
+    assert.match(url, /^\/api\/v1\/media\/[0-9a-f]{24}\.wav$/);
+
+    const served = await fetch(`${baseUrl}${url}`);
+    assert.equal(served.status, 200);
+    assert.equal(served.headers.get('content-type'), 'audio/wav');
+
+    // The lesson remembers that its voice is not a person's, so the learner screen can say so.
+    const saved = await postJson(`${baseUrl}/api/v1/admin/content`, {
+      categoryId: 1, title: lesson.title, body: lesson.body, audioUrl: url, audioIsSynthetic: true
+    }, creatorToken);
+    assert.equal(saved.status, 201);
+    assert.equal((await saved.json()).content.audioIsSynthetic, true);
+  } finally {
+    delete process.env.TTS_COMMAND;
+    server.close();
+  }
+});
+
 test('A forgotten staff password is reset through a one-time emailed link', async () => {
   const { server, baseUrl } = await startServer();
   try {

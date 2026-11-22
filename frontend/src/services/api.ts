@@ -21,6 +21,7 @@ export type ContentPayload = {
   summary?: string;
   body: string;
   audioUrl?: string;
+  audioIsSynthetic?: boolean;
   imageUrl?: string;
   status?: string;
   quiz?: QuizQuestion[];
@@ -130,6 +131,9 @@ export const api = {
     request<{ message: string; categoryIds: number[] }>(`/admin/staff/${id}/topics`, { method: 'PUT', body: JSON.stringify({ categoryIds }) }),
   uploadAudio: (file: File) =>
     request<{ url: string }>('/admin/media/audio', { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } }),
+  // Voices a lesson that has no recording; 503 means the server has no voice installed.
+  generateAudio: (title: string, body: string) =>
+    request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate', { method: 'POST', body: JSON.stringify({ title, body }) }),
   getReviewQueue: () => request<{ lessons: any[] }>('/review/queue'),
   reviewLesson: (id: number, decision: 'approve' | 'changes', note: string) =>
     request<{ message: string; lesson: any }>(`/review/lessons/${id}`, { method: 'POST', body: JSON.stringify({ decision, note }) }),

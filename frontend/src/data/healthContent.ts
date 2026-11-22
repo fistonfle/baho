@@ -227,6 +227,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Umuvuduko w\'amaraso ni ingufu amaraso akoresha asunika imitsi. Iyo uri hejuru igihe kirekire, umutima ukora cyane kandi bishobora gutera stroke. Akenshi nta bimenyetso bigaragara, ni yo mpamvu ugomba kwipimisha. Gabanya umunyu, kora imyitozo kandi wirinde itabi.',
     duration: 'Iminota 3',
     audioUrl: '',
+    audioIsSynthetic: false,
     imageUrl: '/images/bp-heart.jpg',
     quiz: []
   },
@@ -239,6 +240,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Diyabete ituma isukari mu maraso izamuka. Ibimenyetso birimo inyota nyinshi, kunyara kenshi no gucika intege. Kurya ibiryo bifite isukari nkeya, gukora imyitozo no kwipimisha bifasha kuyirinda.',
     duration: 'Iminota 2',
     audioUrl: '',
+    audioIsSynthetic: false,
     imageUrl: '/images/glucose.jpg',
     quiz: []
   },
@@ -251,6 +253,7 @@ export const offlineLessons: Lesson[] = [
     body: 'Isahani nziza igira imboga nyinshi, ibinyampeke byuzuye n\'ibiryo byubaka umubiri nk\'ibishyimbo. Gabanya umunyu, isukari n\'amavuta menshi. Rya imbuto aho kurya ibiryo biryohereye.',
     duration: 'Iminota 2',
     audioUrl: '',
+    audioIsSynthetic: false,
     imageUrl: '/images/plate.jpg',
     quiz: []
   }

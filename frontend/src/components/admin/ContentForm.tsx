@@ -61,7 +61,10 @@ export function ContentForm({ onSave, asSpecialist = false }: { onSave: (status:
           </div>
           <AudioUpload
             value={contentForm.audioUrl}
-            onChange={(audioUrl) => dispatch(updateContentForm({ audioUrl }))}
+            synthetic={contentForm.audioIsSynthetic}
+            title={contentForm.title}
+            body={contentForm.body}
+            onChange={(audioUrl, audioIsSynthetic) => dispatch(updateContentForm({ audioUrl, audioIsSynthetic }))}
             onError={(message) => dispatch(setFeedbackMessage(message))}
           />
           <div className="form-group span-2">

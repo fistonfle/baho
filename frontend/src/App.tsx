@@ -108,6 +108,7 @@ const toLesson = (item: any, categories: Category[]): Lesson => ({
   // Rough listening time at about 130 words a minute.
   duration: `Iminota ${Math.max(1, Math.round(String(item.body).split(/\s+/).length / 130))}`,
   audioUrl: item.audioUrl || '',
+  audioIsSynthetic: Boolean(item.audioIsSynthetic),
   imageUrl: item.imageUrl || '',
   quiz: item.quiz || []
 });

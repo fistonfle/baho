@@ -1,4 +1,4 @@
-// Upload a recorded lesson (phones can record from the file picker).
+// Upload a recorded lesson, or have the server read it aloud when nobody can record it.
 import { useState } from 'react';
 
 import { api } from '../../services/api';
@@ -6,8 +6,19 @@ import { AudioPlayer } from '../AudioPlayer';
 
 const maxBytes = 20 * 1024 * 1024;
 
-export function AudioUpload({ value, onChange, onError }: { value: string; onChange: (url: string) => void; onError: (message: string) => void }) {
+type Props = {
+  value: string;
+  synthetic: boolean;
+  title: string;
+  body: string;
+  onChange: (url: string, synthetic: boolean) => void;
+  onError: (message: string) => void;
+};
+
+export function AudioUpload({ value, synthetic, title, body, onChange, onError }: Props) {
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const busy = uploading || generating;
 
   const upload = async (file: File | undefined) => {
     if (!file) return;
@@ -18,7 +29,7 @@ export function AudioUpload({ value, onChange, onError }: { value: string; onCha
     setUploading(true);
     try {
       const { url } = await api.uploadAudio(file);
-      onChange(url);
+      onChange(url, false);
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Could not upload the recording.');
     } finally {
@@ -26,26 +37,57 @@ export function AudioUpload({ value, onChange, onError }: { value: string; onCha
     }
   };
 
+  // A silent lesson shuts out whoever cannot read it; a recording still replaces this.
+  const generate = async () => {
+    if (!body.trim()) {
+      onError('Write the lesson text first, then generate its audio.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { url } = await api.generateAudio(title, body);
+      onChange(url, true);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Could not make the audio.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="form-group span-2">
-      <label htmlFor="lesson-audio">Recorded audio (optional)</label>
+      <label htmlFor="lesson-audio">Lesson audio (optional)</label>
       {value ? (
         <div className="stack-sm">
-          <AudioPlayer audioUrl={value} />
-          <div><button type="button" className="btn btn-danger btn-sm" onClick={() => onChange('')}>Remove recording</button></div>
+          <AudioPlayer audioUrl={value} synthetic={synthetic} />
+          <div className="actions">
+            <button type="button" className="btn btn-danger btn-sm" onClick={() => onChange('', false)}>Remove audio</button>
+            {synthetic && (
+              <span className="small muted">Computer voice. Listen to it in full, and replace it with a recording when one is made.</span>
+            )}
+          </div>
         </div>
       ) : (
-        <input
-          id="lesson-audio"
-          className="input"
-          type="file"
-          accept="audio/*"
-          disabled={uploading}
-          onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ''; }}
-        />
+        <div className="stack-sm">
+          <input
+            id="lesson-audio"
+            className="input"
+            type="file"
+            accept="audio/*"
+            disabled={busy}
+            onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ''; }}
+          />
+          <div className="actions">
+            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void generate()}>
+              {generating ? <><span className="spinner" /> Making the audio...</> : 'Generate audio instead'}
+            </button>
+          </div>
+        </div>
       )}
       <span className="form-hint">
-        {uploading ? <><span className="spinner" /> Uploading...</> : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). Lessons without a recording show no audio player.'}
+        {uploading
+          ? <><span className="spinner" /> Uploading...</>
+          : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server can read it aloud instead, and learners are told the voice is a computer. Lessons with neither show no audio player.'}
       </span>
     </div>
   );

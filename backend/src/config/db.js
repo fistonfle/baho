@@ -129,6 +129,9 @@ const createSchemaSql = `
   ALTER TABLE content ADD COLUMN IF NOT EXISTS review_note TEXT;
   ALTER TABLE content ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
 
+  -- Learners are told which lessons are read by a machine, so the flag is here.
+  ALTER TABLE content ADD COLUMN IF NOT EXISTS audio_is_synthetic BOOLEAN NOT NULL DEFAULT FALSE;
+
   -- Learners sign in with a phone number; staff keep email.
   ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(16) UNIQUE;
   ALTER TABLE users ALTER COLUMN email DROP NOT NULL;

@@ -5,12 +5,12 @@ import {
 } from '../../store/appSlice';
 import { Photo } from '../ui';
 
-export function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' | 'summary' | 'body' | 'quiz' | 'audioUrl'> }) {
+export function LessonPreview({ lesson }: { lesson: Pick<AdminContentItem, 'imageUrl' | 'summary' | 'body' | 'quiz' | 'audioUrl' | 'audioIsSynthetic'> }) {
   return (
     <div className="preview-box stack-sm">
       {lesson.imageUrl && <Photo src={lesson.imageUrl} lazy />}
       {lesson.summary && <p><strong>{lesson.summary}</strong></p>}
-      <AudioPlayer audioUrl={lesson.audioUrl} />
+      <AudioPlayer audioUrl={lesson.audioUrl} synthetic={Boolean(lesson.audioIsSynthetic)} />
       <p style={{ whiteSpace: 'pre-line' }}>{lesson.body}</p>
       {lesson.quiz && lesson.quiz.length > 0 && (
         <div>

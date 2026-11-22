@@ -250,6 +250,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 .audio-meta strong { color: var(--ink); }
 .audio-meta span { color: var(--muted); }
 .audio-seek { width: 100%; accent-color: var(--brand); }
+.audio-note { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 .audio-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
 /* Quiz */
