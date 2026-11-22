@@ -16,7 +16,8 @@ ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 
 COPY voice.py server.py cli.py ./
 
-RUN useradd --system --uid 10001 voice && chown -R voice /models
-USER voice
+# Named baho, not voice: Debian already ships a system group called voice.
+RUN groupadd --system baho && useradd --system --gid baho --uid 10001 baho && chown -R baho:baho /models
+USER baho
 EXPOSE 8080
 CMD ["python", "server.py"]
