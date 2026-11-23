@@ -116,6 +116,17 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
             export IMAGE_TAG
+            # Every deploy pulls three images tagged with the commit, so the ones from
+            # older deploys have to go or the disk fills and the next pull fails.
+            echo "Disk before the pull:"; df -h "$APP_DIR" | tail -1
+            docker images --format '{{.Repository}}:{{.Tag}}' \
+              | grep -E '/baho-(backend|frontend|tts):' \
+              | grep -v ":$IMAGE_TAG$" | grep -v ':latest$' \
+              | xargs -r -n1 docker rmi -f >/dev/null 2>&1 || true
+            # Dangling layers only, so the other stacks on the VM keep their images.
+            docker image prune -f >/dev/null 2>&1 || true
+            echo "Disk after the clean-up:"; df -h "$APP_DIR" | tail -1
+
             docker compose -f docker-compose.production.yml pull
             docker compose -f docker-compose.production.yml up -d
             docker logout ghcr.io >/dev/null 2>&1 || true
