@@ -4,7 +4,7 @@ import { api, type DiseasePayload } from '../../services/api';
 import { setCategories, setFeedbackMessage, upsertCurriculum } from '../../store/appSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { Curriculum } from '../../types';
-import { Panel } from '../ui';
+import { Panel, StatusBadge } from '../ui';
 import { AudioUpload } from './AudioUpload';
 
 type DiseaseForm = { name: string; icon: string; about: string; description: string; riskFactors: string; warningSigns: string; prevention: string; audioUrl: string; audioIsSynthetic: boolean };
@@ -17,34 +17,42 @@ const emptyForm: DiseaseForm = { name: '', icon: '', about: '', description: '',
 const toLines = (items: string[]) => items.join('\n');
 const fromLines = (text: string) => text.split('\n').map((line) => line.trim()).filter(Boolean);
 
+const asForm = (disease: Curriculum): DiseaseForm => ({
+  name: disease.condition || '',
+  icon: disease.icon || '',
+  about: disease.about,
+  description: disease.description,
+  riskFactors: toLines(disease.riskFactors),
+  warningSigns: toLines(disease.warningSigns),
+  prevention: toLines(disease.prevention),
+  audioUrl: disease.audioUrl || '',
+  audioIsSynthetic: disease.audioIsSynthetic
+});
+
 // Add a disease and edit its info. onWriteLesson is optional.
 export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Curriculum) => void }) {
   const dispatch = useAppDispatch();
   const curricula = useAppSelector((state) => state.app.curricula);
   const categories = useAppSelector((state) => state.app.categories);
   const diseases = curricula.filter((curriculum) => curriculum.condition);
+  const [writing, setWriting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<DiseaseForm>(emptyForm);
   const notify = (message: string) => dispatch(setFeedbackMessage(message));
 
-  const startEdit = (disease: Curriculum) => {
-    setEditingId(disease.id);
-    setForm({
-      name: disease.condition || '',
-      icon: disease.icon || '',
-      about: disease.about,
-      description: disease.description,
-      riskFactors: toLines(disease.riskFactors),
-      warningSigns: toLines(disease.warningSigns),
-      prevention: toLines(disease.prevention),
-      audioUrl: disease.audioUrl || '',
-      audioIsSynthetic: disease.audioIsSynthetic
-    });
+  // The list and the editor are two views, as they are for lessons: one at a time.
+  const open = (disease: Curriculum | null) => {
+    setEditingId(disease ? disease.id : null);
+    setForm(disease ? asForm(disease) : emptyForm);
+    setWriting(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const reset = () => {
+  const close = () => {
+    setWriting(false);
     setEditingId(null);
     setForm(emptyForm);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const save = async () => {
@@ -70,7 +78,9 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
         dispatch(setCategories([...categories, { id: response.disease.categoryId, name: payload.name, slug: response.disease.slug }]));
       }
       notify(editingId ? 'Disease information updated.' : `"${payload.name}" added. You can now write lessons for it.`);
-      reset();
+      // A new disease goes back to the list, where it now appears; an edit stays open.
+      if (editingId) setForm(asForm(response.disease));
+      else close();
     } catch (error) {
       notify(error instanceof Error && error.message.includes('already exists') ? 'This disease already exists.' : 'Could not save the disease.');
     }
@@ -86,73 +96,97 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
     </div>
   );
 
-  return (
-    <div className="layout-main-aside">
-      <Panel title={`Diseases in Baho (${diseases.length})`} description="Each disease has its own lesson topic and learning path." flush>
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>Diseases</th><th>Published lessons</th><th className="right">Actions</th></tr></thead>
-            <tbody>
-              {diseases.map((disease) => (
-                <tr key={disease.id}>
-                  <td><strong>{disease.condition}</strong><div className="small muted">{disease.description}</div></td>
-                  <td>{disease.lessonIds.length}</td>
-                  <td className="right">
-                    <div className="actions">
-                      <button className="btn btn-secondary btn-sm" onClick={() => startEdit(disease)}>Edit</button>
-                      {onWriteLesson && <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Write lesson</button>}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
+  const audioCell = (disease: Curriculum) => {
+    if (!disease.audioUrl) return <span className="muted">Silent</span>;
+    return disease.audioIsSynthetic ? 'Computer voice' : 'Recording';
+  };
 
+  if (writing) {
+    return (
       <form className="panel" onSubmit={(event) => { event.preventDefault(); void save(); }}>
         <div className="panel-head">
           <div>
-            <h2>{editingId ? 'Edit disease information' : 'Add disease'}</h2>
-            <p>A new disease appears in the learners' disease section, health profile and learning paths. Write its information in Kinyarwanda.</p>
+            <h2>{editingId ? `Edit ${form.name}` : 'New disease'}</h2>
+            <p>
+              {editingId
+                ? 'The name stays as it is; everything else can be rewritten. Learners see this page in the disease section.'
+                : 'A new disease gets its own lesson topic and learning path, and appears in the learners\' disease section and health profile. Write it in Kinyarwanda.'}
+            </p>
           </div>
+          {editingId && <StatusBadge label="Editing" tone="info" />}
         </div>
         <div className="panel-body">
-          <div className="form-group">
-            <label htmlFor="disease-name">Disease name (Kinyarwanda)</label>
-            <input id="disease-name" className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="e.g. Asima" required />
+          <div className="form-grid">
+            <div className="form-group span-2">
+              <label htmlFor="disease-name">Disease name (Kinyarwanda)</label>
+              <input id="disease-name" className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={Boolean(editingId)} placeholder="e.g. Asima" required />
+            </div>
+            {field('about', 'What is it?', 'A few simple sentences.')}
+            {field('riskFactors', 'Risk factors', 'One per line.')}
+            {field('warningSigns', 'Warning signs', 'One per line.')}
+            {field('prevention', 'Prevention', 'One per line.')}
+            <AudioUpload
+              value={form.audioUrl}
+              synthetic={form.audioIsSynthetic}
+              title={form.name}
+              body={form.about}
+              quiz={[]}
+              label="Disease audio (optional)"
+              inputId="disease-audio"
+              missingText="Write what the disease is first, then generate its audio."
+              hint="A person reading this disease page in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server reads the whole page aloud: what the disease is, then the risk factors, the warning signs and the prevention. Learners are told the voice is a computer."
+              onGenerate={() => api.generateDiseaseAudio({
+                name: form.name.trim(),
+                about: form.about.trim(),
+                riskFactors: fromLines(form.riskFactors),
+                warningSigns: fromLines(form.warningSigns),
+                prevention: fromLines(form.prevention)
+              })}
+              onChange={(audioUrl, audioIsSynthetic) => setForm((current) => ({ ...current, audioUrl, audioIsSynthetic }))}
+              onError={notify}
+            />
+            <div className="form-group span-2">
+              <label htmlFor="disease-description">Learning path tagline</label>
+              <input id="disease-description" className="input" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+              <span className="form-hint">Optional.</span>
+            </div>
           </div>
-          {field('about', 'What is it?', 'A few simple sentences.')}
-          {field('riskFactors', 'Risk factors', 'One per line.')}
-          {field('warningSigns', 'Warning signs', 'One per line.')}
-          {field('prevention', 'Prevention', 'One per line.')}
-          <AudioUpload
-            value={form.audioUrl}
-            synthetic={form.audioIsSynthetic}
-            title={form.name}
-            body={form.about}
-            quiz={[]}
-            label="Disease audio (optional)"
-            inputId="disease-audio"
-            missingText="Write what the disease is first, then generate its audio."
-            hint="A person reading this disease page in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server reads the whole page aloud: what the disease is, then the risk factors, the warning signs and the prevention. Learners are told the voice is a computer."
-            onGenerate={() => api.generateDiseaseAudio({
-              name: form.name.trim(),
-              about: form.about.trim(),
-              riskFactors: fromLines(form.riskFactors),
-              warningSigns: fromLines(form.warningSigns),
-              prevention: fromLines(form.prevention)
-            })}
-            onChange={(audioUrl, audioIsSynthetic) => setForm((current) => ({ ...current, audioUrl, audioIsSynthetic }))}
-            onError={notify}
-          />
-          {field('description', 'Learning path tagline', 'Optional.', false)}
         </div>
         <div className="panel-foot form-actions">
           <button className="btn btn-primary" type="submit">{editingId ? 'Save changes' : 'Add disease'}</button>
-          {editingId && <button type="button" className="btn btn-secondary" onClick={reset}>Cancel</button>}
+          <button type="button" className="btn btn-secondary" onClick={close}>{editingId ? 'Done' : 'Cancel'}</button>
         </div>
       </form>
-    </div>
+    );
+  }
+
+  return (
+    <Panel
+      title={`Diseases in Baho (${diseases.length})`}
+      description="Each disease has its own lesson topic and learning path."
+      actions={<button className="btn btn-primary btn-sm" onClick={() => open(null)}>Add disease</button>}
+      flush
+    >
+      <div className="table-wrap">
+        <table className="table">
+          <thead><tr><th>Diseases</th><th>Audio</th><th>Published lessons</th><th className="right">Actions</th></tr></thead>
+          <tbody>
+            {diseases.map((disease) => (
+              <tr key={disease.id}>
+                <td><strong>{disease.condition}</strong><div className="small muted">{disease.description}</div></td>
+                <td>{audioCell(disease)}</td>
+                <td>{disease.lessonIds.length}</td>
+                <td className="right">
+                  <div className="actions">
+                    <button className="btn btn-secondary btn-sm" onClick={() => open(disease)}>Edit</button>
+                    {onWriteLesson && <button className="btn btn-primary btn-sm" onClick={() => onWriteLesson(disease)}>Write lesson</button>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
   );
 }

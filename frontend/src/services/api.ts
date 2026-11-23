@@ -141,7 +141,7 @@ export const api = {
     request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate', { method: 'POST', body: JSON.stringify({ title, body, quiz }) }),
   // Reads a whole disease page aloud: what it is, the risks, the signs, the prevention.
   generateDiseaseAudio: (disease: { name: string; about: string; riskFactors: string[]; warningSigns: string[]; prevention: string[] }) =>
-    request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate', { method: 'POST', body: JSON.stringify({ disease }) }),
+    request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate/disease', { method: 'POST', body: JSON.stringify(disease) }),
   getReviewQueue: () => request<{ lessons: any[] }>('/review/queue'),
   reviewLesson: (id: number, decision: 'approve' | 'changes', note: string) =>
     request<{ message: string; lesson: any }>(`/review/lessons/${id}`, { method: 'POST', body: JSON.stringify({ decision, note }) }),

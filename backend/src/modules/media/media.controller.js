@@ -72,14 +72,9 @@ export const uploadAudio = async (req, res) => {
   }
 };
 
-// POST /admin/media/audio/generate. Made once and stored like an upload, so it plays offline.
-export const generateAudio = async (req, res) => {
-  const { title = '', body = '', quiz = [], disease = null } = req.body || {};
-  // A disease page is read as its own script: the lists are the content, not a quiz.
-  const text = disease ? speakableDisease(disease) : speakable(title, body, quiz);
-  if (!text) {
-    return res.status(400).json({ message: disease ? 'Describe the disease first, then generate its audio' : 'Write the lesson first, then generate its audio' });
-  }
+// Spoken once and stored like an upload, so it plays offline and replaying costs nothing.
+const voice = async (res, text, missing) => {
+  if (!text) return res.status(400).json({ message: missing });
   if (!ttsEngine.isConfigured()) {
     return res.status(503).json({ message: 'This server has no voice installed, so audio must be uploaded as a recording' });
   }
@@ -87,12 +82,22 @@ export const generateAudio = async (req, res) => {
     const name = await mediaStore.saveAudio(await ttsEngine.speak(text));
     return res.status(201).json({ url: `/api/v1/media/${name}`, synthetic: true });
   } catch (error) {
-    if (error.message === 'too-long') return res.status(413).json({ message: 'The lesson is too long to voice in one piece' });
-    if (error.message === 'timeout') return res.status(504).json({ message: 'Making the audio took too long; try a shorter lesson' });
+    if (error.message === 'too-long') return res.status(413).json({ message: 'The text is too long to voice in one piece' });
+    if (error.message === 'timeout') return res.status(504).json({ message: 'Making the audio took too long; try a shorter text' });
     if (error.message === 'unsupported') return res.status(502).json({ message: 'The voice produced something that is not audio' });
     return res.status(503).json({ message: 'Could not make the audio' });
   }
 };
+
+// POST /admin/media/audio/generate, for a lesson and its quiz.
+export const generateAudio = (req, res) => {
+  const { title = '', body = '', quiz = [] } = req.body || {};
+  return voice(res, speakable(title, body, quiz), 'Write the lesson first, then generate its audio');
+};
+
+// POST /admin/media/audio/generate/disease. Whoever writes the disease page may also voice it.
+export const generateDiseaseAudio = (req, res) =>
+  voice(res, speakableDisease(req.body || {}), 'Describe the disease first, then generate its audio');
 
 // Reads the raw upload, up to the size limit, whatever type the browser sends.
 export const readAudioBody = express.raw({ type: () => true, limit: MediaStore.maxBytes });

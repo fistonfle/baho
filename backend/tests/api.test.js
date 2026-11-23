@@ -1400,10 +1400,16 @@ test('A disease page carries its own audio, and the voice reads every part of it
     assert.match(script, /Uko wayirinda\. Fata imiti buri munsi\./);
     assert.equal(speakableDisease({ name: '', about: '' }), '');
 
-    // Nothing written down means nothing to voice, and an admin never voices anything.
-    const empty = await postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, { disease: { name: '', about: '' } }, creatorToken);
+    // The administrator writes the disease page, so the administrator may voice it.
+    const empty = await postJson(`${baseUrl}/api/v1/admin/media/audio/generate/disease`, { name: '', about: '' }, adminToken);
     assert.equal(empty.status, 400);
-    assert.equal((await postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, { disease }, adminToken)).status, 403);
+    // There is no voice installed during the tests, so a full page gets as far as 503.
+    const voiced = await postJson(`${baseUrl}/api/v1/admin/media/audio/generate/disease`, disease, adminToken);
+    assert.equal(voiced.status, 503, await voiced.clone().text());
+    // A writer has no business rewriting a disease page, so neither may they voice one.
+    assert.equal((await postJson(`${baseUrl}/api/v1/admin/media/audio/generate/disease`, disease, creatorToken)).status, 403);
+    // Lessons are unchanged: an admin still cannot voice one.
+    assert.equal((await postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, { title: 'Isomo', body: 'Umubiri.' }, adminToken)).status, 403);
   } finally {
     server.close();
   }
