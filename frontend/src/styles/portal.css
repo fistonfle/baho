@@ -126,6 +126,12 @@ ul, ol { margin: 0; padding-left: 1.25rem; }
 .panel-body { padding: 20px; }
 .panel-body.flush { padding: 0; }
 .panel-foot { padding: 12px 20px; border-top: 1px solid var(--line); background: var(--surface-alt); }
+/* The day's tip is advice to act on today, so it is marked, not just another box. */
+.panel-tip { border-left: 3px solid var(--brand); }
+.panel-tip .panel-head { border-bottom-color: #cfe0d9; background: var(--brand-tint); }
+.panel-tip .panel-head h2 { display: inline-flex; align-items: center; gap: 8px; color: var(--brand); }
+.tip-icon { width: 1.15em; height: 1.15em; flex: none; }
+.panel-tip .panel-body p { color: var(--ink); font-size: 0.95rem; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; line-height: 1.2; text-decoration: none; white-space: nowrap; }

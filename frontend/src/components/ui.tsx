@@ -95,6 +95,15 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
+// A lamp on the day's tip: the one thing on the page asking to be acted on.
+export function TipIcon() {
+  return (
+    <svg className="tip-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.4.3.6.7.6 1.2v1h6v-1c0-.5.2-.9.6-1.2A6 6 0 0 0 12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // A clock says "how long" without being read, which the word never did.
 export function Duration({ value }: { value: string }) {
   const minutes = value.match(/\d+/)?.[0];

@@ -1,7 +1,7 @@
 import { getWeek } from '../../lib/activity';
 import { pathProgress, type RankedLesson } from '../../lib/personalization';
 import type { Curriculum, Lesson } from '../../types';
-import { Duration, PageHeader, Panel } from '../ui';
+import { Duration, PageHeader, Panel, TipIcon } from '../ui';
 
 export function DashboardScreen({
   userName,
@@ -162,7 +162,10 @@ export function DashboardScreen({
         </div>
 
         <aside className="stack">
-          <Panel title="Inama y'uyu munsi">
+          <Panel
+            className="panel-tip"
+            title={<><TipIcon />Inama y'uyu munsi</>}
+          >
             <p className="small">{healthTip}</p>
           </Panel>
           <Panel title="Ukeneye ubufasha?">
