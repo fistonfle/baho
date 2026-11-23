@@ -1,4 +1,4 @@
-# Run by hand to give every silent lesson on the VM a generated voice.
+# Run by hand to give every silent lesson and disease page on the VM a generated voice.
 # Uses the same VM secrets as the deploy workflow.
 name: Back fill lesson audio
 
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: List the lessons without voicing them
+        description: List what is silent without voicing it
         type: boolean
         default: false
 
@@ -19,10 +19,10 @@ env:
 
 jobs:
   backfill:
-    name: Voice the silent lessons
+    name: Voice the silent lessons and diseases
     runs-on: ubuntu-latest
     steps:
-      - name: Read the lessons aloud
+      - name: Read the silent pages aloud
         uses: appleboy/ssh-action@v1.2.0
         env:
           APP_DIR: ${{ env.APP_DIR }}

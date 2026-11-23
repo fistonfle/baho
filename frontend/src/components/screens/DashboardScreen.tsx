@@ -1,11 +1,10 @@
 import { getWeek } from '../../lib/activity';
 import { pathProgress, type RankedLesson } from '../../lib/personalization';
-import type { Curriculum, Interest, Lesson } from '../../types';
-import { PageHeader, Panel } from '../ui';
+import type { Curriculum, Lesson } from '../../types';
+import { Duration, PageHeader, Panel } from '../ui';
 
 export function DashboardScreen({
   userName,
-  selectedInterests,
   rankedLessons,
   lessons,
   activePath,
@@ -15,19 +14,14 @@ export function DashboardScreen({
   totalLessons,
   streak,
   hasRiskCheck,
-  riskTags,
   knowledgeScore,
   healthTip,
   onOpenLesson,
   onViewPaths,
   onViewLibrary,
-  onViewRiskCheck,
-  onViewCheckup,
-  onViewFaq,
-  onEditInterests
+  onViewFaq
 }: {
   userName: string;
-  selectedInterests: Interest[];
   rankedLessons: RankedLesson[];
   lessons: Lesson[];
   activePath: Curriculum | null;
@@ -37,16 +31,12 @@ export function DashboardScreen({
   totalLessons: number;
   streak: number;
   hasRiskCheck: boolean;
-  riskTags: Interest[];
   knowledgeScore: { first: number; latest: number; total: number } | null;
   healthTip: string;
   onOpenLesson: (lesson: Lesson) => void;
   onViewPaths: () => void;
   onViewLibrary: () => void;
-  onViewRiskCheck: () => void;
-  onViewCheckup: () => void;
   onViewFaq: () => void;
-  onEditInterests: () => void;
 }) {
   const pathLessons = activePath
     ? activePath.lessonIds.map((id) => lessons.find((lesson) => lesson.id === id)).filter((lesson): lesson is Lesson => Boolean(lesson))
@@ -121,7 +111,7 @@ export function DashboardScreen({
                           <strong>{lesson.title}</strong>
                           <span className="meta">
                             <span className="tag">{lesson.category}</span>
-                            <span className="meta-item">{lesson.duration}</span>
+                            <Duration value={lesson.duration} />
                           </span>
                         </span>
                         {done && <span className="badge badge-success">Warirangije</span>}
@@ -157,7 +147,7 @@ export function DashboardScreen({
                       <strong>{lesson.title}</strong>
                       <span className="meta">
                         <span className="tag">{lesson.category}</span>
-                        <span className="meta-item">{lesson.duration}</span>
+                        <Duration value={lesson.duration} />
                       </span>
                       {reasons.length > 0 && (
                         <span className="meta"><span className="meta-item">{reasons.join(', ')}</span></span>
@@ -172,32 +162,6 @@ export function DashboardScreen({
         </div>
 
         <aside className="stack">
-          <Panel title="Umwirondoro w'ubuzima">
-            {hasRiskCheck && riskTags.length > 0 ? (
-              <>
-                <p className="small muted">Twibanda kuri:</p>
-                <div className="tags" style={{ marginBottom: 12 }}>
-                  {riskTags.map((tag) => <span key={tag} className="tag tag-brand">{tag}</span>)}
-                </div>
-              </>
-            ) : (
-              <p className="small">{hasRiskCheck ? 'Nta byago bikomeye byagaragaye.' : 'Uzuza umwirondoro kugira ngo tuguhitiremo gahunda ikubereye.'}</p>
-            )}
-            <p className="small muted">Ingingo wahisemo:</p>
-            {selectedInterests.length > 0 ? (
-              <div className="tags" style={{ marginBottom: 12 }}>
-                {selectedInterests.map((interest) => <span key={interest} className="tag">{interest}</span>)}
-              </div>
-            ) : <p className="small muted">Nta n'imwe.</p>}
-            <div className="row">
-              <button className="btn btn-secondary btn-sm" onClick={onViewRiskCheck}>{hasRiskCheck ? 'Hindura umwirondoro' : 'Uzuza umwirondoro'}</button>
-              <button className="btn-link small" onClick={onEditInterests}>Hindura ingingo</button>
-            </div>
-          </Panel>
-          <Panel title="Isuzuma ry'ubumenyi">
-            <p className="small">Ibibazo 5 ku ndwara zitandura. Bikore mbere na nyuma yo kwiga urebe aho watereye imbere.</p>
-            <button className="btn btn-secondary btn-sm" onClick={onViewCheckup}>Tangira isuzuma</button>
-          </Panel>
           <Panel title="Inama y'uyu munsi">
             <p className="small">{healthTip}</p>
           </Panel>

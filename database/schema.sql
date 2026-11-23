@@ -1,4 +1,4 @@
--- Baho PostgreSQL schema (15 tables). See designs/erd.svg for the diagram.
+-- Baho PostgreSQL schema (16 tables). See designs/erd.svg for the diagram.
 -- The backend creates and migrates these tables automatically on start-up
 -- (backend/src/config/db.js); this file is the readable reference.
 
@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS content (
     summary TEXT,
     body TEXT NOT NULL,
     audio_url VARCHAR(255),
+    audio_is_synthetic BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE when the server read the lesson, not a person
     image_url VARCHAR(255),
     status VARCHAR(30) DEFAULT 'published',          -- draft | review | approved | published | rejected
     reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,  -- specialist who approved or sent it back
@@ -79,7 +80,9 @@ CREATE TABLE IF NOT EXISTS curricula (
     about TEXT,
     risk_factors JSONB NOT NULL DEFAULT '[]',
     warning_signs JSONB NOT NULL DEFAULT '[]',
-    prevention JSONB NOT NULL DEFAULT '[]'
+    prevention JSONB NOT NULL DEFAULT '[]',
+    audio_url VARCHAR(255),
+    audio_is_synthetic BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS curriculum_lessons (
@@ -151,6 +154,16 @@ CREATE TABLE IF NOT EXISTS password_resets (
     token_hash VARCHAR(64) NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A phone that agreed to reminder notifications; one row per browser.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

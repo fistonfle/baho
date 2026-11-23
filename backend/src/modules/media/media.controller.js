@@ -41,6 +41,22 @@ export const speakable = (title, body, quiz = []) => {
   return /[\p{L}\p{N}]/u.test(script) ? script : '';
 };
 
+// A disease page as a listener hears it: what it is, then each list under its own heading.
+export const speakableDisease = (disease = {}) => {
+  const heading = (label, items) => {
+    const spoken = (Array.isArray(items) ? items : []).map(plain).filter(Boolean);
+    return spoken.length ? [sentence(label), ...spoken.map(sentence)].join(' ') : '';
+  };
+  const lines = [
+    [plain(disease.name), plain(disease.about)].filter(Boolean).map(sentence).join(' '),
+    heading('Ibyongera ibyago', disease.riskFactors),
+    heading('Ibimenyetso byo kwitondera', disease.warningSigns),
+    heading('Uko wayirinda', disease.prevention)
+  ];
+  const script = lines.filter(Boolean).join('\n');
+  return /[\p{L}\p{N}]/u.test(script) ? script : '';
+};
+
 // POST /admin/media/audio with the recording as the request body.
 export const uploadAudio = async (req, res) => {
   if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
@@ -58,9 +74,12 @@ export const uploadAudio = async (req, res) => {
 
 // POST /admin/media/audio/generate. Made once and stored like an upload, so it plays offline.
 export const generateAudio = async (req, res) => {
-  const { title = '', body = '', quiz = [] } = req.body || {};
-  const text = speakable(title, body, quiz);
-  if (!text) return res.status(400).json({ message: 'Write the lesson first, then generate its audio' });
+  const { title = '', body = '', quiz = [], disease = null } = req.body || {};
+  // A disease page is read as its own script: the lists are the content, not a quiz.
+  const text = disease ? speakableDisease(disease) : speakable(title, body, quiz);
+  if (!text) {
+    return res.status(400).json({ message: disease ? 'Describe the disease first, then generate its audio' : 'Write the lesson first, then generate its audio' });
+  }
   if (!ttsEngine.isConfigured()) {
     return res.status(503).json({ message: 'This server has no voice installed, so audio must be uploaded as a recording' });
   }

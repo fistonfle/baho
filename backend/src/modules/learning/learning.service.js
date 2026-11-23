@@ -154,6 +154,8 @@ const mapCurriculum = (row, lessonIds) => ({
   riskFactors: row.risk_factors ?? row.riskFactors ?? [],
   warningSigns: row.warning_signs ?? row.warningSigns ?? [],
   prevention: row.prevention ?? [],
+  audioUrl: row.audio_url ?? row.audioUrl ?? '',
+  audioIsSynthetic: Boolean(row.audio_is_synthetic ?? row.audioIsSynthetic),
   lessonIds
 });
 
@@ -203,7 +205,9 @@ const diseaseFields = (body) => ({
   imageUrl: String(body.imageUrl || '').trim(),
   riskFactors: cleanList(body.riskFactors),
   warningSigns: cleanList(body.warningSigns),
-  prevention: cleanList(body.prevention)
+  prevention: cleanList(body.prevention),
+  audioUrl: String(body.audioUrl || '').trim(),
+  audioIsSynthetic: Boolean(body.audioIsSynthetic)
 });
 
 // A new disease gets its own lesson category and an (empty) learning path.
@@ -233,10 +237,11 @@ export const createDisease = (body) => withFallback(
         ? existingCategory
         : await client.query('INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id', [name, slug]);
       const created = await client.query(
-        `INSERT INTO curricula (slug, title, condition_name, description, image_url, category_id, icon, about, risk_factors, warning_signs, prevention)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+        `INSERT INTO curricula (slug, title, condition_name, description, image_url, category_id, icon, about, risk_factors, warning_signs, prevention, audio_url, audio_is_synthetic)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
         [slug, `Inzira ya ${name}`, name, fields.description, fields.imageUrl || null, category.rows[0].id, fields.icon, fields.about,
-          JSON.stringify(fields.riskFactors), JSON.stringify(fields.warningSigns), JSON.stringify(fields.prevention)]
+          JSON.stringify(fields.riskFactors), JSON.stringify(fields.warningSigns), JSON.stringify(fields.prevention),
+          fields.audioUrl || null, fields.audioIsSynthetic]
       );
       await client.query('COMMIT');
       return { disease: mapCurriculum(created.rows[0], []) };
@@ -269,10 +274,11 @@ export const updateDisease = (id, body) => withFallback(
     const fields = diseaseFields(body);
     const result = await pool.query(
       `UPDATE curricula SET icon = $2, about = $3, description = $4, image_url = COALESCE(NULLIF($5, ''), image_url),
-         risk_factors = $6, warning_signs = $7, prevention = $8
+         risk_factors = $6, warning_signs = $7, prevention = $8, audio_url = NULLIF($9, ''), audio_is_synthetic = $10
        WHERE id = $1 AND condition_name IS NOT NULL RETURNING *`,
       [id, fields.icon, fields.about, fields.description, fields.imageUrl,
-        JSON.stringify(fields.riskFactors), JSON.stringify(fields.warningSigns), JSON.stringify(fields.prevention)]
+        JSON.stringify(fields.riskFactors), JSON.stringify(fields.warningSigns), JSON.stringify(fields.prevention),
+        fields.audioUrl, fields.audioIsSynthetic]
     );
     return result.rows[0] ? (await listCurricula()).find((item) => item.id === id) : null;
   },

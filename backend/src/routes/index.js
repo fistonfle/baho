@@ -2,10 +2,10 @@ import express from 'express';
 
 import { getHealth } from '../modules/health/health.controller.js';
 import { getCategories, getContent, getContentById, getFaqs, createFaq, updateFaq, deleteFaq, getAdminContent, createContent, updateContent, deleteContent, updateContentStatus } from '../modules/content/content.controller.js';
-import { getQuestions, createQuestion, answerQuestion, draftAnswer } from '../modules/questions/questions.controller.js';
+import { getQuestions, getLessonQuestions, createQuestion, answerQuestion, draftAnswer } from '../modules/questions/questions.controller.js';
 import { createIssue, getIssues, updateIssueStatus } from '../modules/issues/issues.controller.js';
 import { changePassword, createCreator, getCreators, getLearners, login, register, requestPasswordReset, resetLearnerPin, resetPassword, updateMyEmail } from '../modules/auth/auth.controller.js';
-import { authenticate, requireRole } from '../modules/auth/security.js';
+import { authenticate, authenticateOptional, requireRole } from '../modules/auth/security.js';
 import { createReminder, deleteReminder, getReminders } from '../modules/reminders/reminders.controller.js';
 import { completeLesson, getProgress } from '../modules/progress/progress.controller.js';
 import { getCurricula, patchDisease, postDisease, submitQuizAttempt } from '../modules/learning/learning.controller.js';
@@ -20,6 +20,8 @@ router.get('/categories', getCategories);
 router.get('/content', getContent);
 router.get('/content/:id', getContentById);
 router.get('/faq', getFaqs);
+// Answered questions sit under the lesson for everyone, with no name on them.
+router.get('/content/:id/questions', getLessonQuestions);
 router.get('/curricula', getCurricula);
 router.use('/media', serveMedia);
 router.post('/admin/media/audio', authenticate, requireRole('admin', 'creator', 'specialist'), readAudioBody, uploadAudio);
@@ -32,7 +34,8 @@ router.post('/admin/faqs', authenticate, requireRole('admin'), createFaq);
 router.patch('/admin/faqs/:id', authenticate, requireRole('admin'), updateFaq);
 router.delete('/admin/faqs/:id', authenticate, requireRole('admin'), deleteFaq);
 router.get('/questions', authenticate, getQuestions);
-router.post('/questions', authenticate, createQuestion);
+// Anyone may ask, signed in or not; a signed-in learner also gets told when it is answered.
+router.post('/questions', authenticateOptional, createQuestion);
 // Learner questions: writer drafts, specialist approves.
 router.post('/questions/:id/draft', authenticate, requireRole('creator'), draftAnswer);
 router.post('/questions/:id/answer', authenticate, requireRole('specialist'), answerQuestion);
@@ -62,8 +65,8 @@ router.post('/admin/learners/:id/pin', authenticate, requireRole('admin'), reset
 router.put('/admin/staff/:id/topics', authenticate, requireRole('admin'), putSpecialistTopics);
 router.get('/review/queue', authenticate, requireRole('specialist'), getReviewQueue);
 router.post('/review/lessons/:id', authenticate, requireRole('specialist'), reviewLesson);
-// Lessons: writers draft, specialists review and publish, admins can view and delete.
-router.post('/admin/content', authenticate, requireRole('creator'), createContent);
+// Lessons: writers draft, specialists write and publish on their own diseases, admins can view and delete.
+router.post('/admin/content', authenticate, requireRole('creator', 'specialist'), createContent);
 router.patch('/admin/content/:id', authenticate, requireRole('creator', 'specialist'), updateContent);
 router.patch('/admin/content/:id/status', authenticate, requireRole('specialist'), updateContentStatus);
 router.delete('/admin/content/:id', authenticate, requireRole('admin'), deleteContent);

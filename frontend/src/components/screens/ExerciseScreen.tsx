@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { exerciseLevels, exercises, type ExerciseLevel } from '../../data/healthContent';
-import { PageHeader, Photo } from '../ui';
+import { Duration, PageHeader, Photo } from '../ui';
 
 export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (title: string) => void; onHome: () => void }) {
   const [level, setLevel] = useState<ExerciseLevel>('Iya abatangira');
@@ -47,7 +47,7 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
                 <button className={`list-button ${selected.id === exercise.id ? 'current' : ''}`} onClick={() => setOpenId(exercise.id)}>
                   <span className="grow">
                     <strong>{exercise.title}</strong>
-                    <span className="meta"><span className="meta-item">Iminota {exercise.minutes}</span></span>
+                    <span className="meta"><Duration value={`Iminota ${exercise.minutes}`} /></span>
                   </span>
                   {doneIds.includes(exercise.id) && <span className="badge badge-success">Wabikoze</span>}
                 </button>
@@ -62,7 +62,7 @@ export function ExerciseScreen({ onExerciseDone, onHome }: { onExerciseDone: (ti
               <h2>{selected.title}</h2>
               <div className="meta">
                 <span className="tag tag-brand">{selected.level}</span>
-                <span className="meta-item">Iminota {selected.minutes}</span>
+                <Duration value={`Iminota ${selected.minutes}`} />
               </div>
             </div>
           </div>

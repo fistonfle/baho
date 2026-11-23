@@ -9,7 +9,7 @@ const { join } = await import('node:path');
 process.env.MEDIA_DIR = mkdtempSync(join(tmpdir(), 'baho-media-'));
 const { default: app } = await import('../src/app.js');
 const { seedInitialAdmin } = await import('../src/modules/auth/bootstrap.js');
-const { speakable } = await import('../src/modules/media/media.controller.js');
+const { speakable, speakableDisease } = await import('../src/modules/media/media.controller.js');
 
 const startServer = async () => {
   const server = app.listen(0);
@@ -359,11 +359,18 @@ test('Draft/review content stays private until the specialist approves it', asyn
   }
 });
 
-test('Learner questions are authenticated and private to their owner', async () => {
+test('Anyone may ask, and the API never says who asked', async () => {
   const { server, baseUrl } = await startServer();
   try {
-    const anonymous = await postJson(`${baseUrl}/api/v1/questions`, { topic: 'Imirire', question: 'Question?' });
-    assert.equal(anonymous.status, 401);
+    // No account, no sign-in: the question still reaches the staff.
+    const guest = await postJson(`${baseUrl}/api/v1/questions`, { topic: 'Imirire', question: 'Question?' });
+    assert.equal(guest.status, 201, await guest.clone().text());
+    const asGuest = (await guest.json()).question;
+    assert.equal(asGuest.user_id, undefined, 'no asker comes back out');
+    assert.equal(asGuest.userId, undefined, 'no asker comes back out');
+
+    const tooLong = await postJson(`${baseUrl}/api/v1/questions`, { topic: 'Imirire', question: 'a'.repeat(601) });
+    assert.equal(tooLong.status, 400);
 
     const response = await postJson(`${baseUrl}/api/v1/questions`, {
       topic: 'Imirire',
@@ -495,6 +502,10 @@ test('A question asked from a lesson is drafted by a writer and approved by the 
     })).json()).questions.find((entry) => entry.id === question.id);
     assert.equal(stillWaiting.status, 'Drafted', 'the learner is not told it is answered yet');
 
+    // Nothing is under the lesson until a specialist has approved it.
+    const beforeApproval = (await (await fetch(`${baseUrl}/api/v1/content/${lesson.id}/questions`)).json()).questions;
+    assert.ok(!beforeApproval.some((entry) => entry.id === question.id), 'a draft is not public');
+
     // A specialist cannot draft, and a writer cannot approve.
     const specialistToken = await makeSpecialist(baseUrl, `dr.${lessonTopic.toLowerCase().replace(/[^a-z]/g, '')}@example.test`,
       [(await (await fetch(`${baseUrl}/api/v1/categories`)).json()).categories.find((c) => c.name === lessonTopic).id]);
@@ -522,9 +533,48 @@ test('A question asked from a lesson is drafted by a writer and approved by the 
     })).json()).questions;
     assert.ok(!writerAfter.some((entry) => entry.id === question.id), 'answered questions leave the writer queue');
 
+    // Everyone reading the lesson now sees the question and the answer, with no name on them.
+    const publicList = await fetch(`${baseUrl}/api/v1/content/${lesson.id}/questions`);
+    assert.equal(publicList.status, 200);
+    const openly = (await publicList.json()).questions.find((entry) => entry.id === question.id);
+    assert.ok(openly, 'the answered question is under the lesson');
+    assert.equal(openly.answer, 'Nywa amazi arenga litiro ebyiri.');
+    assert.equal(openly.user_id, undefined, 'the lesson page never names the asker');
+    assert.equal(openly.userId, undefined, 'the lesson page never names the asker');
+
     // An answered question cannot be redrafted.
     const redraft = await postJson(`${baseUrl}/api/v1/questions/${question.id}/draft`, { answer: 'Again.' }, creatorToken);
     assert.equal(redraft.status, 409);
+  } finally {
+    server.close();
+  }
+});
+
+test('A specialist writes and publishes a lesson on their own disease', async () => {
+  const { server, baseUrl } = await startServer();
+  try {
+    const nutrition = await makeSpecialist(baseUrl, 'dr.publish@example.test', [1]);
+    const lesson = {
+      categoryId: 1,
+      title: 'Imirire myiza mu rugo',
+      body: 'Rya imboga n\'imbuto buri munsi.',
+      status: 'published'
+    };
+    const created = await postJson(`${baseUrl}/api/v1/admin/content`, lesson, nutrition);
+    assert.equal(created.status, 201, await created.clone().text());
+    assert.equal((await created.json()).content.status, 'published', 'the specialist publishes it directly');
+
+    // Off their own diseases, the same request waits for the specialist who owns it.
+    const elsewhere = await postJson(`${baseUrl}/api/v1/admin/content`,
+      { ...lesson, categoryId: 4, title: 'Umutima' }, nutrition);
+    assert.equal(elsewhere.status, 201, await elsewhere.clone().text());
+    assert.equal((await elsewhere.json()).content.status, 'review');
+
+    // A writer asking to publish is still held back.
+    const byWriter = await postJson(`${baseUrl}/api/v1/admin/content`,
+      { ...lesson, title: 'Imirire y\'abana' }, creatorToken);
+    assert.equal(byWriter.status, 201, await byWriter.clone().text());
+    assert.equal((await byWriter.json()).content.status, 'review');
   } finally {
     server.close();
   }
@@ -1295,6 +1345,65 @@ test('A specialist owns the lessons on their own diseases, and only those', asyn
 
     // The admin still can't publish.
     assert.equal((await patchJson(`${baseUrl}/api/v1/admin/content/${written.id}/status`, { status: 'published' }, adminToken)).status, 403);
+  } finally {
+    server.close();
+  }
+});
+
+test('A disease page carries its own audio, and the voice reads every part of it', async () => {
+  const { server, baseUrl } = await startServer();
+  const patchJson = (url, body, token) => fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body)
+  });
+  try {
+    const disease = {
+      name: 'Igicuri',
+      icon: '🧠',
+      about: 'Igicuri ni indwara y\'ubwonko.',
+      riskFactors: ['Gukomereka mu mutwe'],
+      warningSigns: ['Guhinda umushyitsi'],
+      prevention: ['Fata imiti buri munsi']
+    };
+
+    const created = await postJson(`${baseUrl}/api/v1/admin/diseases`, { ...disease, audioUrl: '/api/v1/media/igicuri.mp3', audioIsSynthetic: true }, adminToken);
+    assert.equal(created.status, 201, await created.clone().text());
+    const added = (await created.json()).disease;
+    assert.equal(added.audioUrl, '/api/v1/media/igicuri.mp3');
+    assert.equal(added.audioIsSynthetic, true);
+
+    // Learners read the disease list without signing in, audio and all.
+    const { curricula } = await (await fetch(`${baseUrl}/api/v1/curricula`)).json();
+    const listed = curricula.find((item) => item.id === added.id);
+    assert.equal(listed.audioUrl, '/api/v1/media/igicuri.mp3');
+
+    // A recording replaces the machine voice, and removing it leaves the page silent.
+    const recorded = await patchJson(`${baseUrl}/api/v1/admin/diseases/${added.id}`, { ...disease, audioUrl: '/api/v1/media/umuntu.mp3', audioIsSynthetic: false }, adminToken);
+    const withRecording = (await recorded.json()).disease;
+    assert.equal(withRecording.audioUrl, '/api/v1/media/umuntu.mp3');
+    assert.equal(withRecording.audioIsSynthetic, false);
+    const silenced = await patchJson(`${baseUrl}/api/v1/admin/diseases/${added.id}`, { ...disease, audioUrl: '' }, adminToken);
+    assert.equal((await silenced.json()).disease.audioUrl, '');
+
+    // The script reads the page in the order it is shown, under the same headings.
+    const script = speakableDisease({
+      name: disease.name,
+      about: disease.about,
+      riskFactors: disease.riskFactors,
+      warningSigns: disease.warningSigns,
+      prevention: disease.prevention
+    });
+    assert.match(script, /Igicuri ni indwara y'ubwonko\./);
+    assert.match(script, /Ibyongera ibyago\. Gukomereka mu mutwe\./);
+    assert.match(script, /Ibimenyetso byo kwitondera\. Guhinda umushyitsi\./);
+    assert.match(script, /Uko wayirinda\. Fata imiti buri munsi\./);
+    assert.equal(speakableDisease({ name: '', about: '' }), '');
+
+    // Nothing written down means nothing to voice, and an admin never voices anything.
+    const empty = await postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, { disease: { name: '', about: '' } }, creatorToken);
+    assert.equal(empty.status, 400);
+    assert.equal((await postJson(`${baseUrl}/api/v1/admin/media/audio/generate`, { disease }, adminToken)).status, 403);
   } finally {
     server.close();
   }

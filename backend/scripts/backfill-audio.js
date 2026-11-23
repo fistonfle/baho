@@ -1,11 +1,13 @@
-// Gives every silent lesson a generated voice. A recording uploaded later replaces it.
+// Gives every silent lesson and disease page a generated voice. A recording uploaded later replaces it.
 // Run on the server: docker compose exec -T baho-backend node scripts/backfill-audio.js
 import { pool } from '../src/config/db.js';
 import { mediaStore } from '../src/modules/media/MediaStore.js';
-import { speakable } from '../src/modules/media/media.controller.js';
+import { speakable, speakableDisease } from '../src/modules/media/media.controller.js';
 import { ttsEngine } from '../src/modules/media/TtsEngine.js';
 
 const dryRun = process.argv.includes('--dry-run');
+
+const asList = (value) => (Array.isArray(value) ? value : JSON.parse(value || '[]'));
 
 const quizOf = async (lessonId) => {
   const { rows } = await pool.query(
@@ -58,7 +60,40 @@ const run = async () => {
     }
   }
 
-  console.log(`\nVoiced ${voiced} of ${lessons.length}.`);
+  const { rows: diseases } = await pool.query(
+    "SELECT id, condition_name, about, risk_factors, warning_signs, prevention FROM curricula WHERE condition_name IS NOT NULL AND (audio_url IS NULL OR audio_url = '') ORDER BY id"
+  );
+  console.log(`${diseases.length} disease page(s) have no audio.`);
+
+  for (const disease of diseases) {
+    const script = speakableDisease({
+      name: disease.condition_name,
+      about: disease.about,
+      riskFactors: asList(disease.risk_factors),
+      warningSigns: asList(disease.warning_signs),
+      prevention: asList(disease.prevention)
+    });
+    if (!script) {
+      failed.push(`disease ${disease.id} (${disease.condition_name}): nothing to read`);
+      continue;
+    }
+    if (dryRun) {
+      console.log(`disease ${disease.id} ${disease.condition_name}: would voice ${script.length} characters`);
+      continue;
+    }
+    const started = Date.now();
+    try {
+      const name = await mediaStore.saveAudio(await ttsEngine.speak(script));
+      await pool.query('UPDATE curricula SET audio_url = $1, audio_is_synthetic = TRUE WHERE id = $2', [`/api/v1/media/${name}`, disease.id]);
+      voiced += 1;
+      console.log(`disease ${disease.id} ${disease.condition_name}: ${name} in ${Math.round((Date.now() - started) / 1000)}s`);
+    } catch (error) {
+      // One page the voice cannot manage must not stop the rest.
+      failed.push(`disease ${disease.id} (${disease.condition_name}): ${error.message}`);
+    }
+  }
+
+  console.log(`\nVoiced ${voiced} of ${lessons.length + diseases.length}.`);
   if (failed.length) console.log(`Left alone:\n  ${failed.join('\n  ')}`);
   await pool.end();
   process.exit(failed.length ? 1 : 0);

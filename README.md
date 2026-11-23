@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Live app** | https://baho.filito.rw |
+| **Live app** | https://bahoapp.site |
 | **Walkthrough video** | [Google Drive](https://drive.google.com/file/d/1_zNSDlDi8jTz1MEercGTen0InET0_bhB/view?usp=sharing) (8 min 46 s; file: [demo/Baho-Walkthrough.mp4](demo/Baho-Walkthrough.mp4)) |
 | **Technical report (PDF)** | [docs/Baho-Technical-Report.pdf](docs/Baho-Technical-Report.pdf) |
 | **Repository** | https://github.com/fistonfle/baho |
@@ -38,7 +38,7 @@
 | Kinyarwanda learner interface and content; staff portal in English | whole app; `components/admin/` | FR01 |
 | **Study programmes** (*gahunda y'imyigire*): each disease has an ordered set of lessons; the dashboard shows "lesson 2 of 7" and the next lesson | `GET /curricula`, `screens/PathsScreen.tsx`, `DashboardScreen.tsx` | FR09 |
 | **Lesson flow**: illustration -> short text -> audio -> quiz | `screens/LibraryScreen.tsx`, `public/images/` | FR01, FR02 |
-| **Recorded audio**: staff upload a person reading the lesson (or record it on a phone); learners get play, seek, speed and offline listening. Lessons without a recording show no player; there is no computer voice | `components/admin/AudioUpload.tsx`, `components/AudioPlayer.tsx`, `modules/media/` | FR02 |
+| **Audio on lessons and on each disease page**: staff upload a person reading it (or record it on a phone), and where nobody can record, the server reads it aloud and the learner is told the voice is a computer. Learners get play, seek, speed and offline listening; with no audio at all there is no player | `components/admin/AudioUpload.tsx`, `components/AudioPlayer.tsx`, `modules/media/` | FR02 |
 | **Lesson quizzes** graded by the server; best score and average in progress | `POST /quiz-attempts`, `components/LessonQuiz.tsx` | SO3 |
 | NCD module: what each disease is, risk factors, warning signs, prevention | `screens/NcdScreen.tsx` | FR03 |
 | Onboarding with topics and an optional health profile (diagnosed conditions plus six lifestyle questions) | `OnboardingScreen.tsx`, `HealthProfileScreen.tsx` | FR07, FR08 |
@@ -128,7 +128,7 @@ The first admin is created only from the `BAHO_ADMIN_*` values; there is no publ
 
 ### Install on a phone (no APK needed)
 
-Baho is a progressive web app, so there is no APK or executable to download. On Android, open https://baho.filito.rw in Chrome and choose **Add to Home screen** (on iPhone: Safari > Share > **Add to Home Screen**). It then opens full-screen like an app and keeps working offline.
+Baho is a progressive web app, so there is no APK or executable to download. On Android, open https://bahoapp.site in Chrome and choose **Add to Home screen** (on iPhone: Safari > Share > **Add to Home Screen**). It then opens full-screen like an app and keeps working offline.
 
 **Production build and offline check:** `npm run preview` serves the production build on http://localhost:4173. Open it once, stop the servers or switch off the network, and reload: the app still opens with the downloaded lessons.
 
@@ -295,12 +295,12 @@ Base path `/api/v1`. 🔒 = signed-in user, 🛡 = staff role required.
 
 ## Deployment
 
-Live at **https://baho.filito.rw** on a Linux server, as a Docker stack behind Caddy (HTTPS from Let's Encrypt).
+Live at **https://bahoapp.site** on a Linux server, as a Docker stack behind Caddy (HTTPS from Let's Encrypt).
 
 | Part | Runs as | Notes |
 |---|---|---|
 | Web app (PWA) | `baho-frontend` (nginx serving the Vite build) | Same domain as the API; installable with **Add to home screen** |
-| REST API | `baho-backend` (Node 20) | `https://baho.filito.rw/api/v1`, health check at `/api/v1/health` |
+| REST API | `baho-backend` (Node 20) | `https://bahoapp.site/api/v1`, health check at `/api/v1/health` |
 | Database | `baho-postgres` (PostgreSQL 16) | Private to the stack |
 | Recordings | volume `baho_media` mounted in `baho-backend` | Uploaded lesson audio, served at `/api/v1/media/...` |
 | Routing and HTTPS | Caddy | `/api/*` to the API, everything else to the web app |

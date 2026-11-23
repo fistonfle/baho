@@ -32,7 +32,7 @@ export function ContentForm({ onSave, asSpecialist = false }: { onSave: (status:
           <h2>{editingContentId ? 'Edit lesson' : 'New lesson'}</h2>
           <p>
             {asSpecialist
-              ? 'This lesson is on one of your diseases. Correct the text, or replace the recording, then keep it where it is or publish it.'
+              ? 'You are the specialist for your own diseases, so what you write here goes live as soon as you publish it. Pick one of your diseases as the topic.'
               : 'The specialist for this disease has to approve the lesson, and their approval publishes it. Until a specialist is assigned to the disease, the lesson waits.'}
           </p>
         </div>

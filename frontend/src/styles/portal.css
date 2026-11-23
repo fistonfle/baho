@@ -182,6 +182,8 @@ textarea.input { min-height: 110px; resize: vertical; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
 .meta-item { color: var(--muted); font-size: 0.78rem; }
 .meta-item + .meta-item::before { content: '\00b7'; margin-right: 6px; color: var(--line-strong); }
+.meta-item.duration { display: inline-flex; align-items: center; gap: 3px; }
+.meta-icon { width: 1.05em; height: 1.05em; flex: none; }
 .alert { padding: 12px 16px; border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); background: var(--surface-alt); font-size: 0.9rem; }
 .alert-info { border-color: #bcd2ea; border-left-color: var(--info); background: var(--info-tint); }
 .alert-warning { border-color: #ecd3a4; border-left-color: #c47f0e; background: var(--warning-tint); }
@@ -312,6 +314,20 @@ textarea.input { min-height: 110px; resize: vertical; }
 
 .path-list .list-button { padding-left: 16px; }
 .lesson-list { max-height: 640px; overflow-y: auto; }
+
+/* Back and next, so a learner moves between lessons without going up to the list. */
+.lesson-pager { display: flex; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.lesson-pager .pager-btn { flex: 1 1 0; min-width: 0; min-height: 58px; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; text-align: left; white-space: normal; }
+.lesson-pager .pager-btn > span { flex: none; max-width: 100%; }
+.lesson-pager .pager-next { align-items: flex-end; text-align: right; }
+.pager-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.pager-title { max-width: 100%; overflow: hidden; font-size: 0.92rem; text-overflow: ellipsis; white-space: nowrap; }
+.pager-count { margin-top: 8px; text-align: center; }
+/* Questions under a lesson: everyone reads them, nobody is named. */
+.qa-list > li { padding: 10px 0; }
+.qa-question { margin: 0; color: var(--ink); font-weight: 600; }
+.qa-answer { margin: 4px 0 0; color: var(--text); }
+@media (max-width: 560px) { .lesson-pager { flex-direction: column; } .lesson-pager .pager-next { align-items: flex-start; text-align: left; } }
 .filter-bar { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--surface-alt); }
 .fact-list { margin: 0; padding-left: 1.1rem; }
 .fact-list li { margin-bottom: 4px; }

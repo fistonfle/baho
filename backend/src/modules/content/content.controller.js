@@ -32,16 +32,15 @@ const outsideSpecialty = async (userId, categoryId) => {
   return !topics.includes(Number(categoryId));
 };
 
-// Only the specialist of the disease can publish, and never their own lesson.
-const mayPublish = async (user, categoryId, creatorId) => {
+// Only the specialist of the disease can publish, their own lesson included.
+const mayPublish = async (user, categoryId) => {
   if (user?.role !== 'specialist') return false;
-  if (await outsideSpecialty(user.id, categoryId)) return false;
-  return Number(creatorId) !== Number(user.id);
+  return !(await outsideSpecialty(user.id, categoryId));
 };
 
 // Anyone else asking to publish gets the lesson sent to review.
-const allowedStatus = async (categoryId, requested, current, user = null, creatorId = null) => {
-  if (requested === 'published' && await mayPublish(user, categoryId, creatorId)) return 'published';
+const allowedStatus = async (categoryId, requested, current, user = null) => {
+  if (requested === 'published' && await mayPublish(user, categoryId)) return 'published';
   return new LessonWorkflow().resolve(requested, current);
 };
 
@@ -202,10 +201,11 @@ export const createContent = async (req, res) => {
   const { categoryId, title, summary = '', body, audioUrl = '', imageUrl = '', audioIsSynthetic = false } = req.body || {};
   const inputError = learningInputError(req.body);
   if (inputError) return res.status(400).json({ message: inputError });
-  const requestedStatus = req.user?.role === 'admin'
-    ? (req.body?.status || 'draft')
-    : (req.body?.status === 'draft' ? 'draft' : 'review');
-  const status = await allowedStatus(Number(categoryId), requestedStatus, null);
+  // A writer may only draft or submit; a specialist and an admin say what they mean.
+  const requestedStatus = req.user?.role === 'creator'
+    ? (req.body?.status === 'draft' ? 'draft' : 'review')
+    : (req.body?.status || 'draft');
+  const status = await allowedStatus(Number(categoryId), requestedStatus, null, req.user);
 
   if (!Number.isInteger(Number(categoryId)) || !title?.trim() || !body?.trim()) {
     return res.status(400).json({ message: 'Category, title and body are required' });
@@ -274,7 +274,7 @@ export const updateContent = async (req, res) => {
     const result = await pool.query(
       `UPDATE content SET category_id = $1, title = $2, summary = $3, body = $4, audio_url = $5, audio_is_synthetic = $6, image_url = $7, status = COALESCE($8, status), updated_at = CURRENT_TIMESTAMP WHERE id = $9 RETURNING *`,
       [Number(categoryId), title.trim(), summary.trim(), body.trim(), audioUrl.trim() || null, Boolean(audioIsSynthetic), imageUrl.trim() || null,
-        status ? await allowedStatus(Number(categoryId), status, existing.status, req.user, existing.creator_id) : null, id]
+        status ? await allowedStatus(Number(categoryId), status, existing.status, req.user) : null, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Content not found' });
     await saveLearningInput(id, req.body);
@@ -296,7 +296,7 @@ export const updateContent = async (req, res) => {
     const existing = inMemoryStore.content[index];
     const allowed = LessonWorkflow.allowedFor(req.user?.role);
     const nextStatus = status && allowed.includes(status)
-      ? await allowedStatus(Number(categoryId), status, existing.status, req.user, existing.creatorId)
+      ? await allowedStatus(Number(categoryId), status, existing.status, req.user)
       : existing.status;
     inMemoryStore.content[index] = {
       ...existing,
@@ -346,13 +346,12 @@ export const updateContentStatus = async (req, res) => {
   }
   const needsApproval = { message: 'A specialist must approve this lesson before it is published' };
   const notYours = { message: 'This lesson is outside your specialty' };
-  const ownWriting = { message: 'You cannot publish a lesson you wrote yourself' };
   try {
     const current = (await pool.query('SELECT category_id, status, creator_id FROM content WHERE id = $1', [id])).rows[0];
     if (!current) return res.status(404).json({ message: 'Content not found' });
     if (await outsideSpecialty(req.user.id, current.category_id)) return res.status(403).json(notYours);
-    if ((await allowedStatus(current.category_id, status, current.status, req.user, current.creator_id)) !== status) {
-      return res.status(409).json(Number(current.creator_id) === Number(req.user.id) ? ownWriting : needsApproval);
+    if ((await allowedStatus(current.category_id, status, current.status, req.user)) !== status) {
+      return res.status(409).json(needsApproval);
     }
     const result = await pool.query(
       'UPDATE content SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
@@ -365,8 +364,8 @@ export const updateContentStatus = async (req, res) => {
     const content = inMemoryStore.content.find((entry) => entry.id === id);
     if (!content) return res.status(404).json({ message: 'Content not found' });
     if (await outsideSpecialty(req.user.id, content.categoryId)) return res.status(403).json(notYours);
-    if ((await allowedStatus(content.categoryId, status, content.status, req.user, content.creatorId)) !== status) {
-      return res.status(409).json(Number(content.creatorId) === Number(req.user.id) ? ownWriting : needsApproval);
+    if ((await allowedStatus(content.categoryId, status, content.status, req.user)) !== status) {
+      return res.status(409).json(needsApproval);
     }
     content.status = status;
     return res.json({ message: 'Content status updated in demo mode', content });

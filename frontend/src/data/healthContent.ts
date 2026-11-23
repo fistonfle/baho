@@ -75,7 +75,9 @@ export const offlineDiseases: Curriculum[] = ncdTopics.map((topic, index) => ({
   about: topic.description,
   riskFactors: topic.riskFactors,
   warningSigns: topic.warningSigns,
-  prevention: topic.prevention
+  prevention: topic.prevention,
+  audioUrl: '',
+  audioIsSynthetic: false
 }));
 
 export type ExerciseLevel = 'Iya abatangira' | 'Iyabageze Hagati' | 'Iyabisumbuye';

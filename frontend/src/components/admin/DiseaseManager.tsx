@@ -5,10 +5,13 @@ import { setCategories, setFeedbackMessage, upsertCurriculum } from '../../store
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { Curriculum } from '../../types';
 import { Panel } from '../ui';
+import { AudioUpload } from './AudioUpload';
 
-type DiseaseForm = { name: string; icon: string; about: string; description: string; riskFactors: string; warningSigns: string; prevention: string };
+type DiseaseForm = { name: string; icon: string; about: string; description: string; riskFactors: string; warningSigns: string; prevention: string; audioUrl: string; audioIsSynthetic: boolean };
 
-const emptyForm: DiseaseForm = { name: '', icon: '', about: '', description: '', riskFactors: '', warningSigns: '', prevention: '' };
+type DiseaseTextKey = Exclude<keyof DiseaseForm, 'audioIsSynthetic'>;
+
+const emptyForm: DiseaseForm = { name: '', icon: '', about: '', description: '', riskFactors: '', warningSigns: '', prevention: '', audioUrl: '', audioIsSynthetic: false };
 
 // One item per line in the form, a list in the API.
 const toLines = (items: string[]) => items.join('\n');
@@ -33,7 +36,9 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
       description: disease.description,
       riskFactors: toLines(disease.riskFactors),
       warningSigns: toLines(disease.warningSigns),
-      prevention: toLines(disease.prevention)
+      prevention: toLines(disease.prevention),
+      audioUrl: disease.audioUrl || '',
+      audioIsSynthetic: disease.audioIsSynthetic
     });
   };
 
@@ -50,7 +55,9 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
       description: form.description.trim(),
       riskFactors: fromLines(form.riskFactors),
       warningSigns: fromLines(form.warningSigns),
-      prevention: fromLines(form.prevention)
+      prevention: fromLines(form.prevention),
+      audioUrl: form.audioUrl,
+      audioIsSynthetic: form.audioIsSynthetic
     };
     if (!payload.name || !payload.about || !payload.riskFactors.length || !payload.warningSigns.length || !payload.prevention.length) {
       notify('Fill in the name, the description and at least one item in each list.');
@@ -69,7 +76,7 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
     }
   };
 
-  const field = (key: keyof DiseaseForm, label: string, hint?: string, multiline = true, placeholder = '') => (
+  const field = (key: DiseaseTextKey, label: string, hint?: string, multiline = true, placeholder = '') => (
     <div className="form-group">
       <label htmlFor={`disease-${key}`}>{label}</label>
       {multiline
@@ -119,6 +126,26 @@ export function DiseaseManager({ onWriteLesson }: { onWriteLesson?: (disease: Cu
           {field('riskFactors', 'Risk factors', 'One per line.')}
           {field('warningSigns', 'Warning signs', 'One per line.')}
           {field('prevention', 'Prevention', 'One per line.')}
+          <AudioUpload
+            value={form.audioUrl}
+            synthetic={form.audioIsSynthetic}
+            title={form.name}
+            body={form.about}
+            quiz={[]}
+            label="Disease audio (optional)"
+            inputId="disease-audio"
+            missingText="Write what the disease is first, then generate its audio."
+            hint="A person reading this disease page in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server reads the whole page aloud: what the disease is, then the risk factors, the warning signs and the prevention. Learners are told the voice is a computer."
+            onGenerate={() => api.generateDiseaseAudio({
+              name: form.name.trim(),
+              about: form.about.trim(),
+              riskFactors: fromLines(form.riskFactors),
+              warningSigns: fromLines(form.warningSigns),
+              prevention: fromLines(form.prevention)
+            })}
+            onChange={(audioUrl, audioIsSynthetic) => setForm((current) => ({ ...current, audioUrl, audioIsSynthetic }))}
+            onError={notify}
+          />
           {field('description', 'Learning path tagline', 'Optional.', false)}
         </div>
         <div className="panel-foot form-actions">

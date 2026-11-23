@@ -167,7 +167,7 @@ export function AdminScreen() {
     try {
       const data = await api.answerQuestion(id, answer);
       dispatch(answerQuestionSuccess({ id, answer: data.question.answer, status: 'Answered' }));
-      notify('Answer approved and sent to the learner.');
+      notify('Answer published under the lesson.');
     } catch {
       notify('Could not send the answer.');
     }
@@ -220,7 +220,7 @@ export function AdminScreen() {
   const tabs: { id: Tab; label: string; count?: number; roles: string[] }[] = [
     { id: 'pending', label: 'Waiting for review', roles: ['specialist'] },
     { id: 'history', label: 'Reviewed', roles: ['specialist'] },
-    { id: 'write', label: isCreator ? 'Write a lesson' : 'Edit a lesson', roles: ['creator', 'specialist'] },
+    { id: 'write', label: 'Write a lesson', roles: ['creator', 'specialist'] },
     { id: 'content', label: isCreator ? 'My lessons' : 'All lessons', roles: ['admin', 'creator', 'specialist'] },
     { id: 'diseases', label: 'Diseases', roles: ['admin'] },
     { id: 'questions', label: 'Learner questions', count: pendingQuestions.length, roles: ['creator', 'specialist'] },
@@ -330,17 +330,10 @@ export function AdminScreen() {
         <ContentForm onSave={(status) => void saveContent(status)} />
       )}
 
-      {/* A specialist corrects what a writer drafted; they do not start a
-          lesson themselves, which is what keeps writing and approving in two
-          different pairs of hands. */}
+      {/* A specialist is the clinical authority on their own diseases, so they
+          write and publish there without waiting for anyone else. */}
       {tab === 'write' && isSpecialist && (
-        editingContentId
-          ? <ContentForm onSave={(status) => void saveContent(status)} asSpecialist />
-          : (
-            <Panel title="Edit a lesson">
-              <Empty>Open All lessons and choose Edit on the lesson you want to correct.</Empty>
-            </Panel>
-          )
+        <ContentForm onSave={(status) => void saveContent(status)} asSpecialist />
       )}
 
       {tab === 'content' && (
@@ -359,8 +352,8 @@ export function AdminScreen() {
         <Panel
           title="Learner questions"
           description={isCreator
-            ? 'Draft an answer in simple Kinyarwanda. It reaches the learner only after the specialist for that disease approves it. You are not told who asked.'
-            : 'Approve a draft to send it to the learner who asked, or edit it first. Only questions about your own diseases appear here.'}
+            ? 'Draft an answer in simple Kinyarwanda. It is published only after the specialist for that disease approves it. You are not told who asked.'
+            : 'Answer a question yourself, or approve a writer\'s draft. The answer is published under the lesson for everyone, and nobody is told who asked. Only questions about your own diseases appear here.'}
           flush
         >
           {questions.length === 0 ? (
@@ -372,7 +365,7 @@ export function AdminScreen() {
                 {questions.map((question) => {
                   const draft = question.answer || '';
                   const isAnswered = question.status === 'Answered';
-                  const waitingOnMe = isCreator ? !isAnswered : question.status === 'Drafted';
+                  const waitingOnMe = !isAnswered;
                   return (
                     <tr key={question.id}>
                       <td>
@@ -394,19 +387,19 @@ export function AdminScreen() {
                             <textarea
                               id={`answer-${question.id}`}
                               className="input"
-                              placeholder={isCreator ? 'Write the answer in simple Kinyarwanda.' : 'Leave empty to approve the draft as it stands.'}
+                              placeholder={isCreator || !draft ? 'Write the answer in simple Kinyarwanda.' : 'Leave empty to approve the draft as it stands.'}
                               value={answerDrafts[question.id] || ''}
                               onChange={(event) => dispatch(updateAnswerDraft({ id: question.id, answer: event.target.value }))}
                             />
                             <div>
                               {isCreator
                                 ? <button className="btn btn-primary btn-sm" onClick={() => void saveDraftAnswer(question.id)}>Send to specialist</button>
-                                : <button className="btn btn-primary btn-sm" onClick={() => void approveAnswer(question.id, draft)}>Approve and send</button>}
+                                : <button className="btn btn-primary btn-sm" onClick={() => void approveAnswer(question.id, draft)}>{draft ? 'Approve and publish' : 'Answer and publish'}</button>}
                             </div>
                           </div>
                         )}
                         {!isCreator && question.status === 'Pending' && (
-                          <p className="small muted" style={{ marginTop: 6 }}>Waiting for a writer to draft an answer.</p>
+                          <p className="small muted" style={{ marginTop: 6 }}>No writer has drafted this one. You can answer it yourself.</p>
                         )}
                       </td>
                       <td><StatusBadge label={question.status} tone={isAnswered ? 'success' : question.status === 'Drafted' ? 'info' : 'warning'} /></td>

@@ -184,7 +184,7 @@ export const seedLessons = [
 export const seedCurricula = [
   {
     slug: 'prevention',
-    title: 'Gahunda yo kwirinda',
+    title: 'Gahunda yo kwiga',
     condition: null,
     description: 'Amasomo y\'ibanze yo kwirinda indwara zitandura.',
     imageUrl: '/images/walking.jpg',

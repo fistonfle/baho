@@ -50,6 +50,15 @@ export const authenticate = (req, res, next) => {
   return next();
 };
 
+// A guest is allowed through without a token; a token still names them.
+export const authenticateOptional = (req, _res, next) => {
+  const authorization = req.get('authorization') || '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const user = verifyToken(token);
+  if (user) req.user = { id: user.sub, email: user.email, role: user.role };
+  return next();
+};
+
 export const requireRole = (...roles) => (req, res, next) => {
   if (!req.user || !roles.includes(req.user.role)) {
     return res.status(403).json({ message: 'You do not have permission to perform this action' });

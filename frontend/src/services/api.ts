@@ -13,6 +13,8 @@ export type DiseasePayload = {
   riskFactors: string[];
   warningSigns: string[];
   prevention: string[];
+  audioUrl?: string;
+  audioIsSynthetic?: boolean;
 };
 
 export type ContentPayload = {
@@ -96,6 +98,9 @@ export const api = {
     request<{ message: string; faq: any }>(`/admin/faqs/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   deleteFaq: (id: number) => request<{ message: string }>(`/admin/faqs/${id}`, { method: 'DELETE' }),
   getQuestions: () => request<{ questions: any[] }>('/questions'),
+  // Answered questions shown under a lesson, with nothing about who asked.
+  getLessonQuestions: (contentId: number) =>
+    request<{ questions: { id: number; question: string; answer: string }[] }>(`/content/${contentId}/questions`),
   createQuestion: (payload: { topic?: string; question: string; contentId?: number }) =>
     request<{ message: string; question: any }>('/questions', {
       method: 'POST',
@@ -134,6 +139,9 @@ export const api = {
   // Voices a lesson that has no recording; 503 means the server has no voice installed.
   generateAudio: (title: string, body: string, quiz: QuizQuestion[] = []) =>
     request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate', { method: 'POST', body: JSON.stringify({ title, body, quiz }) }),
+  // Reads a whole disease page aloud: what it is, the risks, the signs, the prevention.
+  generateDiseaseAudio: (disease: { name: string; about: string; riskFactors: string[]; warningSigns: string[]; prevention: string[] }) =>
+    request<{ url: string; synthetic: boolean }>('/admin/media/audio/generate', { method: 'POST', body: JSON.stringify({ disease }) }),
   getReviewQueue: () => request<{ lessons: any[] }>('/review/queue'),
   reviewLesson: (id: number, decision: 'approve' | 'changes', note: string) =>
     request<{ message: string; lesson: any }>(`/review/lessons/${id}`, { method: 'POST', body: JSON.stringify({ decision, note }) }),

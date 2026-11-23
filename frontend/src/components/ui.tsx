@@ -95,6 +95,20 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
+// A clock says "how long" without being read, which the word never did.
+export function Duration({ value }: { value: string }) {
+  const minutes = value.match(/\d+/)?.[0];
+  return (
+    <span className="meta-item duration">
+      <svg className="meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7.5V12l3 1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="visually-hidden">{value}</span>
+      <span aria-hidden="true">{minutes ?? value}</span>
+    </span>
+  );
+}
+
 // Photos have a large and a small (-sm) version; lazy loaded.
 const photoSizes = (path: string) => (/^\/images\/[a-z-]+\.jpg$/.test(path) ? `${path.replace(/\.jpg$/, '-sm.jpg')} 480w, ${path} 1000w` : undefined);
 

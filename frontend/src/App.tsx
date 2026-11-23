@@ -693,7 +693,6 @@ function App() {
         return (
           <DashboardScreen
             userName={userName}
-            selectedInterests={selectedInterests}
             rankedLessons={rankedLessons}
             lessons={lessons}
             activePath={activePath}
@@ -703,16 +702,12 @@ function App() {
             totalLessons={lessons.length}
             streak={streak}
             hasRiskCheck={healthProfile.conditions.length > 0 || Object.keys(healthProfile.answers).length > 0}
-            riskTags={riskTags}
             knowledgeScore={knowledgeScore}
             healthTip={healthTip}
             onOpenLesson={openLesson}
             onViewPaths={() => navigate('paths')}
             onViewLibrary={() => navigate('library')}
-            onViewRiskCheck={() => navigate('risk')}
-            onViewCheckup={() => navigate('checkup')}
             onViewFaq={() => navigate('faq')}
-            onEditInterests={() => navigate('onboarding')}
           />
         );
       case 'library':

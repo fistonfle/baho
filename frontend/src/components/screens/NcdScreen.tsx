@@ -1,4 +1,5 @@
 import type { Curriculum, Lesson } from '../../types';
+import { AudioPlayer } from '../AudioPlayer';
 import { Disclaimer, PageHeader, Photo } from '../ui';
 
 // NCD module, diseases come from the API.
@@ -46,7 +47,7 @@ export function NcdScreen({
                   <button className={`list-button ${disease.id === item.id ? 'current' : ''}`} aria-pressed={disease.id === item.id} onClick={() => onSelectTopic(index)}>
                     <span className="grow">
                       <strong>{item.condition}</strong>
-                      <span className="meta"><span className="meta-item">Amasomo {item.lessonIds.length}</span></span>
+                      <span className="meta"><span className="meta-item">Amasomo {item.lessonIds.length}</span>{item.audioUrl && <span className="meta-item">Ijwi</span>}</span>
                     </span>
                     {chosenIds.includes(item.id) && <span className="badge badge-info">Warihisemo</span>}
                   </button>
@@ -68,6 +69,11 @@ export function NcdScreen({
             {disease.imageUrl && <figure className="article-figure"><Photo src={disease.imageUrl} /></figure>}
             <h2 style={{ fontSize: '1.4rem' }}>{disease.condition}</h2>
             <div className="article-body" style={{ marginTop: 8 }}><p>{disease.about}</p></div>
+            {disease.audioUrl && (
+              <div style={{ marginTop: 12 }}>
+                <AudioPlayer audioUrl={disease.audioUrl} synthetic={disease.audioIsSynthetic} subject="ibisobanuro" />
+              </div>
+            )}
 
             <h3 className="section-title">Ibyongera ibyago</h3>
             <ul className="fact-list">{disease.riskFactors.map((item) => <li key={item}>{item}</li>)}</ul>

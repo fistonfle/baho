@@ -42,6 +42,8 @@ export type Curriculum = {
   riskFactors: string[];
   warningSigns: string[];
   prevention: string[];
+  audioUrl: string;
+  audioIsSynthetic: boolean;
 };
 
 export type QuizScore = { contentId: number; score: number; total: number };

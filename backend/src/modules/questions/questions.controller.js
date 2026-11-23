@@ -29,10 +29,39 @@ const isMySpecialty = async (userId, topic) => {
   return (await getSpecialistTopics(userId)).includes(Number(categoryId));
 };
 
-// Writers don't get the learner's id.
+// Nobody on the staff side gets the learner's id: the question is public, the asker is not.
 const withoutTheAsker = (question) => {
   const { user_id: _dbOwner, userId: _owner, ...rest } = question;
   return rest;
+};
+
+// What a lesson page shows: the question, the approved answer, nothing about who asked.
+const publicShape = (question) => ({
+  id: question.id,
+  contentId: question.content_id ?? question.contentId ?? null,
+  question: question.question,
+  answer: question.answer,
+  answeredAt: question.updated_at ?? question.updatedAt ?? null
+});
+
+// Answered questions on one lesson, for anyone reading it, signed in or not.
+export const getLessonQuestions = async (req, res) => {
+  const lessonId = Number(req.params.id);
+  if (!Number.isInteger(lessonId) || lessonId <= 0) {
+    return res.status(400).json({ message: 'A valid lesson id is required' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM questions WHERE content_id = $1 AND status = $2 ORDER BY updated_at DESC, id DESC',
+      [lessonId, QuestionStatus.answered]
+    );
+    return res.json({ questions: rows.map(publicShape) });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) return res.status(503).json({ message: 'Could not load questions' });
+    const answered = inMemoryStore.questions.filter((entry) =>
+      Number(entry.contentId) === lessonId && entry.status === QuestionStatus.answered);
+    return res.json({ questions: answered.map(publicShape) });
+  }
 };
 
 const keepMyDiseases = async (userId, questions) => {
@@ -51,7 +80,8 @@ export const getQuestions = async (req, res) => {
   try {
     let rows;
     if (role === 'specialist') {
-      rows = await keepMyDiseases(req.user.id, (await pool.query('SELECT * FROM questions ORDER BY id DESC')).rows);
+      rows = (await keepMyDiseases(req.user.id, (await pool.query('SELECT * FROM questions ORDER BY id DESC')).rows))
+        .map(withoutTheAsker);
     } else if (role === 'creator') {
       rows = (await pool.query(
         'SELECT * FROM questions WHERE status <> $1 ORDER BY id DESC', [QuestionStatus.answered]
@@ -66,7 +96,7 @@ export const getQuestions = async (req, res) => {
     }
     let questions;
     if (role === 'specialist') {
-      questions = await keepMyDiseases(req.user.id, inMemoryStore.questions);
+      questions = (await keepMyDiseases(req.user.id, inMemoryStore.questions)).map(withoutTheAsker);
     } else if (role === 'creator') {
       questions = inMemoryStore.questions
         .filter((question) => question.status !== QuestionStatus.answered)
@@ -93,6 +123,8 @@ const lessonTopic = async (contentId) => {
   }
 };
 
+const maxQuestion = 600;
+
 export const createQuestion = async (req, res) => {
   const { topic, question, contentId = null } = req.body || {};
   const lessonId = contentId === null || contentId === '' ? null : Number(contentId);
@@ -112,10 +144,15 @@ export const createQuestion = async (req, res) => {
   if (!resolvedTopic || !question?.trim()) {
     return res.status(400).json({ message: 'Topic and question are required' });
   }
+  if (question.trim().length > maxQuestion) {
+    return res.status(400).json({ message: `A question can be at most ${maxQuestion} characters` });
+  }
 
+  // A guest may ask too; the row simply has no owner to notify.
+  const askerId = req.user?.id ?? null;
   const entry = {
     id: Date.now(),
-    userId: req.user.id,
+    userId: askerId,
     contentId: lessonId,
     topic: resolvedTopic,
     question: question.trim(),
@@ -125,15 +162,15 @@ export const createQuestion = async (req, res) => {
   try {
     const result = await pool.query(
       'INSERT INTO questions (user_id, content_id, topic, question, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [req.user.id, lessonId, String(resolvedTopic).trim(), question.trim(), QuestionStatus.pending]
+      [askerId, lessonId, String(resolvedTopic).trim(), question.trim(), QuestionStatus.pending]
     );
-    return res.status(201).json({ message: 'Question submitted successfully', question: result.rows[0] });
+    return res.status(201).json({ message: 'Question submitted successfully', question: withoutTheAsker(result.rows[0]) });
   } catch (error) {
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not save question' });
     }
     inMemoryStore.questions.unshift(entry);
-    return res.status(201).json({ message: 'Question submitted successfully', question: entry });
+    return res.status(201).json({ message: 'Question submitted successfully', question: withoutTheAsker(entry) });
   }
 };
 
@@ -261,13 +298,13 @@ export const answerQuestion = async (req, res) => {
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Question not found' });
     const told = await notifyAsker(result.rows[0]);
-    return res.json({ message: 'Answer approved and sent to the learner', question: result.rows[0], notified: Boolean(told.delivered) });
+    return res.json({ message: 'Answer approved and published under the lesson', question: withoutTheAsker(result.rows[0]), notified: Boolean(told.delivered) });
   } catch (error) {
     if (!isDatabaseUnavailable(error)) {
       return res.status(503).json({ message: 'Could not save the answer' });
     }
     Object.assign(question, { status: QuestionStatus.answered, answer: approved, reviewedBy: req.user.id });
     const told = await notifyAsker(question);
-    return res.json({ message: 'Answer approved in demo mode', question, notified: Boolean(told.delivered) });
+    return res.json({ message: 'Answer approved in demo mode', question: withoutTheAsker(question), notified: Boolean(told.delivered) });
   }
 };

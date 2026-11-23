@@ -10,7 +10,8 @@ const formatTime = (seconds: number) => {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 };
 
-export function AudioPlayer({ audioUrl, synthetic = false, onFinished }: { audioUrl?: string; synthetic?: boolean; onFinished?: () => void }) {
+// `subject` is the word the controls use, so a disease page does not say "lesson".
+export function AudioPlayer({ audioUrl, synthetic = false, subject = 'isomo', onFinished }: { audioUrl?: string; synthetic?: boolean; subject?: string; onFinished?: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -87,14 +88,14 @@ export function AudioPlayer({ audioUrl, synthetic = false, onFinished }: { audio
         onEnded={() => { setPlaying(false); onFinished?.(); }}
         onError={() => setFailed(true)}
       />
-      <button type="button" className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : 'Umva isomo'}>
+      <button type="button" className="audio-toggle" onClick={playing ? pause : play} aria-label={playing ? 'Hagarika' : `Umva ${subject}`}>
         {playing
           ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor" /></svg>
           : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>}
       </button>
       <div className="audio-main">
         <div className="audio-meta">
-          <strong>{playing ? 'Biri gusomwa' : progress >= 100 ? 'Warangije kumva' : 'Umva isomo mu ijwi'}</strong>
+          <strong>{playing ? 'Biri gusomwa' : progress >= 100 ? 'Warangije kumva' : `Umva ${subject} mu ijwi`}</strong>
           <span>{formatTime(elapsed)} / {formatTime(duration)}</span>
         </div>
         <input

@@ -15,9 +15,29 @@ type Props = {
   quiz: QuizQuestion[];
   onChange: (url: string, synthetic: boolean) => void;
   onError: (message: string) => void;
+  label?: string;
+  inputId?: string;
+  hint?: string;
+  missingText?: string;
+  onGenerate?: () => Promise<{ url: string }>;
 };
 
-export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onError }: Props) {
+const lessonHint = 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server can read it aloud instead, quiz and all: each question is read, then a silence to answer in, then the right answer. Learners are told the voice is a computer.';
+
+export function AudioUpload({
+  value,
+  synthetic,
+  title,
+  body,
+  quiz,
+  onChange,
+  onError,
+  label = 'Lesson audio (optional)',
+  inputId = 'lesson-audio',
+  hint = lessonHint,
+  missingText = 'Write the lesson text first, then generate its audio.',
+  onGenerate
+}: Props) {
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const busy = uploading || generating;
@@ -42,12 +62,12 @@ export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onE
   // A silent lesson shuts out whoever cannot read it; a recording still replaces this.
   const generate = async () => {
     if (!body.trim()) {
-      onError('Write the lesson text first, then generate its audio.');
+      onError(missingText);
       return;
     }
     setGenerating(true);
     try {
-      const { url } = await api.generateAudio(title, body, quiz);
+      const { url } = onGenerate ? await onGenerate() : await api.generateAudio(title, body, quiz);
       onChange(url, true);
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Could not make the audio.');
@@ -58,7 +78,7 @@ export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onE
 
   return (
     <div className="form-group span-2">
-      <label htmlFor="lesson-audio">Lesson audio (optional)</label>
+      <label htmlFor={inputId}>{label}</label>
       {value ? (
         <div className="stack-sm">
           <AudioPlayer audioUrl={value} synthetic={synthetic} />
@@ -72,7 +92,7 @@ export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onE
       ) : (
         <div className="stack-sm">
           <input
-            id="lesson-audio"
+            id={inputId}
             className="input"
             type="file"
             accept="audio/*"
@@ -89,7 +109,7 @@ export function AudioUpload({ value, synthetic, title, body, quiz, onChange, onE
       <span className="form-hint">
         {uploading
           ? <><span className="spinner" /> Uploading...</>
-          : 'A person reading the lesson in Kinyarwanda (MP3, M4A, OGG, WAV or WebM, up to 20 MB). If nobody can record it, the server can read it aloud instead, quiz and all: each question is read, then a silence to answer in, then the right answer. Learners are told the voice is a computer.'}
+          : hint}
       </span>
     </div>
   );
