@@ -19,15 +19,16 @@
 1. [Features](#features)
 2. [Technical requirements](#technical-requirements)
 3. [Installation](#installation)
-4. [Repository structure](#repository-structure)
-5. [Testing and evidence](#testing-and-evidence)
-6. [Code quality and algorithms](#code-quality-and-algorithms)
-7. [Designs and screenshots](#designs-and-screenshots)
-8. [Database schema](#database-schema)
-9. [API endpoints](#api-endpoints)
-10. [Deployment](#deployment)
-11. [Translations](#translations)
-12. [Scope and privacy notes](#scope-and-privacy-notes)
+4. [Running it, and changing it, in a demo](#running-it-and-changing-it-in-a-demo)
+5. [Repository structure](#repository-structure)
+6. [Testing and evidence](#testing-and-evidence)
+7. [Code quality and algorithms](#code-quality-and-algorithms)
+8. [Designs and screenshots](#designs-and-screenshots)
+9. [Database schema](#database-schema)
+10. [API endpoints](#api-endpoints)
+11. [Deployment](#deployment)
+12. [Translations](#translations)
+13. [Scope and privacy notes](#scope-and-privacy-notes)
 
 ---
 
@@ -131,6 +132,124 @@ The first admin is created only from the `BAHO_ADMIN_*` values; there is no publ
 Baho is a progressive web app, so there is no APK or executable to download. On Android, open https://bahoapp.site in Chrome and choose **Add to Home screen** (on iPhone: Safari > Share > **Add to Home Screen**). It then opens full-screen like an app and keeps working offline.
 
 **Production build and offline check:** `npm run preview` serves the production build on http://localhost:4173. Open it once, stop the servers or switch off the network, and reload: the app still opens with the downloaded lessons.
+
+---
+
+## Running it, and changing it, in a demo
+
+Everything here is a command that has been run on this project, not a sketch.
+
+### Start it
+
+```bash
+# With no database at all: the whole app and the tests run from memory.
+cd backend && BAHO_DEMO_MODE=true npm run dev     # terminal 1
+npm run dev:frontend                              # terminal 2
+
+# With PostgreSQL, which is what a real demo should show.
+npm run dev:backend                               # terminal 1
+npm run dev:frontend                              # terminal 2
+```
+
+Which one is running is a question the API answers:
+
+```bash
+curl http://localhost:4000/api/v1/health
+```
+
+`"database":"postgres-connected"` is the real thing, `"demo-mode"` is the
+in-memory fallback, and `"voice"` says whether the Kinyarwanda text-to-speech
+container is reachable (`absent` on a laptop, `ready` on the server).
+
+### Look inside the database
+
+```bash
+psql baho                                   # the local development database
+docker compose exec postgres psql -U fle -d baho   # if you started it with npm run docker:up
+```
+
+On the server, through the container:
+
+```bash
+docker compose -f docker-compose.production.yml exec postgres psql -U baho -d baho
+```
+
+Three queries worth having ready:
+
+```sql
+\dt                                                        -- the 16 tables
+SELECT status, count(*) FROM content GROUP BY status;       -- what is published
+SELECT condition_name, COALESCE(NULLIF(audio_url, ''), '(silent)') AS audio
+  FROM curricula WHERE condition_name IS NOT NULL;          -- which diseases have a voice
+```
+
+### Re-run the schema
+
+There is no migration command to remember: **starting the API is the migration.**
+`backend/src/config/db.js` runs `CREATE TABLE IF NOT EXISTS` for every table and
+`ALTER TABLE ... ADD COLUMN IF NOT EXISTS` for every column on every start-up, so
+an old database catches up by itself. That is how `curricula.audio_url` reached
+an already-running database when disease audio was added.
+
+```bash
+# Apply the readable copy by hand. Safe to run twice; it only reports what exists.
+psql -d baho -f database/schema.sql
+
+# Start completely over. This DELETES the data and reseeds the demo content.
+dropdb baho && createdb baho && npm run dev:backend
+```
+
+### Change the daily tip
+
+The tips are a list in `frontend/src/data/healthContent.ts`; `tipOfTheDay()`
+picks one by the day of the month, so a new line is a new tip in the rotation.
+
+```ts
+export const dailyTips = [
+  'Gabanya umunyu mu mafunguro yawe, kandi ugende iminota 20 ku munsi...',
+  'Nywa amazi aho kunywa soda. Ibinyobwa biryohereye byongera ibyago bya diyabete.',
+  // add a line here
+];
+```
+
+Vite reloads it as soon as the file is saved; nothing else has to change.
+
+### Add a column
+
+A new field on a disease is five edits, and the first one is the migration:
+
+1. `backend/src/config/db.js` — `ALTER TABLE curricula ADD COLUMN IF NOT EXISTS treatment TEXT;`
+2. `database/schema.sql` — the same line, for whoever reads the schema.
+3. `backend/src/modules/learning/learning.service.js` — `mapCurriculum` (the one
+   place `snake_case` becomes `camelCase`), `diseaseFields`, and the `INSERT` and
+   `UPDATE` queries.
+4. `frontend/src/types.ts` — add it to `Curriculum`, then `npx tsc --noEmit`
+   lists every file still to touch.
+5. The screens: `components/admin/DiseaseManager.tsx` for staff,
+   `components/screens/NcdScreen.tsx` for learners.
+
+Restart the API and the column is there. [defence-guide.md](docs/defence-guide.md)
+walks the same change line by line, including a list-valued field.
+
+### Other things worth having ready
+
+```bash
+cd backend && npm test          # 38 API and rule tests, no database needed
+cd frontend && npm test         # 41 unit tests
+curl https://bahoapp.site/api/v1/health                 # the live app
+```
+
+- **Sign in as staff:** landing page -> **Staff sign-in (email)**. The first
+  admin only ever comes from `BAHO_ADMIN_*`; everyone else is created in the
+  portal under **Staff**.
+- **Give a page a voice:** portal -> **Diseases** -> **Edit** -> *Generate audio
+  instead* (or the same button in the lesson editor). Without the voice
+  container it answers `503` and asks for a recording, which is the honest
+  answer, not a crash.
+- **Voice everything silent at once:** GitHub -> Actions -> **Back fill lesson
+  audio** -> *Run workflow*. It reads every lesson and disease page that has no
+  audio.
+- **Server logs:** `docker compose -f docker-compose.production.yml logs -f baho-backend`
 
 ---
 
